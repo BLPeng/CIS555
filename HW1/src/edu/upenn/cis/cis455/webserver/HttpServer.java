@@ -1,5 +1,16 @@
 package edu.upenn.cis.cis455.webserver;
 
+/*
+ * todo
+ * class:
+ * 1. HtteServer.java : start all threads
+ * 2. MyBlockingQueue.java : blockingQueue to hold incoming requests
+ * 3. WorkerThread.java : thread to handle request
+ * 4. WorkerThreadPool.java : thread pool of WorkerThreads , consumer
+ * 5. RequestReceiver.java : receive requests, producer
+ */
+import java.net.Socket;
+
 import org.apache.log4j.Logger;
 
 
@@ -7,29 +18,18 @@ class HttpServer {
 	
 	private static int portNumber;
 	private static String rootDir;
-	static final Logger logger = Logger.getLogger(HttpServer.class.getName());
+	private final static int blockingQueueSize = 1000;
+	private static MyBlockingQueue<Socket> blockingQueue;
 	
-	public HttpServer(int port, String rootDir){
-		portNumber = port;
-		rootDir = new String(rootDir);
-	}
-	public int getPortNumber() {
-		return portNumber;
-	}
-	public void setPortNumber(int portNum) {
-		portNumber = portNum;
-	}
-	public String getRootDir() {
-		return rootDir;
-	}
-	public void setRootDir(String Dir) {
-		rootDir = Dir;
-	}
+	static final Logger logger = Logger.getLogger(HttpServer.class.getName());
 	
     public static void main(String args[])
     {
     	logger.info("Starting HttpServer.");
-		if (!validateInput(args))	return;
+    	// input invalid
+		if (!validateInput(args)){
+			return;
+		}
         runServer();
     }
     
@@ -60,6 +60,11 @@ class HttpServer {
 	
 	private static void runServer(){
 		
+		blockingQueue = new MyBlockingQueue<Socket>(blockingQueueSize);
+		RequestReceiver rr = new RequestReceiver(portNumber, rootDir, blockingQueue);
+		WorkerThreadPool wtp = new WorkerThreadPool(blockingQueue);
+		wtp.start();
+		rr.start();
 	}
   
 }
