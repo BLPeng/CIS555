@@ -4,7 +4,7 @@ import java.net.Socket;
 
 public class WorkerThreadPool extends Thread{
 
-	private final int threadPoolSize = 200;
+	private final int threadPoolSize = 500;
 	//shared blockingQueue
 	private MyBlockingQueue<Socket> requestQueue;
 	private WorkerThread[] pools;

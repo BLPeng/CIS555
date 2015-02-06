@@ -61,6 +61,8 @@ public class HTTPRequestParser {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return CODE.BADREQ;
+		
 		}		
 
 		return code;
@@ -71,7 +73,7 @@ public class HTTPRequestParser {
 	// filter out invalid request
 	private boolean filterInvalidRequest(RequestLine initialLine){
 		
-	    System.out.println(initialLine.oriStr);
+		logger.info(initialLine.oriStr);
 		if (!"GET".equalsIgnoreCase(initialLine.method) && !"HEAD".equalsIgnoreCase(initialLine.method) ){
 			return true;
 		}
@@ -91,14 +93,18 @@ public class HTTPRequestParser {
 			
 			oriStr = line;
 			valid = true;
-			String[] tmp = line.split(" ");
-			if (tmp.length != 3){
-				valid = false;
-			}else{
-				method = tmp[0];
-				url = tmp[1];
-				protocol = tmp[2];
+			if (line == null) valid = false;
+			else {
+				String[] tmp = line.split(" ");
+				if (tmp.length != 3){
+					valid = false;
+				}else{
+					method = tmp[0];
+					url = tmp[1];
+					protocol = tmp[2];
+				}
 			}
+			
 		}
 	
 	}

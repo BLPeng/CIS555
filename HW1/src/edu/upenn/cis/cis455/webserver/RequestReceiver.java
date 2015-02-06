@@ -12,7 +12,7 @@ public class RequestReceiver extends Thread{
 	private String rootDir;
 	private Boolean acceptRequest = true;
 	private ServerSocket serverSocket;
-	private final int serverSocketSize = 100;
+	private final int serverSocketSize = 300;
 	//shared blockingQueue
 	private MyBlockingQueue<Socket> bq;
 	
@@ -47,7 +47,7 @@ public class RequestReceiver extends Thread{
 			Socket socket = null;
 			//while accepting requests
 			while (acceptRequest){
-				System.out.print(acceptRequest);
+//				System.out.print(acceptRequest);
 				try{
 					socket = serverSocket.accept();
 					bq.add(socket);
