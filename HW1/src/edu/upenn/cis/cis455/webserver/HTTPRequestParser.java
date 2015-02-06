@@ -12,7 +12,7 @@ public class HTTPRequestParser {
 	
 	static final Logger logger = Logger.getLogger(HTTPRequestParser.class);	
 	private RequestLine initialLine;	//first line of req
-	private CODE code;			//parse code
+	private CODE code = CODE.NORMAL;			//parse code
 		
 	public RequestLine getInitialLine() {
 		return initialLine;
@@ -23,7 +23,7 @@ public class HTTPRequestParser {
 	}
 
 	public enum CODE {
-		BADREQ, BADDIR, SHUTDOWN, CONTROL, PARSE, NONE, NOFOUND
+		BADREQ, BADDIR, SHUTDOWN, CONTROL, PARSE, NORMAL, NOFOUND, HEAD
 	}
 	
 	public CODE parseHttpRequest(Socket socket){
@@ -33,37 +33,37 @@ public class HTTPRequestParser {
 		try {
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-			//handle the initial line
+			//parse the initial line
 			String initLine = in.readLine();
 			initialLine = new RequestLine(initLine);
 			if (initialLine.valid == false){
 				code = CODE.BADREQ;
-				return CODE.BADREQ;
+				return code;
 			}	
 			
 			if (filterInvalidRequest(initialLine)){
 				code = CODE.BADREQ;
-				return CODE.BADREQ; 
+				return code;
 			}
 			
 			if ("/shutdown".equalsIgnoreCase(initialLine.url)){
 				//shotdown server
 				code = CODE.SHUTDOWN;
-				return CODE.SHUTDOWN; 
+				return code;
 			}
 			
 			if ("/control".equalsIgnoreCase(initialLine.url)){
 				code = CODE.CONTROL;
-				return CODE.CONTROL;
+				return code;
 			}
 			
-			in.close();
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
 
-		return CODE.NONE;
+		return code;
 		
 	}
 	

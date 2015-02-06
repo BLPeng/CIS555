@@ -14,28 +14,26 @@ public class WorkerThread extends Thread{
 	private MyBlockingQueue<Socket> requestQueue;
 	private Socket task;
 	private Boolean run;
+	private int label;
 	static final Logger logger = Logger.getLogger(WorkerThread.class);	
 	
-	public WorkerThread(MyBlockingQueue<Socket> requestQueue){
+	public WorkerThread(MyBlockingQueue<Socket> requestQueue, int label){
 		this.requestQueue = requestQueue;
+		this.label = label;
 	}
 	public void run(){
 		
 		run = true;
 		while (run){
-			synchronized (run){
-				try {
-					task = requestQueue.get();
-					logger.info("Handle task");
-					HTTPRequestParser requestParser = new HTTPRequestParser();
-					CODE code = requestParser.parseHttpRequest(task);
-					handleRequest(requestParser, task);
+			try {
+				task = requestQueue.get();
+				logger.info("thread " +label+ ", Handle task");		
+				handleRequest(task);
 
-					
-				} catch (InterruptedException e) {
-					logger.error("Failed to get task");
-					e.printStackTrace();
-				}
+				closeSocket();		//close the socket
+			} catch (InterruptedException e) {
+				logger.error("Failed to get task");
+				e.printStackTrace();
 			}
 
 		}
@@ -43,26 +41,35 @@ public class WorkerThread extends Thread{
 	}
 	
 	
-	private void handleRequest(HTTPRequestParser requestParser, Socket socket){
+	private void handleRequest(Socket socket){
 		
-		if (requestParser == null)	return;
-		CODE code = requestParser.getCode();
+		String res = "";
+		HTTPRequestParser requestParser = new HTTPRequestParser();	
+		CODE code = requestParser.parseHttpRequest(task);
 		switch (code){
 		case BADDIR:
-			reponseError(requestParser, code, socket);
+			res = responseMessage(requestParser, code);
+			responseToClient(res, socket);
 			break;
 		case BADREQ:
-			reponseError(requestParser, code, socket);
+			res = responseMessage(requestParser, code);
+			responseToClient(res, socket);
 			break;
 		case CONTROL:
 			
 			break;
 		case SHUTDOWN:
 			shutdownServer();
+			res = responseMessage(requestParser, code);
+			responseToClient(res, socket);			
 			break;
 		case NOFOUND:
+			res = responseMessage(requestParser, code);
+			responseToClient(res, socket);			
 			break;
-		case NONE:
+		case NORMAL:
+			res = responseMessage(requestParser, code);
+			responseToClient(res, socket);	
 			break;
 		case PARSE:
 			break;
@@ -74,7 +81,20 @@ public class WorkerThread extends Thread{
 	}
 	
 	
-	private void reponseError(HTTPRequestParser requestParser, CODE code, Socket socket){
+	private void responseToClient(String res, Socket socket){
+		
+		try {
+			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+			out.println(res);
+			out.close();
+		} catch (IOException e) {
+			logger.error("Error");
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private String responseMessage(HTTPRequestParser requestParser, CODE code){
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(requestParser.getInitialLine().protocol);
@@ -82,19 +102,23 @@ public class WorkerThread extends Thread{
 		switch (code){
 		case BADREQ:{
 			sb.append("400 "); sb.append(" Bad request method!");
-			try {
-				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-				String res = sb.toString();
-				out.println(res);
-				out.close();
-			} catch (IOException e) {
-				logger.error("Error");
-				e.printStackTrace();
-			}
-			break;
-		}
-			
+			return sb.toString();
+		}	
 		case BADDIR:
+			
+			return "";
+		case SHUTDOWN:{
+			sb.append("200 "); sb.append(" Server successfully shutdown!");
+			return sb.toString();
+		}
+		case NORMAL:{
+			sb.append("200 "); sb.append(" OK!");
+			return sb.toString();
+		}
+		
+			
+		default:
+			return "";
 		}
 		
 		
@@ -110,10 +134,8 @@ public class WorkerThread extends Thread{
 	
 	public void stopThread(){
 		//TODO
-		synchronized (run){
-			this.run = false;
-			closeSocket();
-		}
+		//let current work finish
+		this.run = false;
 
 	}
 	

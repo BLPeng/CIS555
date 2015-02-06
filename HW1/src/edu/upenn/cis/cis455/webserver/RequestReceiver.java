@@ -73,7 +73,7 @@ public class RequestReceiver extends Thread{
 		try {
 			serverSocket.close();
 		} catch (IOException e) {
-			logger.error("can not close serverSocket");
+			logger.error("Can not close serverSocket");
 			e.printStackTrace();
 		}
 	}

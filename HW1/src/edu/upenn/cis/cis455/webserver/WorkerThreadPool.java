@@ -14,7 +14,7 @@ public class WorkerThreadPool extends Thread{
 		this.requestQueue = requestQueue;
 		pools = new WorkerThread[threadPoolSize];
 		for (int i = 0; i < threadPoolSize; i++){
-			pools[i] = new WorkerThread(this.requestQueue);
+			pools[i] = new WorkerThread(this.requestQueue, i);
 		}
 	}
 	

@@ -23,9 +23,7 @@ public class MyBlockingQueue<T> {
 			wait();
 		}
 		logger.info("task added to blockingQueue");
-		if (isEmpty()){
-			notifyAll();
-		}
+		notifyAll();
 		bq.add(task);	
 		
 	}
@@ -36,9 +34,7 @@ public class MyBlockingQueue<T> {
 			wait();
 		}
 		logger.info("task fetched from blockingQueue");
-		if (isFull()){
-			notifyAll();
-		}
+		notifyAll();
 		return bq.poll();
 	}
 
