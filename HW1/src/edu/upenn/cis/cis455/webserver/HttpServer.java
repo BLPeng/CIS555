@@ -16,21 +16,37 @@ import org.apache.log4j.Logger;
 
 class HttpServer {
 	
-	private static int portNumber;
-	private static String rootDir;
-	private final static int blockingQueueSize = 1000;
-	private static MyBlockingQueue<Socket> blockingQueue;
+	public static HttpServer httpServer; 
+	public static Boolean run;
+	private int portNumber;
+	private String rootDir;
+	private final int blockingQueueSize = 1000;
+	private RequestReceiver requestReceiver;
+	private WorkerThreadPool workerThreadPool;	
+	private MyBlockingQueue<Socket> blockingQueue;
 	
 	static final Logger logger = Logger.getLogger(HttpServer.class.getName());
+	
+	public HttpServer(String portNum, String root){
+		
+		HttpServer.httpServer = this;
+		int port = Integer.valueOf(portNum);
+		portNumber = port;
+		rootDir = root;
+		blockingQueue = new MyBlockingQueue<Socket>(blockingQueueSize);
+		requestReceiver = new RequestReceiver(portNumber, rootDir, blockingQueue);
+		workerThreadPool = new WorkerThreadPool(blockingQueue);
+	}
 	
     public static void main(String args[])
     {
     	logger.info("Starting HttpServer.");
     	// input invalid
 		if (!validateInput(args)){
-			return;
+			//TODO return error res
 		}
-        runServer();
+		HttpServer httpServer = new HttpServer(args[0], args[1]);
+		httpServer.runServer();
     }
     
     private static boolean validateInput(String[] args){
@@ -48,23 +64,31 @@ class HttpServer {
 			System.out.println("Valid port number range:[0, 65535], [1024, 65535] is recommended!");
 			return false;
 		}
-		portNumber = portNum;
-		rootDir = args[1];
+
 		System.out.println("Server Name: Xiaobin Chen. PennKey: xiaobinc");
-        System.out.println("Port: " + portNumber + "\rRoot Directory: " + rootDir);
+        System.out.println("Port: " + portNum + "\rRoot Directory: " + args[1]);
 		return true;
-		//validate root dir
-		
 
 	}
 	
-	private static void runServer(){
+	private void runServer(){
+
+		run = true;
+		requestReceiver.start();
+		workerThreadPool.start();
 		
-		blockingQueue = new MyBlockingQueue<Socket>(blockingQueueSize);
-		RequestReceiver rr = new RequestReceiver(portNumber, rootDir, blockingQueue);
-		WorkerThreadPool wtp = new WorkerThreadPool(blockingQueue);
-		wtp.start();
-		rr.start();
 	}
-  
+    
+	
+	//  
+	public static void shutdownServer(){
+		
+		HttpServer hs = HttpServer.httpServer;
+		if (hs != null){
+			logger.info("shutdown server.");
+			hs.requestReceiver.shutdown();
+			hs.workerThreadPool.shutdownThreadPools();
+		}
+		
+	}
 }

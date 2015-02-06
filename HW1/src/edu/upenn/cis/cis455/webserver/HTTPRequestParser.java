@@ -46,13 +46,13 @@ public class HTTPRequestParser {
 				return CODE.BADREQ; 
 			}
 			
-			if ("/shutdown".equals(initialLine.url.toLowerCase())){
+			if ("/shutdown".equalsIgnoreCase(initialLine.url)){
 				//shotdown server
 				code = CODE.SHUTDOWN;
 				return CODE.SHUTDOWN; 
 			}
 			
-			if ("/control".equals(initialLine.url.toLowerCase())){
+			if ("/control".equalsIgnoreCase(initialLine.url)){
 				code = CODE.CONTROL;
 				return CODE.CONTROL;
 			}
@@ -72,7 +72,7 @@ public class HTTPRequestParser {
 	private boolean filterInvalidRequest(RequestLine initialLine){
 		
 	    System.out.println(initialLine.oriStr);
-		if (!"GET".equals(initialLine.method) && !"HEAD".equals(initialLine.method) ){
+		if (!"GET".equalsIgnoreCase(initialLine.method) && !"HEAD".equalsIgnoreCase(initialLine.method) ){
 			return true;
 		}
 		//TODO

@@ -10,7 +10,7 @@ public class RequestReceiver extends Thread{
 	
 	private int portNumber;
 	private String rootDir;
-	private boolean acceptRequest = true;
+	private Boolean acceptRequest = true;
 	private ServerSocket serverSocket;
 	private final int serverSocketSize = 100;
 	//shared blockingQueue
@@ -47,11 +47,18 @@ public class RequestReceiver extends Thread{
 			Socket socket = null;
 			//while accepting requests
 			while (acceptRequest){
-				socket = serverSocket.accept();
-				bq.add(socket);
+				System.out.print(acceptRequest);
+				try{
+					socket = serverSocket.accept();
+					bq.add(socket);
+				}catch (IOException e) {
+					logger.info("Socket closed");
+				} 
+
 			}
+			
 		} catch (IOException e) {
-			logger.error("Could not bind portNumber:" + portNumber);
+			logger.error("Socket error:" + portNumber);
 			e.printStackTrace();
 			return;
 		} catch (InterruptedException e) {
@@ -60,13 +67,13 @@ public class RequestReceiver extends Thread{
 		} 
     }
 	
-	public void close(){
-		//stop accepting requests
+	public void shutdown(){
+		//stop accepting requests		
 		this.acceptRequest = false;
 		try {
 			serverSocket.close();
 		} catch (IOException e) {
-			logger.error("Could not close serverSocket.");
+			logger.error("can not close serverSocket");
 			e.printStackTrace();
 		}
 	}

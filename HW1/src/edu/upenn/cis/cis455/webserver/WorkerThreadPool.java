@@ -26,7 +26,7 @@ public class WorkerThreadPool extends Thread{
 		
 	}
 	
-	public void stopThreadPools(){
+	public void shutdownThreadPools(){
 
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].stopThread();
