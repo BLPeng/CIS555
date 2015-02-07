@@ -17,10 +17,9 @@ import org.apache.log4j.Logger;
 class HttpServer {
 	
 	public static HttpServer httpServer; 
-	public static Boolean run;
 	private int portNumber;
 	private String rootDir;
-	private final int blockingQueueSize = 1000;
+	private final int blockingQueueSize = 10000;
 	private RequestReceiver requestReceiver;
 	private WorkerThreadPool workerThreadPool;	
 	private MyBlockingQueue<Socket> blockingQueue;
@@ -73,7 +72,6 @@ class HttpServer {
 	
 	private void runServer(){
 
-		run = true;
 		requestReceiver.start();
 		workerThreadPool.start();
 		

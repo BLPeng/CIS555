@@ -2,23 +2,21 @@ package edu.upenn.cis.cis455.webserver;
 
 import java.net.Socket;
 
-public class WorkerThreadPool extends Thread{
+public class WorkerThreadPool{
 
-	private final int threadPoolSize = 500;
+	private final int threadPoolSize = 1100;
 	//shared blockingQueue
-	private MyBlockingQueue<Socket> requestQueue;
 	private WorkerThread[] pools;
 	
 	public WorkerThreadPool(MyBlockingQueue<Socket> requestQueue){
 		
-		this.requestQueue = requestQueue;
 		pools = new WorkerThread[threadPoolSize];
 		for (int i = 0; i < threadPoolSize; i++){
-			pools[i] = new WorkerThread(this.requestQueue, i);
+			pools[i] = new WorkerThread(requestQueue, i);
 		}
 	}
 	
-	public void run(){
+	public void start(){
 		
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].start();

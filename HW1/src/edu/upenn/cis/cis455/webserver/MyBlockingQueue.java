@@ -19,11 +19,12 @@ public class MyBlockingQueue<T> {
 	// only one thread could operate this queue at a time
 	public synchronized void add(T task) throws InterruptedException{
 		
-		while (isFull()){		//queue not full
+		while (isFull()){		//queue is full
 			wait();
 		}
 		logger.info("task added to blockingQueue");
-		notifyAll();
+		if (isEmpty())
+			notify();
 		bq.add(task);	
 		
 	}
@@ -34,7 +35,8 @@ public class MyBlockingQueue<T> {
 			wait();
 		}
 		logger.info("task fetched from blockingQueue");
-		notifyAll();
+		if (isFull())
+			notify();
 		return bq.poll();
 	}
 

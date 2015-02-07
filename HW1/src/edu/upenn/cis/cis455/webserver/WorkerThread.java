@@ -1,12 +1,15 @@
 package edu.upenn.cis.cis455.webserver;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
 import org.apache.log4j.Logger;
 
 import edu.upenn.cis.cis455.webserver.HTTPRequestParser.CODE;
+import edu.upenn.cis.cis455.webserver.HTTPRequestParser.RequestLine;
 
 
 public class WorkerThread extends Thread{
@@ -15,7 +18,6 @@ public class WorkerThread extends Thread{
 	private Socket task;
 	private Boolean run;
 	private int label;
-	static final Logger logger = Logger.getLogger(WorkerThread.class);	
 	
 	public WorkerThread(MyBlockingQueue<Socket> requestQueue, int label){
 		this.requestQueue = requestQueue;
@@ -27,12 +29,14 @@ public class WorkerThread extends Thread{
 		while (run){
 			try {
 				task = requestQueue.get();
-				logger.info("thread " +label+ ", Handle task");		
-				handleRequest(task);
-
-				closeSocket();		//close the socket
-			} catch (InterruptedException e) {
-				logger.error("Failed to get task");
+				BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
+				String initLine = in.readLine();
+	//			handleRequest(task);
+				PrintWriter out = new PrintWriter(task.getOutputStream(), true);
+				out.println("HTTP/1.0 200 OK");
+				
+				task.close();
+			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
 			}
 
@@ -83,20 +87,13 @@ public class WorkerThread extends Thread{
 	
 	private void responseToClient(String res, Socket socket){
 		
-		try {
-			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			out.println(res);
-			out.close();
-		} catch (IOException e) {
-			logger.error("Error");
-			e.printStackTrace();
-		}
 		
 	}
 	
 	private String responseMessage(HTTPRequestParser requestParser, CODE code){
 		
-		StringBuilder sb = new StringBuilder();
+		return " ";
+		/*StringBuilder sb = new StringBuilder();
 		sb.append(requestParser.getInitialLine().protocol);
 		sb.append(" ");
 		switch (code){
@@ -120,7 +117,7 @@ public class WorkerThread extends Thread{
 		default:
 			return "";
 		}
-		
+		*/
 		
 	}
 	
@@ -133,22 +130,12 @@ public class WorkerThread extends Thread{
 	}
 	
 	public void stopThread(){
-		//TODO
-		//let current work finish
-		this.run = false;
+
 
 	}
 	
 	private void closeSocket(){
 		
-		try {
-			if (task != null){
-				task.close();
-			}		
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		
 	}
 
