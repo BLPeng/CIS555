@@ -49,7 +49,7 @@ public class RequestReceiver extends Thread{
 				socket.setSoTimeout(3000);			//prevent hanging
 				taskQueue.add(socket);
 			}catch (IOException e) {
-				logger.info("Socket closed");
+				logger.info("Server socket closed");
 			} catch (InterruptedException e) {
 				logger.error("Could not add/receive task");
 				e.printStackTrace();

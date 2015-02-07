@@ -47,7 +47,7 @@ public class WorkerThread extends Thread{
 				this.reqUrl = "None";
 				task = null;
 			} catch (InterruptedException e) {
-				logger.error("Can not read from socket, socket closed?");
+				logger.error("Thread stopped");
 			} catch (IOException e) {
 				logger.error("Can not fetch/parse task");
 			} 
@@ -57,29 +57,31 @@ public class WorkerThread extends Thread{
 	
 	private void handleRequest(Socket socket) throws IOException{
 		
-		String res = "";
 		String content = "";
 		HTTPRequestParser requestParser = new HTTPRequestParser();	
 		requestParser.parseHttpRequest(task);
 		this.reqUrl = requestParser.getUrl();
+		
 		CODE code = requestParser.getCode();
-		if (code == CODE.SHUTDOWN) {
+		if (code == CODE.SHUTDOWN) {		//special url
 			shutdownServer();	
 		} 
-		if (code == CODE.CONTROL) {
-			content = genHTMLPage(getControlPage());
-		}
-		res = genResMessage(requestParser, content, code);
+		String res  = genResMessage(requestParser, code);
 		responseToClient(res, socket);
 	}
 	
 	
-	private void responseToClient(String res, Socket socket) throws IOException{	
-		PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-		out.println(res);	
+	private void responseToClient(String res, Socket socket){	
+		PrintWriter out;
+		try {
+			out = new PrintWriter(socket.getOutputStream(), true);
+			out.println(res);
+		} catch (IOException e) {
+			logger.error("Could not write to client");
+		}		
 	}
 	
-	private String genResMessage(HTTPRequestParser requestParser, String content, CODE code){
+	private String genResMessage(HTTPRequestParser requestParser, CODE code){
 	
 		StringBuilder sb = new StringBuilder();
 		String protocol = requestParser.getProtocol();
@@ -104,7 +106,7 @@ public class WorkerThread extends Thread{
 			sb.append("200 "); sb.append(" Server status");
 			sb.append(System.getProperty("line.separator"));
 			sb.append("\r\n");
-			sb.append(content);
+			sb.append(genHTMLPage(getControlPage()));
 			return sb.toString();	
 		}
 		default:

@@ -35,7 +35,7 @@ public class HTTPRequestParser {
 	}
 
 	public enum CODE {
-		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD
+		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, LISTDIR, FILE
 	}
 	
 	public void parseHttpRequest(Socket socket) throws IOException{
