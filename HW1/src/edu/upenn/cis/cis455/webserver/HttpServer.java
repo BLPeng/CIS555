@@ -79,7 +79,7 @@ class HttpServer {
 
 	}
 	//let's run server
-	private void runServer(){
+	private void runServer() {
 
 		requestReceiver.start();
 		workerThreadPool.start();
@@ -88,14 +88,14 @@ class HttpServer {
     
 	
 	//let's shutdown server  
-	public static void shutdownServer(){
+	public static void shutdownServer() {
 		
-		HttpServer hs = HttpServer.httpServer;
-		if (hs != null){
+		if (httpServer != null){
 			logger.info("shutdown server.");
-			hs.requestReceiver.shutdown();
-			hs.workerThreadPool.shutdown();
+			httpServer.requestReceiver.shutdown();
+			httpServer.workerThreadPool.shutdown();
 		}
 		
 	}
+	
 }

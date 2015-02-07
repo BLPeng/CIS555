@@ -24,8 +24,10 @@ public class MyBlockingQueue<T> {
 		}
 //		logger.info("task added to blockingQueue");
 		//why not notifyAll() ?
-
-		notifyAll();
+		if (isEmpty())
+			notifyAll();
+		else
+			notify();
 		bq.add(task);			
 	}
 	

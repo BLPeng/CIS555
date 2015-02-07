@@ -21,6 +21,10 @@ public class HTTPRequestParser {
 		return this.protocol;
 	}
 	
+	public String getUrl() {
+		return this.reqUrl;
+	}
+	
 	public HTTPRequestParser() {
 		code = CODE.BADREQ;
 		headers = new ArrayList<String>();
