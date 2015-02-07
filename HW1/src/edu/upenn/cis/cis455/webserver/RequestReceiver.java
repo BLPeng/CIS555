@@ -14,7 +14,7 @@ public class RequestReceiver extends Thread{
 	private ServerSocket serverSocket;
 	private final int serverSocketSize = 300;
 	//shared blockingQueue
-	private MyBlockingQueue<Socket> bq;
+	private MyBlockingQueue<Socket> taskQueue;
 	
 	static final Logger logger = Logger.getLogger(RequestReceiver.class.getName());
 	
@@ -31,40 +31,31 @@ public class RequestReceiver extends Thread{
 		rootDir = Dir;
 	}
 	
-	public RequestReceiver(int port, String dir, MyBlockingQueue<Socket> bq){
+	public RequestReceiver(int port, String dir, MyBlockingQueue<Socket> taskQueue) throws IOException{
 		
 		portNumber = port;
 		rootDir = new String(dir);
-		this.bq = bq;
+		this.taskQueue = taskQueue;
 		acceptRequest = true;
-		
+		serverSocket = new ServerSocket(portNumber, serverSocketSize);
 	}
 	
-	public void run() {
-		
-		try {
-			serverSocket = new ServerSocket(portNumber, serverSocketSize);
-			Socket socket = null;
-			//while accepting requests
-			while (acceptRequest){
+	public void run() {	
+		//while accepting requests
+		while (acceptRequest){
 //				System.out.print(acceptRequest);
-				try{
-					socket = serverSocket.accept();
-					bq.add(socket);
-				}catch (IOException e) {
-					logger.info("Socket closed");
-				} 
+			try{
+				Socket socket = serverSocket.accept();
+				socket.setSoTimeout(3000);			//prevent hanging
+				taskQueue.add(socket);
+			}catch (IOException e) {
+				logger.info("Socket closed");
+			} catch (InterruptedException e) {
+				logger.error("Could not add task");
+				e.printStackTrace();
+			} 
 
-			}
-			
-		} catch (IOException e) {
-			logger.error("Socket error:" + portNumber);
-			e.printStackTrace();
-			return;
-		} catch (InterruptedException e) {
-			logger.error("Could not add task to queue.");
-			e.printStackTrace();
-		} 
+		}
     }
 	
 	public void shutdown(){

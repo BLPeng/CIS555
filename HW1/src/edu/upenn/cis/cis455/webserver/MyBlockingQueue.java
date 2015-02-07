@@ -23,20 +23,20 @@ public class MyBlockingQueue<T> {
 			wait();
 		}
 		logger.info("task added to blockingQueue");
-		if (isEmpty())
-			notify();
-		bq.add(task);	
-		
+		//why not notifyAll() ?
+
+		notifyAll();
+		bq.add(task);			
 	}
 	
 	public synchronized T get() throws InterruptedException{
-		
+		 
 		while (isEmpty()){
 			wait();
 		}
 		logger.info("task fetched from blockingQueue");
 		if (isFull())
-			notify();
+			notifyAll();
 		return bq.poll();
 	}
 

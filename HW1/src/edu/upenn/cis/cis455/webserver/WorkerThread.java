@@ -29,15 +29,19 @@ public class WorkerThread extends Thread{
 		while (run){
 			try {
 				task = requestQueue.get();
-				BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
-				String initLine = in.readLine();
-	//			handleRequest(task);
-				PrintWriter out = new PrintWriter(task.getOutputStream(), true);
-				out.println("HTTP/1.0 200 OK");
-				
+				if (task.isConnected()){
+					BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
+					String initLine = in.readLine();
+		//			handleRequest(task);
+					PrintWriter out = new PrintWriter(task.getOutputStream(), true);
+					out.println("HTTP/1.0 200 OK");
+				}	
 				task.close();
+				task = null;
 			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
+			} finally{
+				
 			}
 
 		}

@@ -4,8 +4,7 @@ import java.net.Socket;
 
 public class WorkerThreadPool{
 
-	private final int threadPoolSize = 1100;
-	//shared blockingQueue
+	private final int threadPoolSize = 2;	//for multi-processor /core, increase this number
 	private WorkerThread[] pools;
 	
 	public WorkerThreadPool(MyBlockingQueue<Socket> requestQueue){
@@ -24,7 +23,7 @@ public class WorkerThreadPool{
 		
 	}
 	
-	public void shutdownThreadPools(){
+	public void shutdown(){
 
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].stopThread();

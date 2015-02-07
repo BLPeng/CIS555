@@ -9,6 +9,7 @@ package edu.upenn.cis.cis455.webserver;
  * 4. WorkerThreadPool.java : thread pool of WorkerThreads , consumer
  * 5. RequestReceiver.java : receive requests, producer
  */
+import java.io.IOException;
 import java.net.Socket;
 
 import org.apache.log4j.Logger;
@@ -19,14 +20,14 @@ class HttpServer {
 	public static HttpServer httpServer; 
 	private int portNumber;
 	private String rootDir;
-	private final int blockingQueueSize = 10000;
+	private final int blockingQueueSize = 2000;
 	private RequestReceiver requestReceiver;
 	private WorkerThreadPool workerThreadPool;	
 	private MyBlockingQueue<Socket> blockingQueue;
 	
 	static final Logger logger = Logger.getLogger(HttpServer.class.getName());
 	
-	public HttpServer(String portNum, String root){
+	public HttpServer(String portNum, String root) throws IOException{
 		
 		HttpServer.httpServer = this;
 		int port = Integer.valueOf(portNum);
@@ -40,12 +41,20 @@ class HttpServer {
     public static void main(String args[])
     {
     	logger.info("Starting HttpServer.");
-    	// input invalid
+    	// check if input is invalid
 		if (!validateInput(args)){
-			//TODO return error res
+			System.out.println("Arguments are not valid");
+			return;
 		}
-		HttpServer httpServer = new HttpServer(args[0], args[1]);
-		httpServer.runServer();
+		HttpServer httpServer;
+		try {
+			httpServer = new HttpServer(args[0], args[1]);
+			httpServer.runServer();
+		} catch (IOException e) {
+			logger.error("Could not initialize server");
+			e.printStackTrace();
+		}
+		
     }
     
     private static boolean validateInput(String[] args){
@@ -69,7 +78,7 @@ class HttpServer {
 		return true;
 
 	}
-	
+	//let's run server
 	private void runServer(){
 
 		requestReceiver.start();
@@ -78,14 +87,14 @@ class HttpServer {
 	}
     
 	
-	//  
+	//let's shutdown server  
 	public static void shutdownServer(){
 		
 		HttpServer hs = HttpServer.httpServer;
 		if (hs != null){
 			logger.info("shutdown server.");
 			hs.requestReceiver.shutdown();
-			hs.workerThreadPool.shutdownThreadPools();
+			hs.workerThreadPool.shutdown();
 		}
 		
 	}
