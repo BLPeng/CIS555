@@ -9,7 +9,6 @@ import java.net.Socket;
 import org.apache.log4j.Logger;
 
 import edu.upenn.cis.cis455.webserver.HTTPRequestParser.CODE;
-import edu.upenn.cis.cis455.webserver.HTTPRequestParser.RequestLine;
 
 
 public class WorkerThread extends Thread{
@@ -18,6 +17,7 @@ public class WorkerThread extends Thread{
 	private Socket task;
 	private Boolean run;
 	private int label;
+	static final Logger logger = Logger.getLogger(WorkerThread.class.getName());
 	
 	public WorkerThread(MyBlockingQueue<Socket> requestQueue, int label){
 		this.requestQueue = requestQueue;
@@ -30,16 +30,18 @@ public class WorkerThread extends Thread{
 			try {
 				task = requestQueue.get();
 				if (task.isConnected()){
-					BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
-					String initLine = in.readLine();
-		//			handleRequest(task);
+					handleRequest(task);
+/*					BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
+					String initLine = in.readLine();			
 					PrintWriter out = new PrintWriter(task.getOutputStream(), true);
-					out.println("HTTP/1.0 200 OK");
+					out.println("HTTP/1.0 200 OK");*/
 				}	
 				task.close();
 				task = null;
-			} catch (InterruptedException | IOException e) {
-				e.printStackTrace();
+			} catch (InterruptedException e) {
+				logger.error("Can not read from socket, socket closed?");
+			} catch (IOException e) {
+				logger.error("Can not fetch/parse task");
 			} finally{
 				
 			}
@@ -49,56 +51,32 @@ public class WorkerThread extends Thread{
 	}
 	
 	
-	private void handleRequest(Socket socket){
+	private void handleRequest(Socket socket) throws IOException{
 		
 		String res = "";
 		HTTPRequestParser requestParser = new HTTPRequestParser();	
-		CODE code = requestParser.parseHttpRequest(task);
-		switch (code){
-		case BADDIR:
-			res = responseMessage(requestParser, code);
-			responseToClient(res, socket);
-			break;
-		case BADREQ:
-			res = responseMessage(requestParser, code);
-			responseToClient(res, socket);
-			break;
-		case CONTROL:
-			
-			break;
-		case SHUTDOWN:
-			shutdownServer();
-			res = responseMessage(requestParser, code);
-			responseToClient(res, socket);			
-			break;
-		case NOFOUND:
-			res = responseMessage(requestParser, code);
-			responseToClient(res, socket);			
-			break;
-		case NORMAL:
-			res = responseMessage(requestParser, code);
-			responseToClient(res, socket);	
-			break;
-		case PARSE:
-			break;
-		default:
-			break;
-			
-		}
-		
+		requestParser.parseHttpRequest(task);
+		CODE code = requestParser.getCode();
+		if (code == CODE.SHUTDOWN){
+			shutdownServer();	
+		}	
+		res = genResMessage(requestParser, code);
+		responseToClient(res, socket);
 	}
 	
 	
-	private void responseToClient(String res, Socket socket){
+	private void responseToClient(String res, Socket socket) throws IOException{
 		
+		PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+		out.println(res);
 		
 	}
 	
-	private String responseMessage(HTTPRequestParser requestParser, CODE code){
-		
-		return " ";
-		/*StringBuilder sb = new StringBuilder();
-		sb.append(requestParser.getInitialLine().protocol);
+	private String genResMessage(HTTPRequestParser requestParser, CODE code){
+	
+		StringBuilder sb = new StringBuilder();
+		String protocol = requestParser.getProtocol();
+		sb.append(protocol);
 		sb.append(" ");
 		switch (code){
 		case BADREQ:{
@@ -106,26 +84,21 @@ public class WorkerThread extends Thread{
 			return sb.toString();
 		}	
 		case BADDIR:
-			
+			sb.append("404 "); sb.append(" Bad request directory!");
 			return "";
 		case SHUTDOWN:{
 			sb.append("200 "); sb.append(" Server successfully shutdown!");
 			return sb.toString();
 		}
-		case NORMAL:{
-			sb.append("200 "); sb.append(" OK!");
+		
+		default:
+			sb.append("200 "); sb.append(" Not implemented yet!");
 			return sb.toString();
 		}
 		
-			
-		default:
-			return "";
-		}
-		*/
-		
 	}
 	
-	private void shutdownServer(){
+	private void shutdownServer() {
 		
 		if (HttpServer.httpServer != null){
 			HttpServer.shutdownServer();
@@ -133,14 +106,10 @@ public class WorkerThread extends Thread{
 		
 	}
 	
-	public void stopThread(){
-
-
+	public void terminate() {
+		logger.info("Thread " + this.label + " terminated.");
+		this.run = false;
+		this.interrupt();
 	}
 	
-	private void closeSocket(){
-		
-		
-	}
-
 }

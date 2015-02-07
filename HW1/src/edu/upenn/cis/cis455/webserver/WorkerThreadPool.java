@@ -26,7 +26,7 @@ public class WorkerThreadPool{
 	public void shutdown(){
 
 		for (int i = 0; i < threadPoolSize; i++){
-			pools[i].stopThread();
+			pools[i].terminate();
 		}
 	}
 }

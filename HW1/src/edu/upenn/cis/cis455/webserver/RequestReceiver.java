@@ -51,7 +51,7 @@ public class RequestReceiver extends Thread{
 			}catch (IOException e) {
 				logger.info("Socket closed");
 			} catch (InterruptedException e) {
-				logger.error("Could not add task");
+				logger.error("Could not add/receive task");
 				e.printStackTrace();
 			} 
 
@@ -62,6 +62,7 @@ public class RequestReceiver extends Thread{
 		//stop accepting requests		
 		this.acceptRequest = false;
 		try {
+			//Closes this socket. Any thread currently blocked in accept() will throw a SocketException. 
 			serverSocket.close();
 		} catch (IOException e) {
 			logger.error("Can not close serverSocket");

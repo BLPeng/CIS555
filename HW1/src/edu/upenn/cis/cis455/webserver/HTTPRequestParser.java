@@ -3,110 +3,85 @@ package edu.upenn.cis.cis455.webserver;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.log4j.Logger;
 
 public class HTTPRequestParser {
 	
-	static final Logger logger = Logger.getLogger(HTTPRequestParser.class);	
-	private RequestLine initialLine;	//first line of req
-	private CODE code = CODE.NORMAL;			//parse code
+	private String protocol;
+	private String reqUrl;
+	private String method;
+	private List<String> headers;
+//	private String body;				do not deal with body
+	private CODE code;			
 		
-	public RequestLine getInitialLine() {
-		return initialLine;
+	public String getProtocol() {
+		return this.protocol;
 	}
-
+	
+	public HTTPRequestParser() {
+		code = CODE.BADREQ;
+		headers = new ArrayList<String>();
+	}
+	
 	public CODE getCode() {
 		return code;
 	}
 
 	public enum CODE {
-		BADREQ, BADDIR, SHUTDOWN, CONTROL, PARSE, NORMAL, NOFOUND, HEAD
+		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD
 	}
 	
-	public CODE parseHttpRequest(Socket socket){
+	public void parseHttpRequest(Socket socket) throws IOException{
 		
-		BufferedReader in;
-
-		try {
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-			//parse the initial line
-			String initLine = in.readLine();
-			initialLine = new RequestLine(initLine);
-			if (initialLine.valid == false){
-				code = CODE.BADREQ;
-				return code;
-			}	
-			
-			if (filterInvalidRequest(initialLine)){
-				code = CODE.BADREQ;
-				return code;
+		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		//parse the initial line
+		String line = in.readLine();
+		parseInitialLine(line);
+		//get the headers
+		while ((line = in.readLine()) != null) {
+			if (line.length() == 0){
+				break;
 			}
-			
-			if ("/shutdown".equalsIgnoreCase(initialLine.url)){
-				//shotdown server
-				code = CODE.SHUTDOWN;
-				return code;
-			}
-			
-			if ("/control".equalsIgnoreCase(initialLine.url)){
-				code = CODE.CONTROL;
-				return code;
-			}
-			
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return CODE.BADREQ;
-		
-		}		
-
-		return code;
-		
+			headers.add(line);
+		}	
+		filterRequest();	
 	}
 	
 
 	// filter out invalid request
-	private boolean filterInvalidRequest(RequestLine initialLine){
+	private void filterRequest(){
 		
-		logger.info(initialLine.oriStr);
-		if (!"GET".equalsIgnoreCase(initialLine.method) && !"HEAD".equalsIgnoreCase(initialLine.method) ){
-			return true;
+		// not GET or HEAD request
+		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method) ){
+			this.code = CODE.BADREQ;
+			return;
 		}
-		//TODO
-		return false;
+		// security check
+		// shutdown url
+		if ("/shutdown".equalsIgnoreCase(this.reqUrl)){
+			this.code = CODE.SHUTDOWN;
+		}
+		// control url
+		if ("/control".equalsIgnoreCase(this.reqUrl)){
+			this.code = CODE.CONTROL;
+		}
 	}
 	
-	class RequestLine{
-		
-		String method;
-		String url;
-		String protocol;
-		String oriStr;
-		boolean valid;
-		
-		public RequestLine(String line){
-			
-			oriStr = line;
-			valid = true;
-			if (line == null) valid = false;
-			else {
-				String[] tmp = line.split(" ");
-				if (tmp.length != 3){
-					valid = false;
-				}else{
-					method = tmp[0];
-					url = tmp[1];
-					protocol = tmp[2];
-				}
+	private void parseInitialLine(String line){	
+		if (line == null) this.code = CODE.BADREQ;
+		else {
+			String[] tmp = line.split(" ");
+			if (tmp.length != 3){
+				this.code = CODE.BADREQ;
+			}else{
+				method = tmp[0];
+				reqUrl = tmp[1];
+				protocol = tmp[2];
 			}
-			
 		}
-	
 	}
 	
 }
