@@ -57,7 +57,6 @@ public class WorkerThread extends Thread{
 	
 	private void handleRequest(Socket socket) throws IOException{
 		
-		String content = "";
 		HTTPRequestParser requestParser = new HTTPRequestParser();	
 		requestParser.parseHttpRequest(task);
 		this.reqUrl = requestParser.getUrl();
@@ -87,13 +86,15 @@ public class WorkerThread extends Thread{
 		String protocol = requestParser.getProtocol();
 		sb.append(protocol);
 		sb.append(" ");
-		switch (code){
+		switch (code) {
 		case BADREQ:{
 			sb.append("400 "); sb.append(" Bad request method!");
 			return sb.toString();
 		}	
 		case BADDIR:
-			sb.append("404 "); sb.append(" Bad request directory!");
+			sb.append("403 "); sb.append(" Bad request directory!");
+			sb.append("\r\n");
+			sb.append("<h1>Bad request directory!</h1>");
 			return "";
 		case SHUTDOWN:{
 			sb.append("200 "); sb.append(" Server successfully shutdown!\n");
@@ -109,6 +110,15 @@ public class WorkerThread extends Thread{
 			sb.append(genHTMLPage(getControlPage()));
 			return sb.toString();	
 		}
+		case NORMAL:{
+			sb.append("200 "); sb.append(" Normal request");
+			sb.append(System.getProperty("line.separator"));
+			sb.append("\r\n");
+			sb.append("<h1>Not implemented yet</h1>");
+			return sb.toString();	
+		}
+		case LISTDIR:
+			
 		default:
 			sb.append("200 "); sb.append(" Not implemented yet!");
 			return sb.toString();

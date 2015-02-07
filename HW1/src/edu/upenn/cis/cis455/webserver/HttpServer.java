@@ -18,8 +18,8 @@ import org.apache.log4j.Logger;
 class HttpServer {
 	
 	public static HttpServer httpServer; 
-	private int portNumber;
-	private String rootDir;
+	public static int portNumber;
+	public static String rootDir;
 	private final int blockingQueueSize = 2000;
 	private RequestReceiver requestReceiver;
 	private WorkerThreadPool workerThreadPool;	
