@@ -73,7 +73,6 @@ public class HTTPRequestParser {
 			this.code = CODE.BADDIR;
 			return;
 		}
-		System.out.println("url: " + reqUrl);
 		// shutdown url
 		if ("/shutdown".equalsIgnoreCase(this.reqUrl)){
 			this.code = CODE.SHUTDOWN;

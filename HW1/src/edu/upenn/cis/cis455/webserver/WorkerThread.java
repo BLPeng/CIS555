@@ -94,9 +94,10 @@ public class WorkerThread extends Thread{
 		}	
 		case BADDIR:{
 			sb.append("403 "); sb.append(" Bad request directory!");
+			sb.append(System.getProperty("line.separator"));
 			sb.append("\r\n");
 			sb.append("<h1>Bad request directory!</h1>");
-			return "";
+			return sb.toString();
 		}
 		case SHUTDOWN:{
 			sb.append("200 "); sb.append(" Server successfully shutdown!\n");
@@ -120,9 +121,13 @@ public class WorkerThread extends Thread{
 			return sb.toString();	
 		}
 		case LISTDIR:{
+			sb.append("200 "); sb.append(" List files");
+			sb.append(System.getProperty("line.separator"));
+			sb.append("\r\n");
 			File folder = new File(reqUrl);
 			String[] files = folder.list();
-			return genFileListPage(files);
+			sb.append(genHTMLPage(genFileListPage(files)));
+			return sb.toString();
 		}
 		default:
 			sb.append("200 "); sb.append(" Not implemented yet!");
@@ -166,7 +171,7 @@ public class WorkerThread extends Thread{
 		sb.append(System.getProperty("line.separator"));
 		sb.append("<th>FileName    </th>");
 		sb.append(System.getProperty("line.separator"));
-		sb.append("<th> URL    </th>");
+		sb.append("<th>URL    </th>");
 		sb.append(System.getProperty("line.separator"));
 		sb.append("</tr>");
 		sb.append(System.getProperty("line.separator"));
