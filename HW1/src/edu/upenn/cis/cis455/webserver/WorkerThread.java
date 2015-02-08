@@ -37,21 +37,33 @@ public class WorkerThread extends Thread{
 		while (run){
 			try {
 				task = requestQueue.get();
-				if (task.isConnected()){
+				if (task.isConnected()){	
+					task.setSoTimeout(5000);
 					handleRequest(task);
-/*					BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
-					String initLine = in.readLine();			
+/*					System.out.println("dasf");
+					task.setSoTimeout(500);
+					BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
+					String initLine = in.readLine();
+					System.out.println("sdf");
 					PrintWriter out = new PrintWriter(task.getOutputStream(), true);
-					out.println("HTTP/1.0 200 OK");*/
-				}	
-				task.close();
-				this.reqUrl = "None";
-				task = null;
+					out.println("HTTP/1.0 200 OK");		*/		
+				}		
+				this.reqUrl = "None";	
 			} catch (InterruptedException e) {
 				logger.error("Thread stopped");
 			} catch (IOException e) {
-				logger.error("Can not fetch/parse task");
-			} 
+	//			logger.error("Can not fetch/parse task");
+
+			} finally {
+				try {
+					//why chrome send two requests with second one empty???????????
+					if (task != null)
+						task.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
 		}	
 	}
 	
@@ -76,6 +88,7 @@ public class WorkerThread extends Thread{
 		try {
 			out = new PrintWriter(socket.getOutputStream(), true);
 			out.println(res);
+	//		logger.info("Send to client");
 		} catch (IOException e) {
 			logger.error("Could not write to client");
 		}		
@@ -88,11 +101,18 @@ public class WorkerThread extends Thread{
 		sb.append(protocol);
 		sb.append(" ");
 		switch (code) {
-		case BADREQ:{
-			sb.append("400 "); sb.append(" Bad request method!");
+		case BADREQ: {
+			sb.append("400 "); sb.append("Bad request method!");
 			return sb.toString();
 		}	
-		case BADDIR:{
+		case NOFOUND: {
+			sb.append("404 "); sb.append("Resource no found!");
+			sb.append(System.getProperty("line.separator"));
+			sb.append("\r\n");
+			sb.append("<h1>Resource no found!</h1>");
+			return sb.toString();
+		}
+		case BADDIR: {
 			sb.append("403 "); sb.append(" Bad request directory!");
 			sb.append(System.getProperty("line.separator"));
 			sb.append("\r\n");
@@ -124,7 +144,7 @@ public class WorkerThread extends Thread{
 			sb.append("200 "); sb.append(" List files");
 			sb.append(System.getProperty("line.separator"));
 			sb.append("\r\n");
-			File folder = new File(reqUrl);
+			File folder = new File(HttpServer.rootDir + reqUrl);
 			String[] files = folder.list();
 			sb.append(genHTMLPage(genFileListPage(files)));
 			return sb.toString();

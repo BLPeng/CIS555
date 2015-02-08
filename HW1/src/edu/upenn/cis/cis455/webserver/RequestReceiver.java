@@ -32,7 +32,7 @@ public class RequestReceiver extends Thread{
 	}
 	
 	public RequestReceiver(int port, String dir, MyBlockingQueue<Socket> taskQueue) throws IOException{
-		
+		super("Deamon thread");
 		portNumber = port;
 		rootDir = new String(dir);
 		this.taskQueue = taskQueue;

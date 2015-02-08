@@ -29,7 +29,7 @@ public class HTTPRequestParser {
 	}
 	
 	public HTTPRequestParser() {
-		code = CODE.NORMAL;
+		code = CODE.BADREQ;
 		headers = new ArrayList<String>();
 	}
 	
@@ -44,9 +44,10 @@ public class HTTPRequestParser {
 	
 	public void parseHttpRequest(Socket socket) throws IOException{
 		
-		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));		
 		//parse the initial line
 		String line = in.readLine();
+		System.out.println(line);
 		parseInitialLine(line);
 		//get the headers
 		while ((line = in.readLine()) != null) {
@@ -68,6 +69,7 @@ public class HTTPRequestParser {
 			return;
 		}
 		this.reqUrl = parseURL(this.reqUrl);
+//		System.out.println(reqUrl);
 		// security check
 		if (reqUrl == null){
 			this.code = CODE.BADDIR;
@@ -83,10 +85,11 @@ public class HTTPRequestParser {
 			this.code = CODE.CONTROL;
 			return;
 		}
-		reqUrl = HttpServer.rootDir + reqUrl;
-		File file = new File(reqUrl);
+		String tmp = HttpServer.rootDir + reqUrl;
+///		System.out.println(tmp);
+		File file = new File(tmp);
 		if (!file.exists()) {
-			this.code = CODE.BADDIR;
+			this.code = CODE.NOFOUND;
 			return;
 		}
 		if (file.isDirectory()) {
