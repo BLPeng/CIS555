@@ -47,10 +47,10 @@ public class WorkerThread extends Thread{
 			try {
 				task = requestQueue.get();
 				if (!task.isClosed()){	
-					task.setSoTimeout(10000);
+					task.setSoTimeout(5000);
 					handleRequest(task);
 /*					System.out.println("dasf");
-					task.setSoTimeout(500);
+					task.setSoTimeout(5000);
 					BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
 					String initLine = in.readLine();
 					System.out.println("sdf");
@@ -332,6 +332,7 @@ public class WorkerThread extends Thread{
 	public String getProcUrl() {
 		return this.reqUrl;
 	}
+	
 	
 	public void terminate() {
 		logger.info("Thread " + this.label + " terminated.");

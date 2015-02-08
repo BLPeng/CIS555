@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -147,7 +148,7 @@ public class HTTPRequestParser {
 		return newDir;
 	}
 	
-	private void parseInitialLine(String line){	
+	private void parseInitialLine(String line) throws UnsupportedEncodingException{	
 		if (line == null){	
 			this.code = CODE.BADREQ;
 			return;
@@ -157,7 +158,7 @@ public class HTTPRequestParser {
 			this.code = CODE.BADREQ;
 		}else{
 			method = tmp[0];
-			reqUrl = tmp[1];
+			reqUrl = java.net.URLDecoder.decode(tmp[1], "UTF-8");
 			protocol = tmp[2];
 		}
 	}
