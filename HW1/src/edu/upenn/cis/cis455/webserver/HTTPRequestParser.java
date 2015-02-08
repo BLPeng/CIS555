@@ -46,8 +46,9 @@ public class HTTPRequestParser {
 		
 		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));		
 		//parse the initial line
+		
 		String line = in.readLine();
-		System.out.println(line);
+//		System.out.println(line);
 		parseInitialLine(line);
 		//get the headers
 		while ((line = in.readLine()) != null) {
@@ -65,7 +66,7 @@ public class HTTPRequestParser {
 		
 		// not GET or HEAD request
 		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method) ){
-			this.code = CODE.BADREQ;
+			this.code = CODE.NORMAL;
 			return;
 		}
 		this.reqUrl = parseURL(this.reqUrl);
@@ -147,16 +148,17 @@ public class HTTPRequestParser {
 	}
 	
 	private void parseInitialLine(String line){	
-		if (line == null) this.code = CODE.BADDIR;
-		else {
-			String[] tmp = line.split(" ");
-			if (tmp.length != 3){
-				this.code = CODE.BADREQ;
-			}else{
-				method = tmp[0];
-				reqUrl = tmp[1];
-				protocol = tmp[2];
-			}
+		if (line == null){	
+			this.code = CODE.BADREQ;
+			return;
+		}
+		String[] tmp = line.split(" ");
+		if (tmp.length != 3){
+			this.code = CODE.BADREQ;
+		}else{
+			method = tmp[0];
+			reqUrl = tmp[1];
+			protocol = tmp[2];
 		}
 	}
 	

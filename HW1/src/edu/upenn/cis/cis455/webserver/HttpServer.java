@@ -11,6 +11,7 @@ package edu.upenn.cis.cis455.webserver;
  */
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
@@ -20,6 +21,7 @@ class HttpServer {
 	public static HttpServer httpServer; 
 	public static int portNumber;
 	public static String rootDir;
+	public static HashMap<String, String> fileTypes;
 	private final int blockingQueueSize = 2000;
 	private RequestReceiver requestReceiver;
 	private WorkerThreadPool workerThreadPool;	
@@ -36,6 +38,12 @@ class HttpServer {
 		blockingQueue = new MyBlockingQueue<Socket>(blockingQueueSize);
 		requestReceiver = new RequestReceiver(portNumber, rootDir, blockingQueue);
 		workerThreadPool = new WorkerThreadPool(blockingQueue);
+		fileTypes = new HashMap<String, String>();
+		fileTypes.put(".jpg", "image/jpeg");
+		fileTypes.put(".txt", "text/plain");
+		fileTypes.put(".html", "text/html");
+		fileTypes.put(".png", "image/png");
+		fileTypes.put(".gif", "image/gif");
 	}
 	
     public static void main(String args[])
