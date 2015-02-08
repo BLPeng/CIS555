@@ -1,6 +1,7 @@
 package edu.upenn.cis.cis455.webserver;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -66,21 +67,38 @@ public class HTTPRequestParser {
 			this.code = CODE.BADREQ;
 			return;
 		}
+		this.reqUrl = parseURL(this.reqUrl);
 		// security check
-		if (parseURL(this.reqUrl) == null){
+		if (reqUrl == null){
 			this.code = CODE.BADDIR;
 			return;
 		}
+		System.out.println("url: " + reqUrl);
 		// shutdown url
 		if ("/shutdown".equalsIgnoreCase(this.reqUrl)){
 			this.code = CODE.SHUTDOWN;
+			return;
 		}
 		// control url
 		if ("/control".equalsIgnoreCase(this.reqUrl)){
 			this.code = CODE.CONTROL;
+			return;
+		}
+		reqUrl = HttpServer.rootDir + reqUrl;
+		File file = new File(reqUrl);
+		if (!file.exists()) {
+			this.code = CODE.BADDIR;
+			return;
+		}
+		if (file.isDirectory()) {
+			this.code = CODE.LISTDIR;
+		}
+		if (file.isFile()) {
+			this.code = CODE.FILE;
 		}
 	}
 	
+	//parse the request url
 	private String simplifyPath(String path) {
         if (path == null)   return null;
         int level = 0;
@@ -97,6 +115,7 @@ public class HTTPRequestParser {
                  level++;
              }    
         }
+        if (level < 0)	return null;
         StringBuilder sb = new StringBuilder();
         sb.append("/");
         while (st.size() > 0){
@@ -107,23 +126,26 @@ public class HTTPRequestParser {
         return sb.toString();
     }
 	
+	// parse the request url
 	private String parseURL(String dir) {
 		if (dir == null)	return null;
 		String prefix = HttpServer.rootDir;
 		dir = prefix + dir;
 		String newDir = simplifyPath(dir);
-		if (newDir.length() < prefix.length())	//should at least equals to prefix
+//		System.out.println(newDir);
+		if (newDir == null || newDir.length() < prefix.length())	//should at least equals to prefix
 			return null;
 		String newPrefix = newDir.substring(0, prefix.length());
 		if (!newPrefix.equals(prefix)) {
 			return null;
 		}
-		System.out.println(newDir.substring(prefix.length()));
-		return newDir.substring(prefix.length());
+		newDir = newDir.substring(prefix.length());
+//		System.out.println(newDir);
+		return newDir;
 	}
 	
 	private void parseInitialLine(String line){	
-		if (line == null) this.code = CODE.BADREQ;
+		if (line == null) this.code = CODE.BADDIR;
 		else {
 			String[] tmp = line.split(" ");
 			if (tmp.length != 3){

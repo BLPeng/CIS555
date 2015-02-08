@@ -1,6 +1,7 @@
 package edu.upenn.cis.cis455.webserver;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -91,11 +92,12 @@ public class WorkerThread extends Thread{
 			sb.append("400 "); sb.append(" Bad request method!");
 			return sb.toString();
 		}	
-		case BADDIR:
+		case BADDIR:{
 			sb.append("403 "); sb.append(" Bad request directory!");
 			sb.append("\r\n");
 			sb.append("<h1>Bad request directory!</h1>");
 			return "";
+		}
 		case SHUTDOWN:{
 			sb.append("200 "); sb.append(" Server successfully shutdown!\n");
 			sb.append("\r\n");
@@ -117,13 +119,20 @@ public class WorkerThread extends Thread{
 			sb.append("<h1>Not implemented yet</h1>");
 			return sb.toString();	
 		}
-		case LISTDIR:
-			
+		case LISTDIR:{
+			File folder = new File(reqUrl);
+			String[] files = folder.list();
+			return genFileListPage(files);
+		}
 		default:
 			sb.append("200 "); sb.append(" Not implemented yet!");
 			return sb.toString();
 		}
 	}
+	
+	
+	
+
 	
 	private void shutdownServer() {	
 		if (HttpServer.httpServer != null){
@@ -145,14 +154,45 @@ public class WorkerThread extends Thread{
 		return sb.toString();
 	}
 	
+	private String genFileListPage(String[] files) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<h1>List files</h1>");
+		sb.append(System.getProperty("line.separator"));
+		sb.append("<h2>Xiaobin Chen, Seas: xiaobinc</h2>");
+		sb.append(System.getProperty("line.separator"));
+		sb.append("<table>");
+		sb.append(System.getProperty("line.separator"));
+		sb.append("<tr>");
+		sb.append(System.getProperty("line.separator"));
+		sb.append("<th>FileName    </th>");
+		sb.append(System.getProperty("line.separator"));
+		sb.append("<th> URL    </th>");
+		sb.append(System.getProperty("line.separator"));
+		sb.append("</tr>");
+		sb.append(System.getProperty("line.separator"));
+		
+		for (String file : files){
+			sb.append("<tr>");
+			sb.append(System.getProperty("line.separator"));
+			sb.append("<td>" + file + "</td>");
+			sb.append(System.getProperty("line.separator"));
+			sb.append("<td>" +  "<a href=\"" + file + "\"> " + file  + "</a> </td>");
+			sb.append(System.getProperty("line.separator"));
+			sb.append("</tr>");
+			sb.append(System.getProperty("line.separator"));
+		}	
+		sb.append("</table>");
+		return sb.toString();
+	}
+	
 	private String getControlPage() {
 		StringBuilder sb = new StringBuilder();
 		List<ThreadStats> status = threadPool.getThreadStatus();
 		if (threadPool == null)	return "";
 		sb.append("<h1>Server status</h1>");
 		sb.append(System.getProperty("line.separator"));
-		sb.append("<h2>Xiaobin Chen, Seas: xiaobinc</h1>");
-		sb.append("<h3>Thread pool size: " + status.size() + "</h1>");
+		sb.append("<h2>Xiaobin Chen, Seas: xiaobinc</h2>");
+		sb.append("<h3>Thread pool size: " + status.size() + "</h3>");
 		sb.append(System.getProperty("line.separator"));
 		sb.append("<table>");
 		sb.append(System.getProperty("line.separator"));
