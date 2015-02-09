@@ -33,7 +33,7 @@ public class HTTPRequestParser {
 	}
 	
 	public HTTPRequestParser() {
-		code = CODE.BADREQ;
+		code = CODE.NORMAL;
 		headers = new ArrayList<String>();
 	}
 	
@@ -67,7 +67,9 @@ public class HTTPRequestParser {
 
 	// filter out invalid request
 	private void filterRequest(){
-		
+		if (this.code == CODE.BADREQ){
+			return;
+		}
 		// not GET or HEAD request
 		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method) ){
 			this.code = CODE.NOALLOW;
@@ -155,9 +157,10 @@ public class HTTPRequestParser {
 			this.code = CODE.BADREQ;
 			return;
 		}
-		String[] tmp = line.split(" ");
+		String[] tmp = line.trim().replaceAll(" +", " ").split(" ");			//be tolerant to input
 		if (tmp.length != 3){
 			this.code = CODE.BADREQ;
+			return;
 		}else{
 			method = tmp[0];
 			reqUrl = java.net.URLDecoder.decode(tmp[1], "UTF-8");

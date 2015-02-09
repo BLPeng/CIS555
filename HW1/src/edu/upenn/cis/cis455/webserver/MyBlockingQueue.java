@@ -22,7 +22,7 @@ public class MyBlockingQueue<T> {
 		while (isFull()){		//queue is full
 			wait();
 		}
-//		logger.info("task added to blockingQueue");
+		logger.info("task added to blockingQueue");
 		//why not notifyAll() ?
 		if (isEmpty())
 			notifyAll();

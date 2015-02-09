@@ -44,7 +44,7 @@ public class WorkerThread extends Thread{
 			try {
 				task = requestQueue.get();
 				if (!task.isClosed()){	
-					task.setSoTimeout(10000);
+					task.setSoTimeout(100000);
 					handleRequest(task);
 /*					System.out.println("dasf");
 					task.setSoTimeout(5000);
@@ -114,37 +114,37 @@ public class WorkerThread extends Thread{
 		String content = null;
 		switch (code) {
 		case NOALLOW: {
-			if (!"HEAD".equals(method))	content = "<h1>Request method not allowed!</h1>";
+			if (!"HEAD".equalsIgnoreCase(method))	content = "<h1>Request method not allowed!</h1>";
 			return genResponse(protocol, "405", "Request method not allowed!", content);
 		}	
 		case NOFOUND: {
-			if (!"HEAD".equals(method))	content = "<h1>Resource no found!</h1>";
+			if (!"HEAD".equalsIgnoreCase(method))	content = "<h1>Resource no found!</h1>";
 			return genResponse(protocol, "404", "Resource no found!", content); 
 		}
 		case BADDIR: {
-			if (!"HEAD".equals(method))	content = "<h1>Bad request directory!</h1>";
+			if (!"HEAD".equalsIgnoreCase(method))	content = "<h1>Bad request directory!</h1>";
 			return genResponse(protocol, "403", "Bad request directory!", content); 
 		}
 		case SHUTDOWN:{
-			if (!"HEAD".equals(method))	content = "<h1>Server successfully shutdown!</h1>";
+			if (!"HEAD".equalsIgnoreCase(method))	content = "<h1>Server successfully shutdown!</h1>";
 			return genResponse(protocol, "200", "Server successfully shutdown!", content); 
 		}
 		case CONTROL:{
-			if (!"HEAD".equals(method))	content = genHTTPContent(getControlPage());
+			if (!"HEAD".equalsIgnoreCase(method))	content = genHTTPContent(getControlPage());
 			return genResponse(protocol, "200", "Server status", content); 
 		}
 		case NORMAL:{
-			if (!"HEAD".equals(method))	content = "<h1>Feature not implemented yet</h1>";
+			if (!"HEAD".equalsIgnoreCase(method))	content = "<h1>Feature not implemented yet</h1>";
 			return genResponse(protocol, "200", "Normal request", content); 
 		}
 		case LISTDIR:{
 			File folder = new File(reqUrl);
 			String[] files = folder.list();
-			if (!"HEAD".equals(method))	content = genHTTPContent(genFileListPage(files));
+			if (!"HEAD".equalsIgnoreCase(method))	content = genHTTPContent(genFileListPage(files));
 			return genResponse(protocol, "200", "List files", content); 
 		}
 		default:{
-			if (!"HEAD".equals(method))	content = "<h1>Unknown request</h1>";
+			if (!"HEAD".equalsIgnoreCase(method))	content = "<h1>Unknown request</h1>";
 			return genResponse(protocol, "400", "Bad Request", content); 
 		}
 		}
