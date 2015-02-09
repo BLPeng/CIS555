@@ -40,7 +40,7 @@ public class HTTPRequestParser {
 
 	public enum CODE {
 		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, 
-		LISTDIR, FILE, NORMAL
+		LISTDIR, FILE, NORMAL, NOALLOW
 	}
 	
 	public void parseHttpRequest(Socket socket) throws IOException{
@@ -67,7 +67,7 @@ public class HTTPRequestParser {
 		
 		// not GET or HEAD request
 		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method) ){
-			this.code = CODE.NORMAL;
+			this.code = CODE.NOALLOW;
 			return;
 		}
 		this.reqUrl = parseURL(this.reqUrl);
@@ -139,7 +139,7 @@ public class HTTPRequestParser {
 //		System.out.println(newDir);
 		if (newDir == null || newDir.length() < prefix.length())	//should at least equals to prefix
 			return null;
-		String newPrefix = newDir.substring(0, prefix.length());
+		String newPrefix = newDir.substring(0, prefix.length());	//should have the same root directory
 		if (!newPrefix.equals(prefix)) {
 			return null;
 		}

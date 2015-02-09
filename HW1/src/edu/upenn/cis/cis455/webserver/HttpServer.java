@@ -11,7 +11,11 @@ package edu.upenn.cis.cis455.webserver;
  */
 import java.io.IOException;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
 
@@ -21,6 +25,7 @@ class HttpServer {
 	public static HttpServer httpServer; 
 	public static int portNumber;
 	public static String rootDir;
+	public static String lastModified;
 	public static HashMap<String, String> fileTypes;
 	private final int blockingQueueSize = 2000;
 	private RequestReceiver requestReceiver;
@@ -44,6 +49,11 @@ class HttpServer {
 		fileTypes.put(".html", "text/html");
 		fileTypes.put(".png", "image/png");
 		fileTypes.put(".gif", "image/gif");
+		Calendar calendar = Calendar.getInstance();		//server start time
+		SimpleDateFormat dateFormat = 
+				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+		lastModified = dateFormat.format(calendar.getTime());
 	}
 	
     public static void main(String args[])
@@ -68,7 +78,12 @@ class HttpServer {
     private static boolean validateInput(String[] args){
 		
 		//validate inputs
-		if (args == null || args.length != 2){	
+    	if (args != null && args.length == 0) {
+    		System.out.println("Server Name: Xiaobin Chen. PennKey: xiaobinc");
+    		return false;
+    	}
+    	
+		if (args == null || args.length != 2) {	
 			logger.error("Number of arguments is wrong!");
 			return false;
 		}

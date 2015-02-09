@@ -62,7 +62,7 @@ public class WorkerThread extends Thread{
 				logger.error("Thread stopped");
 			} catch (IOException e) {
 		//		e.printStackTrace();
-				logger.error("Can not fetch/parse task");
+		//		logger.error("Can not fetch/parse task");
 
 			} finally {
 				try {
@@ -83,14 +83,17 @@ public class WorkerThread extends Thread{
 		
 		HTTPRequestParser requestParser = new HTTPRequestParser();	
 		requestParser.parseHttpRequest(task);
-		this.reqUrl = HttpServer.rootDir + requestParser.getUrl();
-		
+		if (requestParser.getUrl() == null){	//set request url for later use
+			this.reqUrl = "None";
+		}else{
+			this.reqUrl = HttpServer.rootDir + requestParser.getUrl();
+		}
 		CODE code = requestParser.getCode();
 		if (code == CODE.SHUTDOWN) {		//special url
 			shutdownServer();	
 		} 
 		if (code == CODE.FILE) {
-			resFileContent(requestParser.getProtocol(), reqUrl, socket);
+			resFileContent(requestParser.getProtocol(), socket);
 		} else {
 			String res  = genResMessage(requestParser.getProtocol(), code);
 			responseToClient(res, socket);			
@@ -110,70 +113,58 @@ public class WorkerThread extends Thread{
 		}		
 	}
 	
-	private String genResMessage(String protocol, CODE code){
-	
-		StringBuilder sb = new StringBuilder();
-		sb.append(protocol);
-		sb.append(" ");
+	private String genResMessage(String protocol, CODE code){	
 		switch (code) {
-		case BADREQ: {
-			sb.append("400 "); sb.append("Bad request method!");
-			return sb.toString();
+		case NOALLOW: {
+			return getSimpleHTMLPage(protocol, "405", "Request method not allowed!", "<h1>Request method not allowed!</h1>");
 		}	
 		case NOFOUND: {
-			sb.append("404 "); sb.append("Resource no found!");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("\r\n");
-			sb.append("<h1>Resource no found!</h1>");
-			return sb.toString();
+			return getSimpleHTMLPage(protocol, "404", "Resource no found!", "<h1>Resource no found!</h1>"); 
 		}
 		case BADDIR: {
-			sb.append("403 "); sb.append(" Bad request directory!");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("\r\n");
-			sb.append("<h1>Bad request directory!</h1>");
-			return sb.toString();
+			return getSimpleHTMLPage(protocol, "403", "Bad request directory!", "<h1>Bad request directory!</h1>"); 
 		}
 		case SHUTDOWN:{
-			sb.append("200 "); sb.append(" Server successfully shutdown!\n");
-			sb.append("\r\n");
-			sb.append("<h1>Server successfully shutdown</h1>");
-			sb.append(System.getProperty("line.separator"));
-			return sb.toString();
+			return getSimpleHTMLPage(protocol, "200", "Server successfully shutdown!", "<h1>Server successfully shutdown!</h1>"); 
 		}
 		case CONTROL:{
-			sb.append("200 "); sb.append(" Server status");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("\r\n");
-			sb.append(genHTMLPage(getControlPage()));
-			return sb.toString();	
+			return getSimpleHTMLPage(protocol, "200", "Server status", genHTTPContent(getControlPage())); 
 		}
 		case NORMAL:{
-			sb.append("200 "); sb.append(" Normal request");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("\r\n");
-			sb.append("<h1>Feature not implemented yet</h1>");
-			return sb.toString();	
+			return getSimpleHTMLPage(protocol, "200", "Normal request", "<h1>Feature not implemented yet</h1>"); 
 		}
 		case LISTDIR:{
-			sb.append("200 "); sb.append(" List files");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("Date : "); sb.append(getServerDate());
-			sb.append(System.getProperty("line.separator"));
-			sb.append("\r\n");
 			File folder = new File(reqUrl);
 			String[] files = folder.list();
-			sb.append(genHTMLPage(genFileListPage(files)));
-			return sb.toString();
+			return getSimpleHTMLPage(protocol, "200", "List files", genHTTPContent(genFileListPage(files))); 
 		}
-		default:
-			sb.append("200 "); sb.append(" Not implemented yet!");
-			return sb.toString();
+		default:{
+			return getSimpleHTMLPage(protocol, "400", "Bad Request", "<h1>Unknown request</h1>"); 
+		}
 		}
 	}
 	
-	private void resFileContent(String protocol, String url, Socket socket) throws IOException {
-		String file = HttpServer.rootDir + url;
+	
+	private String getSimpleHTMLPage(String protocol, String code, String reasonPhrase, String body) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(protocol + " ");
+		sb.append(code + " "); sb.append(reasonPhrase);
+		sb.append(System.getProperty("line.separator"));
+		sb.append("Server : Java/CIS455-v1.0");
+		sb.append(System.getProperty("line.separator"));
+		sb.append("Date : "); sb.append(getServerDate());
+		sb.append(System.getProperty("line.separator"));		//not support yet
+		sb.append("Connection: close"); 
+		sb.append(System.getProperty("line.separator"));
+		sb.append("Last-Modified: " + getLastModifiedTime());		//last-modified
+		sb.append(System.getProperty("line.separator"));
+		sb.append("\r\n");
+		sb.append(body);
+		return sb.toString();
+	}
+	
+	private void resFileContent(String protocol, Socket socket) throws IOException {
+		String file = this.reqUrl;
 		String ext = getFileExt(file);
 		PrintStream pstream = new PrintStream(socket.getOutputStream(), true);
 		if (ext == null) {	// not a file
@@ -182,7 +173,12 @@ public class WorkerThread extends Thread{
 		}
 		String fileType = HttpServer.fileTypes.get(ext);
 		pstream.println(protocol + " 200 File request");
+		// headers 
+		pstream.println("Server : Java/CIS455-v1.0");
 		pstream.println("Date : " + getServerDate());
+		pstream.println("Connection: close"); 
+		pstream.println("Last-Modified: " + getLastModifiedTime());		//last-modified
+		
 		if (fileType == null) {
 			// Unknown file type MIME?, return binary data
 			pstream.println("Content-Type : application/octet-stream");
@@ -191,9 +187,9 @@ public class WorkerThread extends Thread{
 		}
 		pstream.print("\r\n");
 		if (fileType == null || ".gif".equals(ext) || ".png".equals(ext) || ".jpg".equals(ext)) {
-			readBinaryContent(pstream, url);
+			readBinaryContent(pstream, this.reqUrl);
 		} else {
-			readFileContent(pstream, url);
+			readFileContent(pstream, this.reqUrl);
 		}
 	}
 	
@@ -237,7 +233,7 @@ public class WorkerThread extends Thread{
 	}
 	
 	// generate HTML page
-	private String genHTMLPage(String body){
+	private String genHTTPContent(String body){
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html>");	sb.append(System.getProperty("line.separator"));
 		sb.append("<head>");	sb.append(System.getProperty("line.separator"));
@@ -255,6 +251,20 @@ public class WorkerThread extends Thread{
 		int idx = reqUrl.lastIndexOf(".");
 		if (idx == -1 || idx == 0)	return null;
 		else return reqUrl.substring(idx);
+	}
+	
+	private String getLastModifiedTime() {
+		SimpleDateFormat dateFormat = 
+				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+		File file = new File(this.reqUrl);
+		if (file.isDirectory()) {
+			return dateFormat.format(file.lastModified());		//return file last-modified time
+		} else if (file.isFile()) {
+			return dateFormat.format(file.lastModified());		//return file last-modified time
+		} else {
+			return HttpServer.lastModified;			//return server start time
+		}
 	}
 	
 	private String genFileListPage(String[] files) {
