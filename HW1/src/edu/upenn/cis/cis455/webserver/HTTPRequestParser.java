@@ -21,6 +21,9 @@ public class HTTPRequestParser {
 //	private String body;				do not deal with body
 	private CODE code;			
 		
+	public String getMethod() {
+		return this.method;
+	}
 	public String getProtocol() {
 		return this.protocol;
 	}
@@ -71,7 +74,6 @@ public class HTTPRequestParser {
 			return;
 		}
 		this.reqUrl = parseURL(this.reqUrl);
-//		System.out.println(reqUrl);
 		// security check
 		if (reqUrl == null){
 			this.code = CODE.BADDIR;

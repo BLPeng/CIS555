@@ -2,11 +2,8 @@ package edu.upenn.cis.cis455.webserver;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -47,7 +44,7 @@ public class WorkerThread extends Thread{
 			try {
 				task = requestQueue.get();
 				if (!task.isClosed()){	
-					task.setSoTimeout(5000);
+					task.setSoTimeout(10000);
 					handleRequest(task);
 /*					System.out.println("dasf");
 					task.setSoTimeout(5000);
@@ -93,9 +90,9 @@ public class WorkerThread extends Thread{
 			shutdownServer();	
 		} 
 		if (code == CODE.FILE) {
-			resFileContent(requestParser.getProtocol(), socket);
+			resFileContent(requestParser.getMethod(), requestParser.getProtocol(), socket);
 		} else {
-			String res  = genResMessage(requestParser.getProtocol(), code);
+			String res  = genResMessage(requestParser.getMethod(), requestParser.getProtocol(), code);
 			responseToClient(res, socket);			
 		}
 
@@ -113,39 +110,48 @@ public class WorkerThread extends Thread{
 		}		
 	}
 	
-	private String genResMessage(String protocol, CODE code){	
+	private String genResMessage(String method, String protocol, CODE code){	
+		String content = null;
 		switch (code) {
 		case NOALLOW: {
-			return getSimpleHTMLPage(protocol, "405", "Request method not allowed!", "<h1>Request method not allowed!</h1>");
+			if (!"HEAD".equals(method))	content = "<h1>Request method not allowed!</h1>";
+			return genResponse(protocol, "405", "Request method not allowed!", content);
 		}	
 		case NOFOUND: {
-			return getSimpleHTMLPage(protocol, "404", "Resource no found!", "<h1>Resource no found!</h1>"); 
+			if (!"HEAD".equals(method))	content = "<h1>Resource no found!</h1>";
+			return genResponse(protocol, "404", "Resource no found!", content); 
 		}
 		case BADDIR: {
-			return getSimpleHTMLPage(protocol, "403", "Bad request directory!", "<h1>Bad request directory!</h1>"); 
+			if (!"HEAD".equals(method))	content = "<h1>Bad request directory!</h1>";
+			return genResponse(protocol, "403", "Bad request directory!", content); 
 		}
 		case SHUTDOWN:{
-			return getSimpleHTMLPage(protocol, "200", "Server successfully shutdown!", "<h1>Server successfully shutdown!</h1>"); 
+			if (!"HEAD".equals(method))	content = "<h1>Server successfully shutdown!</h1>";
+			return genResponse(protocol, "200", "Server successfully shutdown!", content); 
 		}
 		case CONTROL:{
-			return getSimpleHTMLPage(protocol, "200", "Server status", genHTTPContent(getControlPage())); 
+			if (!"HEAD".equals(method))	content = genHTTPContent(getControlPage());
+			return genResponse(protocol, "200", "Server status", content); 
 		}
 		case NORMAL:{
-			return getSimpleHTMLPage(protocol, "200", "Normal request", "<h1>Feature not implemented yet</h1>"); 
+			if (!"HEAD".equals(method))	content = "<h1>Feature not implemented yet</h1>";
+			return genResponse(protocol, "200", "Normal request", content); 
 		}
 		case LISTDIR:{
 			File folder = new File(reqUrl);
 			String[] files = folder.list();
-			return getSimpleHTMLPage(protocol, "200", "List files", genHTTPContent(genFileListPage(files))); 
+			if (!"HEAD".equals(method))	content = genHTTPContent(genFileListPage(files));
+			return genResponse(protocol, "200", "List files", content); 
 		}
 		default:{
-			return getSimpleHTMLPage(protocol, "400", "Bad Request", "<h1>Unknown request</h1>"); 
+			if (!"HEAD".equals(method))	content = "<h1>Unknown request</h1>";
+			return genResponse(protocol, "400", "Bad Request", content); 
 		}
 		}
 	}
 	
 	
-	private String getSimpleHTMLPage(String protocol, String code, String reasonPhrase, String body) {
+	private String genResponse(String protocol, String code, String reasonPhrase, String body) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(protocol + " ");
 		sb.append(code + " "); sb.append(reasonPhrase);
@@ -159,11 +165,12 @@ public class WorkerThread extends Thread{
 		sb.append("Last-Modified: " + getLastModifiedTime());		//last-modified
 		sb.append(System.getProperty("line.separator"));
 		sb.append("\r\n");
-		sb.append(body);
+		if (body != null)
+			sb.append(body);
 		return sb.toString();
 	}
 	
-	private void resFileContent(String protocol, Socket socket) throws IOException {
+	private void resFileContent(String method, String protocol, Socket socket) throws IOException {
 		String file = this.reqUrl;
 		String ext = getFileExt(file);
 		PrintStream pstream = new PrintStream(socket.getOutputStream(), true);
