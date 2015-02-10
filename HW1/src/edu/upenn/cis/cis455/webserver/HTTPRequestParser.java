@@ -6,10 +6,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Locale;
 
 
 public class HTTPRequestParser {
@@ -17,7 +18,7 @@ public class HTTPRequestParser {
 	private String protocol;
 	private String reqUrl;
 	private String method;
-	private List<String> headers;
+	private HashMap<String, String> headers;
 //	private String body;				do not deal with body
 	private CODE code;			
 		
@@ -34,7 +35,7 @@ public class HTTPRequestParser {
 	
 	public HTTPRequestParser() {
 		code = CODE.NORMAL;
-		headers = new ArrayList<String>();
+		headers = new HashMap<String, String>();
 	}
 	
 	public CODE getCode() {
@@ -55,29 +56,49 @@ public class HTTPRequestParser {
 //		System.out.println(line);
 		parseInitialLine(line);			//need to be extend to handle multi-line headers
 		//get the headers
+		parseHeaders(in);
+		
+		filterRequest();	
+	}
+	
+	
+	
+	
+	private void parseHeaders(BufferedReader in) throws IOException {
+		String line = null;
 		int size = 0;
+		String lastHeader = null;
 		while ((line = in.readLine()) != null) {
 			if (line.length() == 0){
 				break;
 			}
 			line = line.trim();
 			if (line.contains(":")) {				//the header line
-				System.out.println(line);
-				headers.add(line);
+				int idx = line.indexOf(":");
+				String header = line.substring(0, idx + 1);
+				String value = line.substring(idx + 1).trim();
+				headers.put(header.toLowerCase(Locale.ENGLISH), value);
+				lastHeader = header;
 				size++;
 			} else {
 				if (size > 0) {
-					headers.set(size - 1, headers.get(size - 1) + " " + line);
-					System.out.println(headers.get(size - 1));
+					headers.put(lastHeader, headers.get(lastHeader) + " " + line);
+//					System.out.println(headers.get(size - 1));
 				}else {
 					this.code = CODE.BADHEADER1;
 					return;
 				}
 			}
-		}	
-		filterRequest();	
+		}
+		// check http/1.1 host header requirement
+		if ("HTTP/1.1".equalsIgnoreCase(this.protocol)) {
+			//already in lowercase
+			if (!headers.containsKey("host:")){
+				this.code = CODE.BADHEADER2;
+				return;
+			}
+		}
 	}
-	
 
 	// filter out invalid request
 	private void filterRequest(){
