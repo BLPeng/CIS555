@@ -43,7 +43,7 @@ public class HTTPRequestParser {
 
 	public enum CODE {
 		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, 
-		LISTDIR, FILE, NORMAL, NOALLOW
+		LISTDIR, FILE, NORMAL, NOALLOW, BADHEADER1, BADHEADER2		//BADHEADER1 unknown	BADHEADER2 http1.1 not host
 	}
 	
 	public void parseHttpRequest(Socket socket) throws IOException{
@@ -53,13 +53,27 @@ public class HTTPRequestParser {
 		
 		String line = in.readLine();
 //		System.out.println(line);
-		parseInitialLine(line);
+		parseInitialLine(line);			//need to be extend to handle multi-line headers
 		//get the headers
+		int size = 0;
 		while ((line = in.readLine()) != null) {
 			if (line.length() == 0){
 				break;
 			}
-			headers.add(line);
+			line = line.trim();
+			if (line.contains(":")) {				//the header line
+				System.out.println(line);
+				headers.add(line);
+				size++;
+			} else {
+				if (size > 0) {
+					headers.set(size - 1, headers.get(size - 1) + " " + line);
+					System.out.println(headers.get(size - 1));
+				}else {
+					this.code = CODE.BADHEADER1;
+					return;
+				}
+			}
 		}	
 		filterRequest();	
 	}
@@ -67,7 +81,7 @@ public class HTTPRequestParser {
 
 	// filter out invalid request
 	private void filterRequest(){
-		if (this.code == CODE.BADREQ){
+		if (this.code == CODE.BADREQ || this.code == CODE.BADHEADER1 || this.code == CODE.BADHEADER2){
 			return;
 		}
 		// not GET or HEAD request
