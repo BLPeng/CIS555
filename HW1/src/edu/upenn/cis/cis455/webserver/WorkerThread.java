@@ -125,6 +125,10 @@ public class WorkerThread extends Thread{
 			content = "<h1>Request method not allowed!</h1>";
 			return genResponse(method, protocol, "405", "Request method not allowed!", content);
 		}	
+		case NOIMPLEMENT: {
+			content = "<h1>Request method not implemented!</h1>";
+			return genResponse(method, protocol, "501", "Request method not implemented!", content);
+		}	
 		case NOFOUND: {
 			content = "<h1>Resource no found!</h1>";
 			return genResponse(method, protocol, "404", "Resource no found!", content); 

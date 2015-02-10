@@ -14,6 +14,7 @@ import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -27,6 +28,7 @@ class HttpServer {
 	public static String rootDir;
 	public static String lastModified;
 	public static HashMap<String, String> fileTypes;
+	public static HashSet<String> acceptMethods;
 	private final int blockingQueueSize = 2000;
 	private RequestReceiver requestReceiver;
 	private WorkerThreadPool workerThreadPool;	
@@ -49,6 +51,17 @@ class HttpServer {
 		fileTypes.put(".html", "text/html");
 		fileTypes.put(".png", "image/png");
 		fileTypes.put(".gif", "image/gif");
+		
+		acceptMethods = new HashSet<String>();
+		acceptMethods.add("GET");
+		acceptMethods.add("HEAD");
+		acceptMethods.add("POST");
+		acceptMethods.add("PUT");
+		acceptMethods.add("DELETE");
+		acceptMethods.add("CONNECT");
+		acceptMethods.add("OPTIONS");
+		acceptMethods.add("TRACE");
+		
 		Calendar calendar = Calendar.getInstance();		//server start time
 		SimpleDateFormat dateFormat = 
 				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);

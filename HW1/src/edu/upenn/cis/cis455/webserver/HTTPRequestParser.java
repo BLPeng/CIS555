@@ -43,7 +43,7 @@ public class HTTPRequestParser {
 	}
 
 	public enum CODE {
-		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, 
+		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, NOIMPLEMENT,
 		LISTDIR, FILE, NORMAL, NOALLOW, BADHEADER1, BADHEADER2		//BADHEADER1 unknown	BADHEADER2 http1.1 not host
 	}
 	
@@ -105,9 +105,13 @@ public class HTTPRequestParser {
 		if (this.code == CODE.BADREQ || this.code == CODE.BADHEADER1 || this.code == CODE.BADHEADER2){
 			return;
 		}
-		// not GET or HEAD request
-		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method) ){
+		if (!HttpServer.acceptMethods.contains(this.method.toUpperCase(Locale.ENGLISH))) {
 			this.code = CODE.NOALLOW;
+			return;
+		}
+		// not GET or HEAD request
+		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method)) {
+			this.code = CODE.NOIMPLEMENT;
 			return;
 		}
 		this.reqUrl = parseURL(this.reqUrl);
