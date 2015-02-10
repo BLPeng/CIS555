@@ -22,9 +22,14 @@ public class HTTPRequestParser {
 //	private String body;				do not deal with body
 	private CODE code;			
 		
+	public HashMap<String, String> getHeaders() {
+		return this.headers;
+	}
+
 	public String getMethod() {
 		return this.method;
 	}
+	
 	public String getProtocol() {
 		return this.protocol;
 	}

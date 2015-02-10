@@ -9,8 +9,11 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -76,6 +79,62 @@ public class WorkerThread extends Thread{
 		}	
 	}
 	
+	// 200-level-code need this check 
+	private String checkModifyHeader(HTTPRequestParser requestParser) {			
+		HashMap<String, String> headers = requestParser.getHeaders();
+		String url = HttpServer.rootDir + requestParser.getUrl();
+		String ret = "200";
+		if (headers.containsKey("If-Modified-Since:".toLowerCase(Locale.ENGLISH))) {
+			if ("GET".equalsIgnoreCase(requestParser.getMethod())) {
+				Date date = convertDataFormat(headers.get("If-Modified-Since:".toLowerCase(Locale.ENGLISH)));
+				File file = new File(url);
+				if (date != null && file != null && date.getTime() > file.lastModified()) {
+					return "304";
+				}
+			}
+		}else if(headers.containsKey("If-Unmodified-Since:".toLowerCase(Locale.ENGLISH))) {
+			Date date = convertDataFormat(headers.get("If-Unmodified-Since:".toLowerCase(Locale.ENGLISH)));
+			File file = new File(url);
+			if (date != null && file != null && date.getTime() < file.lastModified()) {
+				return "412";
+			}
+		}
+		return ret;
+	}
+	
+	private Date convertDataFormat(String dateStr) {
+		SimpleDateFormat format1 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+		format1.setTimeZone(TimeZone.getTimeZone("GMT"));
+		SimpleDateFormat format2 = new SimpleDateFormat("E, dd-MMM-yy HH:mm:ss z");
+		format2.setTimeZone(TimeZone.getTimeZone("GMT"));
+		SimpleDateFormat format3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
+		format3.setTimeZone(TimeZone.getTimeZone("GMT"));
+		Date date = null;
+		try {
+			date = format1.parse(dateStr);
+		} catch (ParseException e) {
+			date = null;
+		}
+		if (date == null) {
+			try {
+				date = format2.parse(dateStr);
+			} catch (ParseException e) {
+				date = null;
+			}
+		}
+		if (date == null) {
+			try {
+				date = format3.parse(dateStr);
+			} catch (ParseException e) {
+				date = null;
+			}
+		}
+		if (date.getTime() > System.currentTimeMillis()){
+			return null;
+		}
+		return date;
+	}
+	
 	
 	private void handleRequest(Socket socket) throws IOException{
 		
@@ -91,9 +150,9 @@ public class WorkerThread extends Thread{
 			shutdownServer();	
 		} 
 		if (code == CODE.FILE) {
-			resFileContent(requestParser.getMethod(), requestParser.getProtocol(), socket);
+			resFileContent(requestParser, socket);
 		} else {
-			String res  = genResMessage(requestParser.getMethod(), requestParser.getProtocol(), code);
+			String res  = genResMessage(requestParser);
 			responseToClient(res, socket);			
 		}
 
@@ -106,12 +165,15 @@ public class WorkerThread extends Thread{
 			out = new PrintWriter(socket.getOutputStream(), true);
 			out.println(res);
 	//		logger.info("Send to client");
-		} catch (IOException e) {
+		}catch (IOException e) {
 			logger.error("Could not write to client");
 		}		
 	}
 	
-	private String genResMessage(String method, String protocol, CODE code){	
+	private String genResMessage(HTTPRequestParser requestParser){	
+		CODE code = requestParser.getCode();
+		String method = requestParser.getMethod();
+		String protocol = requestParser.getProtocol();
 		String content = null;
 		switch (code) {
 		case BADHEADER1: {	//unknown header
@@ -147,22 +209,28 @@ public class WorkerThread extends Thread{
 			if (!"HEAD".equalsIgnoreCase(method))	content = genHTTPContent(getControlPage());
 			return genResponse(method, protocol, "200", "Server status", content); 
 		}
-		case NORMAL:{
+/*		case NORMAL:{
 			content = "<h1>Feature not implemented yet</h1>";
 			return genResponse(method, protocol, "200", "Normal request", content); 
-		}
+		}*/
 		case LISTDIR:{
-			//avoid extra work
-			if (!"HEAD".equalsIgnoreCase(method)) {
-				File folder = new File(reqUrl);
-				String[] files = folder.list();
-				content = genHTTPContent(genFileListPage(files));
+			if ("304".equalsIgnoreCase(checkModifyHeader(requestParser))) {
+				return genResponse(method, protocol, "304", "Not Modified", null);
+			}else if ("412".equalsIgnoreCase(checkModifyHeader(requestParser))) {
+				return genResponse(method, protocol, "412", "Precondition Failed", null);
+			}else {
+				//avoid extra work
+				if (!"HEAD".equalsIgnoreCase(method)) {
+					File folder = new File(reqUrl);
+					String[] files = folder.list();
+					content = genHTTPContent(genFileListPage(files));
+				}
+				return genResponse(method, protocol, "200", "List files", content);
 			}
-			return genResponse(method, protocol, "200", "List files", content); 
 		}
 		default:{
-			content = "<h1>Unknown request</h1>";
-			return genResponse(method, protocol, "400", "<h1>Unknown request</h1>", content); 
+			content = "<h1>Invalid request</h1>";
+			return genResponse(method, protocol, "400", "Invalid request", content); 
 		}
 		}
 	}
@@ -179,22 +247,34 @@ public class WorkerThread extends Thread{
 		sb.append(System.getProperty("line.separator"));		//not support yet
 		sb.append("Connection: close"); 
 		sb.append(System.getProperty("line.separator"));
-		sb.append("Last-Modified: " + getLastModifiedTime());		//last-modified
+		sb.append("Last-Modified: " + getLastModifiedTime(this.reqUrl));		//last-modified
 		sb.append(System.getProperty("line.separator"));
 		sb.append("\r\n");
 		if ((!"HEAD".equalsIgnoreCase(method)) && body != null)		//if not head mothod
 			sb.append(body);
-		System.out.println(body);
+//		System.out.println(body);
 //		System.out.println("Response size: " + body.length());
 		return sb.toString();
 	}
 	
-	private void resFileContent(String method, String protocol, Socket socket) throws IOException {
+	private void resFileContent(HTTPRequestParser requestParser, Socket socket) throws IOException {
+		String protocol = requestParser.getProtocol();
 		String file = this.reqUrl;
 		String ext = getFileExt(file);
 		PrintStream pstream = new PrintStream(socket.getOutputStream(), true);
 		if (ext == null) {	// not a file
 			pstream.write((protocol + " 404 Resource not found.\r\n").getBytes(Charset.forName("UTF-8")));
+			pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
+			return;
+		}
+		String code = checkModifyHeader(requestParser);
+		if ("304".equalsIgnoreCase(code)) {
+			pstream.write((protocol + " 304 Not Modified\r\n").getBytes(Charset.forName("UTF-8")));
+			pstream.write(("Date : " + getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
+			pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
+		}else if ("412".equalsIgnoreCase(code)) {
+			pstream.write((protocol + " 412 Precondition Failed\r\n").getBytes(Charset.forName("UTF-8")));
+			pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
 			return;
 		}
 		String fileType = HttpServer.fileTypes.get(ext);
@@ -203,7 +283,7 @@ public class WorkerThread extends Thread{
 		pstream.write(("Server : Java/CIS455-v1.0\r\n").getBytes(Charset.forName("UTF-8")));
 		pstream.write(("Date : " + getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
 		pstream.write(("Connection: close\r\n").getBytes(Charset.forName("UTF-8"))); 
-		pstream.write(("Last-Modified: " + getLastModifiedTime() + "\r\n").getBytes(Charset.forName("UTF-8")));		//last-modified
+		pstream.write(("Last-Modified: " + getLastModifiedTime(this.reqUrl) + "\r\n").getBytes(Charset.forName("UTF-8")));		//last-modified
 		
 		if (fileType == null) {
 			// Unknown file type MIME?, return binary data
@@ -281,11 +361,11 @@ public class WorkerThread extends Thread{
 		else return reqUrl.substring(idx);
 	}
 	
-	private String getLastModifiedTime() {
+	private String getLastModifiedTime(String fileUrl) {
 		SimpleDateFormat dateFormat = 
 				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		File file = new File(this.reqUrl);
+		File file = new File(fileUrl);
 		if (file.isDirectory()) {
 			return dateFormat.format(file.lastModified());		//return file last-modified time
 		} else if (file.isFile()) {
