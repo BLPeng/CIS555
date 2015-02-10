@@ -51,6 +51,9 @@ class HttpServer {
 		fileTypes.put(".html", "text/html");
 		fileTypes.put(".png", "image/png");
 		fileTypes.put(".gif", "image/gif");
+		fileTypes.put(".css", "text/css");
+		fileTypes.put(".pdf", "application/pdf");
+		fileTypes.put(".ico", "image/x-icon");
 		
 		acceptMethods = new HashSet<String>();
 		acceptMethods.add("GET");
@@ -92,7 +95,7 @@ class HttpServer {
 		
 		//validate inputs
     	if (args != null && args.length == 0) {
-    		System.out.println("Server Name: Xiaobin Chen. PennKey: xiaobinc");
+    		System.out.println("Full name: Xiaobin Chen. Seas login name: xiaobinc");
     		return false;
     	}
     	

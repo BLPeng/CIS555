@@ -119,6 +119,11 @@ public class HTTPRequestParser {
 			this.code = CODE.NOIMPLEMENT;
 			return;
 		}
+		String tmpUrl = this.reqUrl.toUpperCase(Locale.ENGLISH);
+		if (tmpUrl.contains("HTTP://")){
+			this.code = CODE.BADDIR;
+			return;
+		}
 		this.reqUrl = parseURL(this.reqUrl);
 		// security check
 		if (reqUrl == null){
@@ -182,7 +187,7 @@ public class HTTPRequestParser {
 	private String parseURL(String dir) {
 		if (dir == null)	return null;
 		String prefix = HttpServer.rootDir;
-		dir = prefix + dir;
+		dir = prefix + "/" + dir;
 		String newDir = simplifyPath(dir);
 //		System.out.println(newDir);
 		if (newDir == null || newDir.length() < prefix.length())	//should at least equals to prefix

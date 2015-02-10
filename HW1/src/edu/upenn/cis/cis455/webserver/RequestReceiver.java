@@ -63,10 +63,11 @@ public class RequestReceiver extends Thread{
 		this.acceptRequest = false;
 		try {
 			//Closes this socket. Any thread currently blocked in accept() will throw a SocketException. 
+			//no longer accept new requests
 			serverSocket.close();
 		} catch (IOException e) {
 			logger.error("Can not close serverSocket");
-			e.printStackTrace();
+	//		e.printStackTrace();
 		}
 	}
 }

@@ -48,7 +48,7 @@ public class WorkerThread extends Thread{
 			try {
 				task = requestQueue.get();
 				if (!task.isClosed()){	
-					task.setSoTimeout(100000);
+					task.setSoTimeout(10000);
 					handleRequest(task);
 /*					System.out.println("dasf");
 					task.setSoTimeout(5000);
@@ -60,7 +60,7 @@ public class WorkerThread extends Thread{
 				}		
 				this.reqUrl = "None";	
 			} catch (InterruptedException e) {
-				logger.error("Thread stopped");
+		//		logger.error("Thread stopped");
 			} catch (IOException e) {
 		//		e.printStackTrace();
 		//		logger.error("Can not fetch/parse task");
@@ -245,6 +245,8 @@ public class WorkerThread extends Thread{
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Date : "); sb.append(getServerDate());
 		sb.append(System.getProperty("line.separator"));		//not support yet
+		sb.append("Content-Type : text/html"); 
+		sb.append(System.getProperty("line.separator"));
 		sb.append("Connection: close"); 
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Last-Modified: " + getLastModifiedTime(this.reqUrl));		//last-modified
@@ -292,7 +294,8 @@ public class WorkerThread extends Thread{
 			pstream.write(("Content-Type : " + fileType + "\r\n").getBytes(Charset.forName("UTF-8")));
 		}
 		pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
-		if (fileType == null || ".gif".equals(ext) || ".png".equals(ext) || ".jpg".equals(ext)) {
+		if (fileType == null || ".gif".equals(ext) || ".png".equals(ext) || ".jpg".equals(ext)
+				|| ".pdf".equals(ext) || ".ico".equals(ext)) {
 			readBinaryContent(pstream, this.reqUrl);
 		} else {
 			readFileContent(pstream, this.reqUrl);
