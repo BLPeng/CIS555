@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -183,6 +184,8 @@ public class WorkerThread extends Thread{
 		sb.append("\r\n");
 		if ((!"HEAD".equalsIgnoreCase(method)) && body != null)		//if not head mothod
 			sb.append(body);
+		System.out.println(body);
+//		System.out.println("Response size: " + body.length());
 		return sb.toString();
 	}
 	
@@ -191,29 +194,31 @@ public class WorkerThread extends Thread{
 		String ext = getFileExt(file);
 		PrintStream pstream = new PrintStream(socket.getOutputStream(), true);
 		if (ext == null) {	// not a file
-			pstream.println(protocol + " 404 Resource not found.");
+			pstream.write((protocol + " 404 Resource not found.\r\n").getBytes(Charset.forName("UTF-8")));
 			return;
 		}
 		String fileType = HttpServer.fileTypes.get(ext);
-		pstream.println(protocol + " 200 File request");
+		pstream.write((protocol + " 200 File request\r\n").getBytes(Charset.forName("UTF-8")));
 		// headers 
-		pstream.println("Server : Java/CIS455-v1.0");
-		pstream.println("Date : " + getServerDate());
-		pstream.println("Connection: close"); 
-		pstream.println("Last-Modified: " + getLastModifiedTime());		//last-modified
+		pstream.write(("Server : Java/CIS455-v1.0\r\n").getBytes(Charset.forName("UTF-8")));
+		pstream.write(("Date : " + getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
+		pstream.write(("Connection: close\r\n").getBytes(Charset.forName("UTF-8"))); 
+		pstream.write(("Last-Modified: " + getLastModifiedTime() + "\r\n").getBytes(Charset.forName("UTF-8")));		//last-modified
 		
 		if (fileType == null) {
 			// Unknown file type MIME?, return binary data
-			pstream.println("Content-Type : application/octet-stream");
+			pstream.write("Content-Type : application/octet-stream\r\n".getBytes(Charset.forName("UTF-8")));
 		} else {
-			pstream.println("Content-Type : " + fileType);
+			pstream.write(("Content-Type : " + fileType + "\r\n").getBytes(Charset.forName("UTF-8")));
 		}
-		pstream.print("\r\n");
+		pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
 		if (fileType == null || ".gif".equals(ext) || ".png".equals(ext) || ".jpg".equals(ext)) {
 			readBinaryContent(pstream, this.reqUrl);
 		} else {
 			readFileContent(pstream, this.reqUrl);
 		}
+//		System.out.println("byte array");
+		pstream = null;
 	}
 	
 	private void readBinaryContent(PrintStream pstream ,String url) throws IOException {
