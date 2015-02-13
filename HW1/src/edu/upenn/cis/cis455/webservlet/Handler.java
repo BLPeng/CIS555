@@ -10,9 +10,9 @@ public class Handler extends DefaultHandler {
 	private int m_state = 0;
 	private String m_servletName;
 	private String m_paramName;
-	HashMap<String,String> m_servlets = new HashMap<String,String>();
-	HashMap<String,String> m_contextParams = new HashMap<String,String>();
-	HashMap<String,HashMap<String,String>> m_servletParams = new HashMap<String,HashMap<String,String>>();
+	public HashMap<String,String> m_servlets = new HashMap<String,String>();
+	public HashMap<String,String> m_contextParams = new HashMap<String,String>();
+	public HashMap<String,HashMap<String,String>> m_servletParams = new HashMap<String,HashMap<String,String>>();
 	
 	public void startDocument() throws SAXException {
 		super.startDocument();

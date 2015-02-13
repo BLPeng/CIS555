@@ -5,7 +5,7 @@ import javax.servlet.*;
 import java.util.*;
 
 
-class FakeConfig implements ServletConfig {
+public class FakeConfig implements ServletConfig {
 	private String name;
 	private FakeContext context;
 	private HashMap<String,String> initParams;

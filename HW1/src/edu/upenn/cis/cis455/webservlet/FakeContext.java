@@ -1,19 +1,19 @@
 package edu.upenn.cis.cis455.webservlet;
 import javax.servlet.*;
+
 import java.util.*;
 
 /**
- * @author Nick Taylor
+ * @author CIS455
  */
-class FakeContext implements ServletContext {
+public class FakeContext implements ServletContext {
 	private HashMap<String,Object> attributes;
 	private HashMap<String,String> initParams;
-	
+
 	public FakeContext() {
 		attributes = new HashMap<String,Object>();
 		initParams = new HashMap<String,String>();
 	}
-	
 	/*
 	 * Returns the servlet container attribute with the given name, 
 	 * or null if there is no attribute by that name. An attribute allows
@@ -65,8 +65,11 @@ class FakeContext implements ServletContext {
 		return null;
 	}
 	
-	public String getRealPath(String path) {	//TODO
-		return null;
+	public String getRealPath(String path) {	//??
+		if (path == null || path.charAt(0) != '/')
+			return null;
+		String projPath = System.getProperty("user.dir");
+		return projPath + path;
 	}
 	
 	public RequestDispatcher getRequestDispatcher(String name) {	//ignore
@@ -113,7 +116,7 @@ class FakeContext implements ServletContext {
 		System.err.println(msg);
 	}
 	
-	public void log(String message, Throwable throwable) {	//TODO
+	public void log(String message, Throwable throwable) {	//ignore
 		System.err.println(message);
 		throwable.printStackTrace(System.err);
 	}
@@ -126,7 +129,7 @@ class FakeContext implements ServletContext {
 		attributes.put(name, object);
 	}
 	
-	void setInitParam(String name, String value) {			//OK
+	public void setInitParam(String name, String value) {			//OK
 		initParams.put(name, value);
 	}
 }

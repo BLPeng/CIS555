@@ -9,7 +9,7 @@ import javax.servlet.http.HttpSessionContext;
 /**
  * @author Todd J. Green
  */
-class FakeSession implements HttpSession {
+public class FakeSession implements HttpSession {
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpSession#getCreationTime()

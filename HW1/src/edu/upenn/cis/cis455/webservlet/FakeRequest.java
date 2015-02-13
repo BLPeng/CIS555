@@ -17,7 +17,7 @@ import javax.servlet.http.HttpSession;
 /**
  * @author Todd J. Green
  */
-class FakeRequest implements HttpServletRequest {
+public class FakeRequest implements HttpServletRequest {
 	
 	private String characterEncoding;
 	FakeRequest() {
