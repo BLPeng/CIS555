@@ -25,8 +25,8 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.log4j.Logger;
 
-import edu.upenn.cis.cis455.webservlet.Handler;
-import edu.upenn.cis.cis455.webservlet.FakeContext;;
+import edu.upenn.cis.cis455.webservletcontainer.FakeContext;
+import edu.upenn.cis.cis455.webservletcontainer.Handler;
 
 class HttpServer {
 	
