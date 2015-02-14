@@ -82,7 +82,6 @@ public class HttpServerUtils {
 		sb.append(System.getProperty("line.separator"));
 		sb.append("</tr>");
 		sb.append(System.getProperty("line.separator"));
-		
 		for (String file : files){
 			sb.append("<tr>");
 			sb.append(System.getProperty("line.separator"));
@@ -110,4 +109,5 @@ public class HttpServerUtils {
 			return HttpServer.lastModified;			//return server start time
 		}
 	}
+	
 }

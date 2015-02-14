@@ -7,9 +7,15 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+
+import javax.servlet.http.HttpServlet;
+
+import edu.upenn.cis.cis455.webservletinterface.ServletContainer;
 
 
 public class HttpRequestParser {
@@ -17,11 +23,12 @@ public class HttpRequestParser {
 	private String protocol;
 	private String reqUrl;
 	private String method;
-	private HashMap<String, String> headers;
+	private HashMap<String, List<String>> headers;
+	private ServletContainer servletContainer;
 //	private String body;				do not deal with body
 	private CODE code;			
 		
-	public HashMap<String, String> getHeaders() {
+	public HashMap<String, List<String>> getHeaders() {
 		return this.headers;
 	}
 
@@ -37,9 +44,10 @@ public class HttpRequestParser {
 		return this.reqUrl;
 	}
 	
-	public HttpRequestParser() {
+	public HttpRequestParser(ServletContainer servletContainer) {
 		code = CODE.NORMAL;
-		headers = new HashMap<String, String>();
+		headers = new HashMap<String, List<String>>();
+		this.servletContainer = servletContainer;
 	}
 	
 	public CODE getCode() {
@@ -48,7 +56,7 @@ public class HttpRequestParser {
 
 	public enum CODE {
 		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, NOIMPLEMENT,
-		LISTDIR, FILE, NORMAL, NOALLOW, BADHEADER1, BADHEADER2		//BADHEADER1 unknown	BADHEADER2 http1.1 not host
+		LISTDIR, FILE, NORMAL, NOALLOW, BADHEADER1, BADHEADER2, SERVLET		//BADHEADER1 unknown	BADHEADER2 http1.1 not host
 	}
 	
 	public void parseHttpRequest(Socket socket) throws IOException{
@@ -65,8 +73,17 @@ public class HttpRequestParser {
 		filterRequest();	
 	}
 	
+	public String matchUrlPattern(String reqUrl) {
+		return servletContainer.matchUrlPattern(reqUrl);
+	}
 	
 	
+	public HttpServlet getServletFromURL() {
+		String urlPattern = matchUrlPattern(reqUrl);
+		if (urlPattern == null)	return null;
+		String name = servletContainer.getUrlPattern(urlPattern);
+		return servletContainer.getServlet(name);
+	}
 	
 	private void parseHeaders(BufferedReader in) throws IOException {
 		String line = null;
@@ -79,14 +96,22 @@ public class HttpRequestParser {
 			line = line.trim();
 			if (line.contains(":")) {				//the header line
 				int idx = line.indexOf(":");
-				String header = line.substring(0, idx + 1);
+				String header = line.substring(0, idx).toLowerCase(Locale.ENGLISH);
 				String value = line.substring(idx + 1).trim();
-				headers.put(header.toLowerCase(Locale.ENGLISH), value);
+				if (headers.containsKey(header)) {
+					headers.get(header).add(value);
+				} else {
+					List<String> values = new ArrayList<String>();
+					values.add(value);
+					headers.put(header, values);
+				}
 				lastHeader = header;
 				size++;
 			} else {
 				if (size > 0) {
-					headers.put(lastHeader, headers.get(lastHeader) + " " + line);
+					List<String> values = headers.get(lastHeader);
+					int tail = values.size() - 1;
+					values.set(tail, values.get(tail) + " " + line);
 //					System.out.println(headers.get(size - 1));
 				}else {
 					this.code = CODE.BADHEADER1;
@@ -97,7 +122,7 @@ public class HttpRequestParser {
 		// check http/1.1 host header requirement
 		if ("HTTP/1.1".equalsIgnoreCase(this.protocol)) {
 			//already in lowercase
-			if (!headers.containsKey("host:")){
+			if (!headers.containsKey("host")){
 				this.code = CODE.BADHEADER2;
 				return;
 			}
@@ -123,8 +148,8 @@ public class HttpRequestParser {
 			this.code = CODE.BADDIR;
 			return;
 		}
-		this.reqUrl = parseURL(this.reqUrl);
 		// security check
+		this.reqUrl = parseURL(this.reqUrl);		
 		if (reqUrl == null){
 			this.code = CODE.BADDIR;
 			return;
@@ -137,6 +162,12 @@ public class HttpRequestParser {
 		// control url
 		if ("/control".equalsIgnoreCase(this.reqUrl)){
 			this.code = CODE.CONTROL;
+			return;
+		}
+		// check servlet
+		String match = servletContainer.matchUrlPattern(reqUrl);
+		if (match != null) {
+			this.code = CODE.SERVLET;
 			return;
 		}
 		String tmp = HttpServer.rootDir + reqUrl;

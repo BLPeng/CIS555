@@ -10,8 +10,17 @@ import javax.xml.parsers.SAXParserFactory;
 public class ServletContainer {
 	private HashMap<String, HttpServlet> servlets;
 	private HashMap<String, String> urlPatterns;
+	private String serverHostName;
 	private FakeContext fContext;
 	
+	public String getServerHostName() {
+		return serverHostName;
+	}
+	
+	public HttpServlet getServlet(String name) {
+		return servlets.get(name);
+	}
+
 	public HashMap<String, HttpServlet> getServlets() {
 		return servlets;
 	}
@@ -29,6 +38,7 @@ public class ServletContainer {
 		fContext = createContext(handler);
 		servlets = createServlets(handler, fContext);
 		urlPatterns = getUrlPatterns(handler);
+		serverHostName = handler.m_serverName;
 	}
 	
 	private Handler parseWebdotxml(String webdotxml) throws Exception {
@@ -51,6 +61,10 @@ public class ServletContainer {
 		} 
 		// attributes ???
 		return fc;
+	}
+	
+	public String getUrlPattern(String name) {
+		return urlPatterns.get(name);
 	}
 	
 	private HashMap<String, String> getUrlPatterns(Handler handler) {
@@ -78,5 +92,27 @@ public class ServletContainer {
 			servlets.put(servletName, servlet);
 		}
 		return servlets;
+	}
+	public String matchUrlPattern(String reqUrl) {
+		// reqUrl always starts with '/'
+		if (reqUrl == null || reqUrl.charAt(0) != '/')	//must start with '/' for this assignment
+			return null;
+		// deal with two url-pattern
+		for (String pattern : urlPatterns.keySet()) {
+			String regex = pattern;
+			if (pattern.length() > 1) {
+				String tailing = pattern.substring(pattern.length() - 2);		// /foo/*
+				if ("/*".equals(tailing)) {
+					regex = pattern.substring(0, pattern.length() - 2);			
+				}
+				else if (pattern.endsWith("*")) {								// /foo/abc*   ???
+					regex = pattern.substring(0, pattern.length() - 1);
+				}	
+			}
+			if (reqUrl.startsWith(regex)) {
+				return pattern;
+			}
+		}	
+		return null;
 	}
 }

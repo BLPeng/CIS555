@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 
 import edu.upenn.cis.cis455.webserver.HttpRequestParser.CODE;
 import edu.upenn.cis.cis455.webserver.WorkerThreadPool.ThreadStats;
+import edu.upenn.cis.cis455.webservletinterface.FakeRequest;
 
 
 public class WorkerThread extends Thread{
@@ -69,19 +70,19 @@ public class WorkerThread extends Thread{
 	
 	// 200-level-code need this check 
 	private String checkModifyHeader(HttpRequestParser requestParser) {			
-		HashMap<String, String> headers = requestParser.getHeaders();
+		HashMap<String, List<String>> headers = requestParser.getHeaders();
 		String url = HttpServer.rootDir + requestParser.getUrl();
 		String ret = "200";
-		if (headers.containsKey("If-Modified-Since:".toLowerCase(Locale.ENGLISH))) {
+		if (headers.containsKey("If-Modified-Since".toLowerCase(Locale.ENGLISH))) {
 			if ("GET".equalsIgnoreCase(requestParser.getMethod())) {
-				Date date = HttpServerUtils.convertDataFormat(headers.get("If-Modified-Since:".toLowerCase(Locale.ENGLISH)), 1);
+				Date date = HttpServerUtils.convertDataFormat(headers.get("If-Modified-Since".toLowerCase(Locale.ENGLISH)).get(0), 1);
 				File file = new File(url);
 				if (date != null && file != null && date.getTime() > file.lastModified()) {
 					return "304";
 				}
 			}
-		}else if(headers.containsKey("If-Unmodified-Since:".toLowerCase(Locale.ENGLISH))) {
-			Date date = HttpServerUtils.convertDataFormat(headers.get("If-Unmodified-Since:".toLowerCase(Locale.ENGLISH)), 1);
+		}else if(headers.containsKey("If-Unmodified-Since".toLowerCase(Locale.ENGLISH))) {
+			Date date = HttpServerUtils.convertDataFormat(headers.get("If-Unmodified-Since".toLowerCase(Locale.ENGLISH)).get(0), 1);
 			File file = new File(url);
 			if (date != null && file != null && date.getTime() < file.lastModified()) {
 				return "412";
@@ -92,27 +93,37 @@ public class WorkerThread extends Thread{
 
 	private void handleRequest(Socket socket) throws IOException{
 		
-		HttpRequestParser requestParser = new HttpRequestParser();	
-		requestParser.parseHttpRequest(task);
+		HttpRequestParser requestParser = new HttpRequestParser(HttpServer.servletContainer);	
+		requestParser.parseHttpRequest(socket);
+		CODE code = requestParser.getCode();
+		/*   test   */
+		FakeRequest freq = new FakeRequest(socket, requestParser);
+		freq.setLocalName(HttpServer.servletContainer.getServerHostName());
+		System.out.println(freq.getLocalPort());
+		System.out.println(freq.getLocalName());
+		System.out.println(freq.getLocalAddr());
+		System.out.println(freq.getRemotePort());
+		System.out.println(freq.getRemoteHost());
+		System.out.println(freq.getRemoteAddr());
+		System.out.println(freq.getServerPort());
+		System.out.println(freq.getServerName());
+		System.out.println(freq.getContentLength());
+		System.out.println(freq.getPathInfo());
+		
 		if (requestParser.getUrl() == null){	//set request url for later use
 			this.reqUrl = "None";
 		}else{
 			this.reqUrl = HttpServer.rootDir + requestParser.getUrl();
 		}
-		HttpServlet servlet = getServletFromUrl(requestParser.getUrl());
-		if (servlet != null) {		// servlets
-			System.out.println("call servlets" + servlet.toString());
-		}else {
-			CODE code = requestParser.getCode();
-			if (code == CODE.SHUTDOWN) {		//special url
-				shutdownServer();	
-			} 
-			if (code == CODE.FILE) {
-				resFileContent(requestParser, socket);
-			} else {
-				String res  = genResMessage(requestParser);
-				responseToClient(res, socket);			
-			}
+		if (code == CODE.SERVLET) {		// servlets
+			System.out.println("call servlets" + requestParser.getServletFromURL().toString());
+		}else if (code == CODE.SHUTDOWN) {		//special url
+			shutdownServer();	
+		}else if (code == CODE.FILE) {
+			resFileContent(requestParser, socket);
+		} else {
+			String res  = genResMessage(requestParser);
+			responseToClient(res, socket);			
 		}
 	}
 	
@@ -177,6 +188,10 @@ public class WorkerThread extends Thread{
 				if (!"HEAD".equalsIgnoreCase(method)) {
 					File folder = new File(reqUrl);
 					String[] files = folder.list();
+					String prefix = folder.getPath().substring(HttpServer.rootDir.length());
+					for (int i = 0; i < files.length; i++) {
+						files[i] = prefix + "/" + files[i]; 
+					}
 					content = HttpServerUtils.genHTTPContent(HttpServerUtils.genFileListPage(files));
 				}
 				return genResponse(method, protocol, "200", "List files", content);
@@ -346,39 +361,5 @@ public class WorkerThread extends Thread{
 		this.run = false;
 		this.interrupt();
 	}
-	
-	private HttpServlet getServletFromUrl(String reqUrl) {
-		// reqUrl always starts with '/'
-		if (reqUrl.charAt(0) != '/')	//must start with '/' for this assignment
-			return null;
-		// deal with two url-pattern
-		HashMap<String, HttpServlet> servlets= HttpServer.servletContainer.getServlets();
-		HashMap<String, String> urlPatterns = HttpServer.servletContainer.getUrlPatterns();
-		for (String pattern : urlPatterns.keySet()) {
-			String regex = pattern;
-			if (pattern.length() > 1) {
-				String tailing = pattern.substring(pattern.length() - 2);		// /foo/*
-				if ("/*".equals(tailing)) {
-					regex = pattern.substring(0, pattern.length() - 2);			
-				}
-				else if (pattern.endsWith("*")) {								// /foo/abc*   ???
-					regex = pattern.substring(0, pattern.length() - 1);
-				}	
-			}
-			if (reqUrl.startsWith(regex)) {
-				return servlets.get(urlPatterns.get(pattern));
-			}
-		}	
-		return null;
-	}
-	
-	/*
-	 * 
 
-        A string beginning with a ‘/’ character and ending with a ‘/*’ suffix is used for path mapping.
-        A string beginning with a ‘*.’ prefix is used as an extension mapping.
-        A string containing only the ’/’ character indicates the "default" servlet of the application. In this case the servlet path is the request URI minus the context path and the path info is null.
-        All other strings are used for exact matches only.
-
-	 */
 }

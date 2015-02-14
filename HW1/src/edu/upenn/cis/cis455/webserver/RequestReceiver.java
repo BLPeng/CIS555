@@ -52,7 +52,7 @@ public class RequestReceiver extends Thread{
 				logger.info("Server socket closed");
 			} catch (InterruptedException e) {
 				logger.error("Could not add/receive task");
-				e.printStackTrace();
+		//		e.printStackTrace();
 			} 
 
 		}

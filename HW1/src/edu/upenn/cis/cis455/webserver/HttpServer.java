@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
 
 import edu.upenn.cis.cis455.webservletinterface.ServletContainer;
 
-class HttpServer {
+public class HttpServer {
 	
 	public static HttpServer httpServer; 
 	public static int portNumber;
@@ -41,14 +41,14 @@ class HttpServer {
 	public HttpServer(String portNum, String root, String webdotxml) throws Exception{
 		
 		HttpServer.httpServer = this;
-		int port = Integer.valueOf(portNum);
-		portNumber = port;
+		initBasicSetting();		//for file type and method type
+		portNumber = Integer.valueOf(portNum);
 		rootDir = root;
+		servletContainer = new ServletContainer(webdotxml);
 		blockingQueue = new MyBlockingQueue<Socket>(blockingQueueSize);
 		requestReceiver = new RequestReceiver(portNumber, rootDir, blockingQueue);
 		workerThreadPool = new WorkerThreadPool(blockingQueue);	
-		initBasicSetting();		//for file type and method type
-		servletContainer = new ServletContainer(webdotxml);
+				
 	}
 	
     public static void main(String args[]) throws Exception
@@ -134,6 +134,14 @@ class HttpServer {
 		lastModified = dateFormat.format(calendar.getTime());
 	}
 	
+	/*
+	 * 
 
+        A string beginning with a ‘/’ character and ending with a ‘/*’ suffix is used for path mapping.
+        A string beginning with a ‘*.’ prefix is used as an extension mapping.
+        A string containing only the ’/’ character indicates the "default" servlet of the application. In this case the servlet path is the request URI minus the context path and the path info is null.
+        All other strings are used for exact matches only.
+
+	 */
 	
 }

@@ -9,6 +9,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class Handler extends DefaultHandler {
 	private int m_state = 0;
 	private String m_servletName;
+	public String m_serverName;
 	private String m_paramName;
 	public HashMap<String,String> m_servlets = new HashMap<String,String>();
 	public HashMap<String,String> m_urlMappings = new HashMap<String,String>();
@@ -39,6 +40,8 @@ public class Handler extends DefaultHandler {
 			m_state = (m_state == 10) ? 11 : 21;
 		} else if (qName.compareTo("url-pattern") == 0) {
 			m_state = 5;
+		} else if (qName.compareTo("display-name") == 0) {
+			m_state = 6;
 		} 
 	}
 	public void characters(char[] ch, int start, int length) {
@@ -51,6 +54,9 @@ public class Handler extends DefaultHandler {
 			m_state = 0;
 		} else if (m_state == 5) {
 			m_urlMappings.put(value, m_servletName);
+			m_state = 0;
+		} else if (m_state == 6) {
+			m_serverName = value;
 			m_state = 0;
 		} else if (m_state == 10 || m_state == 20) {
 			m_paramName = value;

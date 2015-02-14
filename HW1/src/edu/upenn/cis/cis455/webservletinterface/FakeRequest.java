@@ -2,7 +2,9 @@ package edu.upenn.cis.cis455.webservletinterface;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.Socket;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -19,6 +21,10 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+
+
+
+import edu.upenn.cis.cis455.webserver.HttpRequestParser;
 import edu.upenn.cis.cis455.webserver.HttpServerUtils;
 
 /**
@@ -27,21 +33,30 @@ import edu.upenn.cis.cis455.webserver.HttpServerUtils;
 public class FakeRequest implements HttpServletRequest {
 	
 	private String characterEncoding;
+	private Socket socket;
+	private String hostName;
+	private HttpRequestParser requestParser;
 	private HashMap<String, List<String>> headers;
-	private Properties m_params = new Properties();
-	private Properties m_props = new Properties();
+	private HashMap<String, List<String>> m_params = new HashMap<String, List<String>>();
+	private HashMap<String, Object> m_props = new HashMap<String, Object>();
 	private FakeSession m_session = null;
 	private String m_method;
 	
-	FakeRequest() {
-		characterEncoding = null;
+	public FakeRequest(Socket socket, HttpRequestParser requestParser) {
+		init(socket, requestParser);
 	}
 	
-	FakeRequest(FakeSession session) {
+	public FakeRequest(Socket socket, HttpRequestParser requestParser, FakeSession session) {
 		m_session = session;
-		headers = new HashMap<String, List<String>>();
+		init(socket, requestParser);
 	}
 	
+	private void init(Socket socket, HttpRequestParser requestParser) {
+		this.socket = socket;
+		this.requestParser = requestParser;
+		characterEncoding = null;
+		headers = requestParser.getHeaders();
+	}
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getAuthType()
 	 */
@@ -127,8 +142,21 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getPathInfo()
 	 */
 	public String getPathInfo() {
-		// TODO Auto-generated method stub
-		return null;
+		String reqUrl = requestParser.getUrl();
+		String match = requestParser.matchUrlPattern(reqUrl);
+		if (match == null)	return "/";		//should not be null
+		else {
+			int sz = match.length();
+			if (match.endsWith("/*")) {
+				sz = sz - 2;
+			} else if (match.endsWith("*")) {
+				sz = sz - 1;
+			}
+			String ret = reqUrl.substring(sz);
+			if (ret.length() == 0 || ret.charAt(0) != '/');
+			ret = "/" + ret;
+			return ret;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -264,7 +292,6 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getAttribute(java.lang.String)
 	 */
 	public Object getAttribute(String arg0) {
-		// TODO Auto-generated method stub
 		return m_props.get(arg0);
 	}
 
@@ -272,8 +299,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getAttributeNames()
 	 */
 	public Enumeration getAttributeNames() {
-		// TODO Auto-generated method stub
-		return m_props.keys();
+		return Collections.enumeration(m_props.keySet());
 	}
 
 	/* (non-Javadoc)
@@ -301,16 +327,19 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getContentLength()
 	 */
 	public int getContentLength() {
-		// TODO Auto-generated method stub
-		return 0;
+		List<String> lengths = headers.get("Content-Length".toLowerCase(Locale.ENGLISH));
+		if (lengths == null)	
+			return -1;
+		else {
+			return Integer.valueOf(lengths.get(0));		//first element
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getContentType()
 	 */
-	public String getContentType() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getContentType() {		// ???
+		return "application/octet-stream";
 	}
 
 	/* (non-Javadoc)
@@ -324,21 +353,29 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getParameter(java.lang.String)
 	 */
 	public String getParameter(String arg0) {
-		return m_params.getProperty(arg0);
+		if (m_params.containsKey(arg0)) {
+			return m_params.get(arg0).get(0);
+		}else {
+			return null;
+		}
 	}
+		
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getParameterNames()
 	 */
 	public Enumeration getParameterNames() {
-		return m_params.keys();
+		return Collections.enumeration(m_params.keySet());
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getParameterValues(java.lang.String)
 	 */
 	public String[] getParameterValues(String arg0) {
-		// TODO Auto-generated method stub
+		if (m_params.containsKey(arg0)) {
+			List<String> values = m_params.get(arg0);
+			return values.toArray(new String[values.size()]);
+		}
 		return null;
 	}
 
@@ -354,8 +391,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getProtocol()
 	 */
 	public String getProtocol() {
-		// TODO Auto-generated method stub
-		return null;
+		return requestParser.getProtocol();
 	}
 
 	/* (non-Javadoc)
@@ -369,16 +405,14 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getServerName()
 	 */
 	public String getServerName() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.hostName;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getServerPort()
 	 */
 	public int getServerPort() {
-		// TODO Auto-generated method stub
-		return 0;
+		return socket.getLocalPort();
 	}
 
 	/* (non-Javadoc)
@@ -393,16 +427,20 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getRemoteAddr()
 	 */
 	public String getRemoteAddr() {
-		// TODO Auto-generated method stub
-		return null;
+		if (socket != null)
+			return socket.getInetAddress().getHostAddress();
+		else 
+			return "0.0.0.0";
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getRemoteHost()
 	 */
 	public String getRemoteHost() {
-		// TODO Auto-generated method stub
-		return null;
+		if (socket != null)
+			return socket.getInetAddress().getHostAddress();
+		else 
+			return socket.getInetAddress().toString();
 	}
 
 	/* (non-Javadoc)
@@ -416,8 +454,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#removeAttribute(java.lang.String)
 	 */
 	public void removeAttribute(String arg0) {
-		// TODO Auto-generated method stub
-
+		m_props.remove(arg0);
 	}
 
 	/* (non-Javadoc)
@@ -438,7 +475,6 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#isSecure()
 	 */
 	public boolean isSecure() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -446,7 +482,6 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getRequestDispatcher(java.lang.String)
 	 */
 	public RequestDispatcher getRequestDispatcher(String arg0) {		//ignore
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -461,49 +496,63 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getRemotePort()
 	 */
 	public int getRemotePort() {
-		// TODO Auto-generated method stub
-		return 0;
+		if (socket != null)
+			return socket.getPort();
+		else 
+			return -1;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getLocalName()
 	 */
 	public String getLocalName() {
-		// TODO Auto-generated method stub
-		return null;
+		return socket.getLocalAddress().getHostName();
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getLocalAddr()
 	 */
 	public String getLocalAddr() {
-		// TODO Auto-generated method stub
-		return null;
+		if (socket != null)
+			return socket.getLocalAddress().getHostAddress();
+		else 
+			return "0.0.0.0";
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getLocalPort()
 	 */
 	public int getLocalPort() {
-		// TODO Auto-generated method stub
-		return 0;
+		if (socket != null)
+			return socket.getLocalPort();
+		else 
+			return -1; 
 	}
 
-	void setMethod(String method) {
+	public void setMethod(String method) {
 		m_method = method;
 	}
 	
-	void setParameter(String key, String value) {
-		m_params.setProperty(key, value);
+	void setParameter(String key, String value) {		//decode URL first
+		if (m_params.containsKey(key)) {
+			m_params.get(key).add(value);
+		} else {
+			 List<String> values = new ArrayList<String>();
+			 values.add(value);
+			 m_params.put(key, values);
+		}
+		
 	}
 	
-	void clearParameters() {
+	public void clearParameters() {
 		m_params.clear();
 	}
 	
-	boolean hasSession() {
+	public boolean hasSession() {
 		return ((m_session != null) && m_session.isValid());
 	}
 		
-
+	public void setLocalName(String name) {
+		this.hostName = name;
+	}
 }
