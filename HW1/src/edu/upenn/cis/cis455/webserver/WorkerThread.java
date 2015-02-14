@@ -9,13 +9,10 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import javax.servlet.http.HttpServlet;
 
@@ -32,13 +29,11 @@ public class WorkerThread extends Thread{
 	private String reqUrl;
 	private Socket task;
 	private Boolean run;
-	private int label;
 	static final Logger logger = Logger.getLogger(WorkerThread.class.getName());
 	
 	public WorkerThread(MyBlockingQueue<Socket> requestQueue, WorkerThreadPool pool, int label){
 		super("Thread " + String.valueOf(label));
 		this.requestQueue = requestQueue;
-		this.label = label;
 		this.threadPool = pool;
 		this.reqUrl = "None";
 	}
@@ -66,8 +61,7 @@ public class WorkerThread extends Thread{
 						task.close();
 					task = null;
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+
 				}
 			}
 		}	
@@ -95,10 +89,7 @@ public class WorkerThread extends Thread{
 		}
 		return ret;
 	}
-	
-	
-	
-	
+
 	private void handleRequest(Socket socket) throws IOException{
 		
 		HttpRequestParser requestParser = new HttpRequestParser();	
@@ -173,7 +164,7 @@ public class WorkerThread extends Thread{
 		}
 		case CONTROL:{
 			//avoid extra work
-			if (!"HEAD".equalsIgnoreCase(method))	content = genHTTPContent(getControlPage());
+			if (!"HEAD".equalsIgnoreCase(method))	content = HttpServerUtils.genHTTPContent(getControlPage());
 			return genResponse(method, protocol, "200", "Server status", content); 
 		}
 		case LISTDIR:{
@@ -186,7 +177,7 @@ public class WorkerThread extends Thread{
 				if (!"HEAD".equalsIgnoreCase(method)) {
 					File folder = new File(reqUrl);
 					String[] files = folder.list();
-					content = genHTTPContent(genFileListPage(files));
+					content = HttpServerUtils.genHTTPContent(HttpServerUtils.genFileListPage(files));
 				}
 				return genResponse(method, protocol, "200", "List files", content);
 			}
@@ -206,13 +197,13 @@ public class WorkerThread extends Thread{
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Server : Java/CIS455-v1.0");
 		sb.append(System.getProperty("line.separator"));
-		sb.append("Date : "); sb.append(getServerDate());
+		sb.append("Date : "); sb.append(HttpServerUtils.getServerDate());
 		sb.append(System.getProperty("line.separator"));		//not support yet
 		sb.append("Content-Type : text/html"); 
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Connection: close"); 
 		sb.append(System.getProperty("line.separator"));
-		sb.append("Last-Modified: " + getLastModifiedTime(this.reqUrl));		//last-modified
+		sb.append("Last-Modified: " + HttpServerUtils.getLastModifiedTime(this.reqUrl));		//last-modified
 		sb.append(System.getProperty("line.separator"));
 		sb.append("\r\n");
 		if ((!"HEAD".equalsIgnoreCase(method)) && body != null)		//if not head mothod
@@ -235,7 +226,7 @@ public class WorkerThread extends Thread{
 		String code = checkModifyHeader(requestParser);
 		if ("304".equalsIgnoreCase(code)) {
 			pstream.write((protocol + " 304 Not Modified\r\n").getBytes(Charset.forName("UTF-8")));
-			pstream.write(("Date : " + getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
+			pstream.write(("Date : " + HttpServerUtils.getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
 			pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
 			return;
 		}else if ("412".equalsIgnoreCase(code)) {
@@ -247,9 +238,9 @@ public class WorkerThread extends Thread{
 		pstream.write((protocol + " 200 File request\r\n").getBytes(Charset.forName("UTF-8")));
 		// headers 
 		pstream.write(("Server : Java/CIS455-v1.0\r\n").getBytes(Charset.forName("UTF-8")));
-		pstream.write(("Date : " + getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
+		pstream.write(("Date : " + HttpServerUtils.getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
 		pstream.write(("Connection: close\r\n").getBytes(Charset.forName("UTF-8"))); 
-		pstream.write(("Last-Modified: " + getLastModifiedTime(this.reqUrl) + "\r\n").getBytes(Charset.forName("UTF-8")));		//last-modified
+		pstream.write(("Last-Modified: " + HttpServerUtils.getLastModifiedTime(this.reqUrl) + "\r\n").getBytes(Charset.forName("UTF-8")));		//last-modified
 		
 		if (fileType == null) {
 			// Unknown file type MIME?, return binary data
@@ -292,85 +283,16 @@ public class WorkerThread extends Thread{
 		}
 	}
 	
-	
-	private String getServerDate() {
-		Calendar calendar = Calendar.getInstance();
-		SimpleDateFormat dateFormat = 
-				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
-		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		return dateFormat.format(calendar.getTime());
-	}
-	
 	private void shutdownServer() {	
 		if (HttpServer.httpServer != null){
 			HttpServer.shutdownServer();
 		}	
 	}
 	
-	// generate HTML page
-	private String genHTTPContent(String body){
-		StringBuilder sb = new StringBuilder();
-		sb.append("<html>");	sb.append(System.getProperty("line.separator"));
-		sb.append("<head>");	sb.append(System.getProperty("line.separator"));
-		sb.append("<title>Xiaobin Chen,  xiaobinc </title>");sb.append(System.getProperty("line.separator"));
-		sb.append("<body>");	sb.append(System.getProperty("line.separator"));
-		sb.append(body);
-		sb.append("</body>");	sb.append(System.getProperty("line.separator"));
-		sb.append("</head>");	sb.append(System.getProperty("line.separator"));
-		sb.append("</html>");	sb.append(System.getProperty("line.separator"));
-		return sb.toString();
-	}
-
-	
 	private String getFileExt(String reqUrl) {
 		int idx = reqUrl.lastIndexOf(".");
 		if (idx == -1 || idx == 0)	return null;
 		else return reqUrl.substring(idx);
-	}
-	
-	private String getLastModifiedTime(String fileUrl) {
-		SimpleDateFormat dateFormat = 
-				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
-		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		File file = new File(fileUrl);
-		if (file.isDirectory()) {
-			return dateFormat.format(file.lastModified());		//return file last-modified time
-		} else if (file.isFile()) {
-			return dateFormat.format(file.lastModified());		//return file last-modified time
-		} else {
-			return HttpServer.lastModified;			//return server start time
-		}
-	}
-	
-	private String genFileListPage(String[] files) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("<h1>List files</h1>");
-		sb.append(System.getProperty("line.separator"));
-		sb.append("<h2>Xiaobin Chen, Seas: xiaobinc</h2>");
-		sb.append(System.getProperty("line.separator"));
-		sb.append("<table>");
-		sb.append(System.getProperty("line.separator"));
-		sb.append("<tr>");
-		sb.append(System.getProperty("line.separator"));
-		sb.append("<th>FileName    </th>");
-		sb.append(System.getProperty("line.separator"));
-		sb.append("<th>URL    </th>");
-		sb.append(System.getProperty("line.separator"));
-		sb.append("</tr>");
-		sb.append(System.getProperty("line.separator"));
-		
-		for (String file : files){
-			sb.append("<tr>");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("<td>" + file + "</td>");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("<td>" +  "<a href=\"" + file + "\"> " + file  + "</a> </td>");
-			sb.append(System.getProperty("line.separator"));
-			sb.append("</tr>");
-			sb.append(System.getProperty("line.separator"));
-		}	
-		sb.append("</table>");
-		return sb.toString();
 	}
 	
 	private String getControlPage() {
@@ -420,7 +342,7 @@ public class WorkerThread extends Thread{
 	
 	
 	public void terminate() {
-		logger.info("Thread " + this.label + " terminated.");
+		logger.info(this.getName() + " terminated.");
 		this.run = false;
 		this.interrupt();
 	}

@@ -196,7 +196,7 @@ public class HttpRequestParser {
 			return null;
 		}
 		newDir = newDir.substring(prefix.length());
-//		System.out.println(newDir);
+		if (newDir.length() == 0)	newDir = "/";
 		return newDir;
 	}
 	
