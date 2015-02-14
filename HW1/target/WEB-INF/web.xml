@@ -2,11 +2,11 @@
 <display-name>Test servlet for CIS455</display-name>
 <servlet>
 <servlet-name>CalculatorServlet</servlet-name>
-<servlet-class>edu.upenn.cis.cis455.CalculatorServlet</servlet-class>
+<servlet-class>edu.upenn.cis.cis455.webservlet.CalculatorServlet</servlet-class>
 </servlet>
 <servlet-mapping>
 <servlet-name>CalculatorServlet</servlet-name>
-<url-pattern>calculate/*</url-pattern>
+<url-pattern>/calculate/*</url-pattern>
 </servlet-mapping>
 <servlet-mapping>
 <servlet-name>default</servlet-name>

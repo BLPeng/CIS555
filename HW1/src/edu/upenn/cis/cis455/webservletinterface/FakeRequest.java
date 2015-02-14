@@ -1,9 +1,14 @@
-package edu.upenn.cis.cis455.webservletcontainer;
+package edu.upenn.cis.cis455.webservletinterface;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -14,18 +19,27 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import edu.upenn.cis.cis455.webserver.HttpServerUtils;
+
 /**
  * @author Todd J. Green
  */
 public class FakeRequest implements HttpServletRequest {
 	
 	private String characterEncoding;
+	private HashMap<String, List<String>> headers;
+	private Properties m_params = new Properties();
+	private Properties m_props = new Properties();
+	private FakeSession m_session = null;
+	private String m_method;
+	
 	FakeRequest() {
 		characterEncoding = null;
 	}
 	
 	FakeRequest(FakeSession session) {
 		m_session = session;
+		headers = new HashMap<String, List<String>>();
 	}
 	
 	/* (non-Javadoc)
@@ -46,41 +60,60 @@ public class FakeRequest implements HttpServletRequest {
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getDateHeader(java.lang.String)
 	 */
-	public long getDateHeader(String arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public long getDateHeader(String header) {
+		if (!headers.containsKey(header))		//1. not contains the header
+			return -1;
+		String dateStr = headers.get(header).get(0);		//first ele
+		Date date = HttpServerUtils.convertDataFormat(dateStr, 0);
+		if (date == null)	throw new IllegalArgumentException();		//not a valid string
+		return date.getTime();
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getHeader(java.lang.String)
 	 */
-	public String getHeader(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public String getHeader(String header) {
+		if (!headers.containsKey(header))
+			return null;
+		else {
+			String value = headers.get(header).get(0);		//first ele
+			return value;
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getHeaders(java.lang.String)
 	 */
-	public Enumeration getHeaders(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public Enumeration getHeaders(String header) {
+		if (!headers.containsKey(header))
+			return Collections.emptyEnumeration();
+		else {
+			Enumeration e = Collections.enumeration(headers.get(header));
+			return e;
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getHeaderNames()
 	 */
 	public Enumeration getHeaderNames() {
-		// TODO Auto-generated method stub
-		return null;
+		if (headers.size() == 0) {
+			return Collections.emptyEnumeration();
+		}else {
+			return Collections.enumeration(headers.keySet());
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getIntHeader(java.lang.String)
 	 */
-	public int getIntHeader(String arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int getIntHeader(String header) {
+		if (!headers.containsKey(header)) {
+			return -1;
+		}
+		String value = headers.get(header).get(0);
+		int ret = Integer.valueOf(value);
+		return ret;
 	}
 
 	/* (non-Javadoc)
@@ -124,8 +157,7 @@ public class FakeRequest implements HttpServletRequest {
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getRemoteUser()
 	 */
-	public String getRemoteUser() {
-		// TODO Auto-generated method stub
+	public String getRemoteUser() {		//ignore
 		return null;
 	}
 
@@ -473,8 +505,5 @@ public class FakeRequest implements HttpServletRequest {
 		return ((m_session != null) && m_session.isValid());
 	}
 		
-	private Properties m_params = new Properties();
-	private Properties m_props = new Properties();
-	private FakeSession m_session = null;
-	private String m_method;
+
 }

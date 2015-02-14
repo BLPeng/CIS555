@@ -1,4 +1,4 @@
-package edu.upenn.cis.cis455.webservletcontainer;
+package edu.upenn.cis.cis455.webservletinterface;
 
 import java.util.HashMap;
 
@@ -11,17 +11,18 @@ public class Handler extends DefaultHandler {
 	private String m_servletName;
 	private String m_paramName;
 	public HashMap<String,String> m_servlets = new HashMap<String,String>();
+	public HashMap<String,String> m_urlMappings = new HashMap<String,String>();
 	public HashMap<String,String> m_contextParams = new HashMap<String,String>();
 	public HashMap<String,HashMap<String,String>> m_servletParams = new HashMap<String,HashMap<String,String>>();
 	
 	public void startDocument() throws SAXException {
 		super.startDocument();
-        System.out.println("start processing xml: ");
+        System.out.println("start processing xml. ");
     }
 
     public void endDocument() throws SAXException {
     	super.endDocument();
-        System.out.println("end processing xml: ");
+        System.out.println("end processing xml. ");
     }
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
 		if (qName.compareTo("servlet-name") == 0) {
@@ -36,7 +37,9 @@ public class Handler extends DefaultHandler {
 			m_state = (m_state == 3) ? 10 : 20;
 		} else if (qName.compareTo("param-value") == 0) {		//11-context-param-value	21-servlet-param-value
 			m_state = (m_state == 10) ? 11 : 21;
-		}
+		} else if (qName.compareTo("url-pattern") == 0) {
+			m_state = 5;
+		} 
 	}
 	public void characters(char[] ch, int start, int length) {
 		String value = new String(ch, start, length);
@@ -45,6 +48,9 @@ public class Handler extends DefaultHandler {
 			m_state = 0;
 		} else if (m_state == 2) {
 			m_servlets.put(m_servletName, value);
+			m_state = 0;
+		} else if (m_state == 5) {
+			m_urlMappings.put(value, m_servletName);
 			m_state = 0;
 		} else if (m_state == 10 || m_state == 20) {
 			m_paramName = value;
@@ -72,3 +78,17 @@ public class Handler extends DefaultHandler {
 		}
 	}
 }
+/*
+ * <servlet>
+    <servlet-name>controlServlet</servlet-name>
+    <servlet-class>com.jenkov.butterfly.ControlServlet</servlet-class>
+    
+        <init-param>
+        <param-name>myParam</param-name>
+        <param-value>paramValue</param-value>
+        </init-param>
+   </servlet>
+ * 
+ * 
+ * 
+ */

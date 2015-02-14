@@ -9,7 +9,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -18,9 +17,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import javax.servlet.http.HttpServlet;
+
 import org.apache.log4j.Logger;
 
-import edu.upenn.cis.cis455.webserver.HTTPRequestParser.CODE;
+import edu.upenn.cis.cis455.webserver.HttpRequestParser.CODE;
 import edu.upenn.cis.cis455.webserver.WorkerThreadPool.ThreadStats;
 
 
@@ -49,14 +50,7 @@ public class WorkerThread extends Thread{
 				task = requestQueue.get();
 				if (!task.isClosed()){	
 					task.setSoTimeout(10000);
-					handleRequest(task);
-/*					System.out.println("dasf");
-					task.setSoTimeout(5000);
-					BufferedReader in = new BufferedReader(new InputStreamReader(task.getInputStream()));
-					String initLine = in.readLine();
-					System.out.println("sdf");
-					PrintWriter out = new PrintWriter(task.getOutputStream(), true);
-					out.println("HTTP/1.0 200 OK");		*/		
+					handleRequest(task);		
 				}		
 				this.reqUrl = "None";	
 			} catch (InterruptedException e) {
@@ -80,20 +74,20 @@ public class WorkerThread extends Thread{
 	}
 	
 	// 200-level-code need this check 
-	private String checkModifyHeader(HTTPRequestParser requestParser) {			
+	private String checkModifyHeader(HttpRequestParser requestParser) {			
 		HashMap<String, String> headers = requestParser.getHeaders();
 		String url = HttpServer.rootDir + requestParser.getUrl();
 		String ret = "200";
 		if (headers.containsKey("If-Modified-Since:".toLowerCase(Locale.ENGLISH))) {
 			if ("GET".equalsIgnoreCase(requestParser.getMethod())) {
-				Date date = convertDataFormat(headers.get("If-Modified-Since:".toLowerCase(Locale.ENGLISH)));
+				Date date = HttpServerUtils.convertDataFormat(headers.get("If-Modified-Since:".toLowerCase(Locale.ENGLISH)), 1);
 				File file = new File(url);
 				if (date != null && file != null && date.getTime() > file.lastModified()) {
 					return "304";
 				}
 			}
 		}else if(headers.containsKey("If-Unmodified-Since:".toLowerCase(Locale.ENGLISH))) {
-			Date date = convertDataFormat(headers.get("If-Unmodified-Since:".toLowerCase(Locale.ENGLISH)));
+			Date date = HttpServerUtils.convertDataFormat(headers.get("If-Unmodified-Since:".toLowerCase(Locale.ENGLISH)), 1);
 			File file = new File(url);
 			if (date != null && file != null && date.getTime() < file.lastModified()) {
 				return "412";
@@ -102,60 +96,33 @@ public class WorkerThread extends Thread{
 		return ret;
 	}
 	
-	private Date convertDataFormat(String dateStr) {
-		SimpleDateFormat format1 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
-		format1.setTimeZone(TimeZone.getTimeZone("GMT"));
-		SimpleDateFormat format2 = new SimpleDateFormat("E, dd-MMM-yy HH:mm:ss z");
-		format2.setTimeZone(TimeZone.getTimeZone("GMT"));
-		SimpleDateFormat format3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
-		format3.setTimeZone(TimeZone.getTimeZone("GMT"));
-		Date date = null;
-		try {
-			date = format1.parse(dateStr);
-		} catch (ParseException e) {
-			date = null;
-		}
-		if (date == null) {
-			try {
-				date = format2.parse(dateStr);
-			} catch (ParseException e) {
-				date = null;
-			}
-		}
-		if (date == null) {
-			try {
-				date = format3.parse(dateStr);
-			} catch (ParseException e) {
-				date = null;
-			}
-		}
-		if (date.getTime() > System.currentTimeMillis()){
-			return null;
-		}
-		return date;
-	}
+	
 	
 	
 	private void handleRequest(Socket socket) throws IOException{
 		
-		HTTPRequestParser requestParser = new HTTPRequestParser();	
+		HttpRequestParser requestParser = new HttpRequestParser();	
 		requestParser.parseHttpRequest(task);
 		if (requestParser.getUrl() == null){	//set request url for later use
 			this.reqUrl = "None";
 		}else{
 			this.reqUrl = HttpServer.rootDir + requestParser.getUrl();
 		}
-		CODE code = requestParser.getCode();
-		if (code == CODE.SHUTDOWN) {		//special url
-			shutdownServer();	
-		} 
-		if (code == CODE.FILE) {
-			resFileContent(requestParser, socket);
-		} else {
-			String res  = genResMessage(requestParser);
-			responseToClient(res, socket);			
+		HttpServlet servlet = getServletFromUrl(requestParser.getUrl());
+		if (servlet != null) {		// servlets
+			System.out.println("call servlets" + servlet.toString());
+		}else {
+			CODE code = requestParser.getCode();
+			if (code == CODE.SHUTDOWN) {		//special url
+				shutdownServer();	
+			} 
+			if (code == CODE.FILE) {
+				resFileContent(requestParser, socket);
+			} else {
+				String res  = genResMessage(requestParser);
+				responseToClient(res, socket);			
+			}
 		}
-
 	}
 	
 	
@@ -170,7 +137,7 @@ public class WorkerThread extends Thread{
 		}		
 	}
 	
-	private String genResMessage(HTTPRequestParser requestParser){	
+	private String genResMessage(HttpRequestParser requestParser){	
 		CODE code = requestParser.getCode();
 		String method = requestParser.getMethod();
 		String protocol = requestParser.getProtocol();
@@ -209,10 +176,6 @@ public class WorkerThread extends Thread{
 			if (!"HEAD".equalsIgnoreCase(method))	content = genHTTPContent(getControlPage());
 			return genResponse(method, protocol, "200", "Server status", content); 
 		}
-/*		case NORMAL:{
-			content = "<h1>Feature not implemented yet</h1>";
-			return genResponse(method, protocol, "200", "Normal request", content); 
-		}*/
 		case LISTDIR:{
 			if ("304".equalsIgnoreCase(checkModifyHeader(requestParser))) {
 				return genResponse(method, protocol, "304", "Not Modified", null);
@@ -259,7 +222,7 @@ public class WorkerThread extends Thread{
 		return sb.toString();
 	}
 	
-	private void resFileContent(HTTPRequestParser requestParser, Socket socket) throws IOException {
+	private void resFileContent(HttpRequestParser requestParser, Socket socket) throws IOException {
 		String protocol = requestParser.getProtocol();
 		String file = this.reqUrl;
 		String ext = getFileExt(file);
@@ -274,6 +237,7 @@ public class WorkerThread extends Thread{
 			pstream.write((protocol + " 304 Not Modified\r\n").getBytes(Charset.forName("UTF-8")));
 			pstream.write(("Date : " + getServerDate() + "\r\n").getBytes(Charset.forName("UTF-8")));
 			pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
+			return;
 		}else if ("412".equalsIgnoreCase(code)) {
 			pstream.write((protocol + " 412 Precondition Failed\r\n").getBytes(Charset.forName("UTF-8")));
 			pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
@@ -460,4 +424,39 @@ public class WorkerThread extends Thread{
 		this.run = false;
 		this.interrupt();
 	}
+	
+	private HttpServlet getServletFromUrl(String reqUrl) {
+		// reqUrl always starts with '/'
+		if (reqUrl.charAt(0) != '/')	//must start with '/' for this assignment
+			return null;
+		// deal with two url-pattern
+		HashMap<String, HttpServlet> servlets= HttpServer.servletContainer.getServlets();
+		HashMap<String, String> urlPatterns = HttpServer.servletContainer.getUrlPatterns();
+		for (String pattern : urlPatterns.keySet()) {
+			String regex = pattern;
+			if (pattern.length() > 1) {
+				String tailing = pattern.substring(pattern.length() - 2);		// /foo/*
+				if ("/*".equals(tailing)) {
+					regex = pattern.substring(0, pattern.length() - 2);			
+				}
+				else if (pattern.endsWith("*")) {								// /foo/abc*   ???
+					regex = pattern.substring(0, pattern.length() - 1);
+				}	
+			}
+			if (reqUrl.startsWith(regex)) {
+				return servlets.get(urlPatterns.get(pattern));
+			}
+		}	
+		return null;
+	}
+	
+	/*
+	 * 
+
+        A string beginning with a ‘/’ character and ending with a ‘/*’ suffix is used for path mapping.
+        A string beginning with a ‘*.’ prefix is used as an extension mapping.
+        A string containing only the ’/’ character indicates the "default" servlet of the application. In this case the servlet path is the request URI minus the context path and the path info is null.
+        All other strings are used for exact matches only.
+
+	 */
 }

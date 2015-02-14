@@ -1,4 +1,4 @@
-package edu.upenn.cis.cis455.webservletcontainer;
+package edu.upenn.cis.cis455.webservletinterface;
 
 import javax.servlet.*;
 
@@ -35,7 +35,7 @@ public class FakeConfig implements ServletConfig {
 		return name;
 	}
 
-	void setInitParam(String name, String value) {		//set init param, may have multi pairs
+	public void setInitParam(String name, String value) {		//set init param, may have multi pairs
 		initParams.put(name, value);
 	}
 }
