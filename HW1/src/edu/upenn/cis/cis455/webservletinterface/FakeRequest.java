@@ -39,7 +39,6 @@ public class FakeRequest implements HttpServletRequest {
 	private HashMap<String, List<String>> m_params = new HashMap<String, List<String>>();
 	private HashMap<String, Object> m_props = new HashMap<String, Object>();
 	private FakeSession m_session = null;
-	private String m_method;
 	
 	public FakeRequest(Socket socket, HttpRequestParser requestParser) {
 		init(socket, requestParser);
@@ -134,7 +133,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getMethod()
 	 */
 	public String getMethod() {
-		return m_method;
+		return requestParser.getMethod();
 	}
 
 	/* (non-Javadoc)
@@ -544,12 +543,8 @@ public class FakeRequest implements HttpServletRequest {
 		else 
 			return -1; 
 	}
-
-	public void setMethod(String method) {
-		m_method = method;
-	}
 	
-	void setParameter(String key, String value) {		//decode URL first
+	public void setParameter(String key, String value) {		//decode URL first
 		if (m_params.containsKey(key)) {
 			m_params.get(key).add(value);
 		} else {

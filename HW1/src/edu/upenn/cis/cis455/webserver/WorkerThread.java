@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
 import org.apache.log4j.Logger;
@@ -104,11 +105,21 @@ public class WorkerThread extends Thread{
 		}else{
 			this.reqUrl = HttpServer.rootDir + requestParser.getUrl();
 		}
-		if (code == CODE.SERVLET) {		// servlets
-			System.out.println("call servlets" + requestParser.getServletFromURL().toString());
+		if (code == CODE.SERVLET) {		// servlets		
+			HttpServlet servlet = requestParser.getServletFromURL();
 			FakeRequest freq = new FakeRequest(socket, requestParser);
-			FakeResponse fres = new FakeResponse(socket, freq);
-			fres.sendError(404, "This is a test");
+			FakeResponse fres = new FakeResponse(socket, freq); 
+			List<String> paras = requestParser.getParaValuePairs();
+			for (int i = 0; i < paras.size(); i = i + 2) {
+				freq.setParameter(paras.get(i), paras.get(i + 1));
+			}
+			try {
+				servlet.service(freq, fres);
+			} catch (ServletException e) {
+				String res = genResponse(requestParser.getMethod(), requestParser.getProtocol(), "500", "Internal Server Error!", null);
+				responseToClient(res, socket);		
+			}
+			System.out.println("call servlets" + servlet.toString());
 		}else if (code == CODE.SHUTDOWN) {		//special url
 			shutdownServer();	
 		}else if (code == CODE.FILE) {

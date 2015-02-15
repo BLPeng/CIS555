@@ -23,13 +23,25 @@ public class HttpRequestParser {
 	private String protocol;
 	private String reqUrl;
 	private String method;
+	private String urlPattern;
 	private HashMap<String, List<String>> headers;
 	private ServletContainer servletContainer;
 //	private String body;				do not deal with body
 	private CODE code;			
-		
+	private List<String> paraValues;
+	
 	public HashMap<String, List<String>> getHeaders() {
 		return this.headers;
+	}
+
+	public List<String> getParaValuePairs() {
+		if (paraValues == null)
+			return new ArrayList<String>();
+		return paraValues;
+	}
+	
+	public String getUrlPattern() {
+		return urlPattern;
 	}
 
 	public String getMethod() {
@@ -54,6 +66,20 @@ public class HttpRequestParser {
 		return code;
 	}
 
+	private void parseParameters(String url) {
+		if (url == null)	return;
+		String parts[] = url.split("\\?");
+		paraValues = new ArrayList<String>();
+		if (parts.length > 1) {				// /foo?x=1&y=2
+			String paras[] = parts[1].split("&|=");
+			if (paras.length % 2 == 0) {
+				for (int i = 0; i < paras.length; i++) {
+					paraValues.add(paras[i]);
+				}
+			}
+		}
+	}
+	
 	public enum CODE {
 		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, NOIMPLEMENT,
 		LISTDIR, FILE, NORMAL, NOALLOW, BADHEADER1, BADHEADER2, SERVLET		//BADHEADER1 unknown	BADHEADER2 http1.1 not host
@@ -67,19 +93,17 @@ public class HttpRequestParser {
 		String line = in.readLine();
 //		System.out.println(line);
 		parseInitialLine(line);			//need to be extend to handle multi-line headers
+		parseParameters(this.reqUrl);
 		//get the headers
 		parseHeaders(in);
-		
 		filterRequest();	
 	}
 	
 	public String matchUrlPattern(String reqUrl) {
 		return servletContainer.matchUrlPattern(reqUrl);
 	}
-	
-	
+
 	public HttpServlet getServletFromURL() {
-		String urlPattern = matchUrlPattern(reqUrl);
 		if (urlPattern == null)	return null;
 		String name = servletContainer.getUrlPattern(urlPattern);
 		return servletContainer.getServlet(name);
@@ -139,7 +163,7 @@ public class HttpRequestParser {
 			return;
 		}
 		// not GET or HEAD request
-		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method)) {
+		if (!"GET".equalsIgnoreCase(this.method) && !"HEAD".equalsIgnoreCase(this.method) && !"POST".equalsIgnoreCase(this.method)) {
 			this.code = CODE.NOIMPLEMENT;
 			return;
 		}
@@ -168,6 +192,7 @@ public class HttpRequestParser {
 		String match = servletContainer.matchUrlPattern(reqUrl);
 		if (match != null) {
 			this.code = CODE.SERVLET;
+			this.urlPattern = match;
 			return;
 		}
 		String tmp = HttpServer.rootDir + reqUrl;
