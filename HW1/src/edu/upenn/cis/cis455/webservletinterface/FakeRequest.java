@@ -1,6 +1,7 @@
 package edu.upenn.cis.cis455.webservletinterface;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.security.Principal;
@@ -9,17 +10,16 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
 
 
 
@@ -34,7 +34,6 @@ public class FakeRequest implements HttpServletRequest {
 	
 	private String characterEncoding;
 	private Socket socket;
-	private String hostName;
 	private HttpRequestParser requestParser;
 	private HashMap<String, List<String>> headers;
 	private HashMap<String, List<String>> m_params = new HashMap<String, List<String>>();
@@ -144,7 +143,7 @@ public class FakeRequest implements HttpServletRequest {
 	public String getPathInfo() {
 		String reqUrl = requestParser.getUrl();
 		String match = requestParser.matchUrlPattern(reqUrl);
-		if (match == null)	return "/";		//should not be null
+		if (match == null)	return null;		//should not be null
 		else {
 			int sz = match.length();
 			if (match.endsWith("/*")) {
@@ -170,16 +169,20 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getContextPath()
 	 */
 	public String getContextPath() {
-		// TODO Auto-generated method stub
-		return null;
+		return "";
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getQueryString()
 	 */
-	public String getQueryString() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getQueryString() {		//should return the HTTP GET query string, i.e., the portion after the “?” when a GET form is posted.
+		if (!"GET".equalsIgnoreCase(requestParser.getMethod())) {
+			return null;
+		}
+		String url = requestParser.getUrl();
+		String[] parts = url.split("\\?");
+		if (parts.length > 1)	return parts[1];
+		else return null;
 	}
 
 	/* (non-Javadoc)
@@ -214,25 +217,35 @@ public class FakeRequest implements HttpServletRequest {
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getRequestURI()
 	 */
-	public String getRequestURI() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getRequestURI() {					//POST /some/path.html HTTP/1.1		/some/path.html 
+		String reqUrl = requestParser.getUrl();
+		String[] parts = reqUrl.split("\\?");
+		return parts[0];
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getRequestURL()
 	 */
 	public StringBuffer getRequestURL() {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuffer sb = new StringBuffer();
+		sb.append(getScheme());
+		sb.append("://");
+		sb.append(getServerName());
+		sb.append(":");
+		sb.append(getServerPort());
+		sb.append(getRequestURI());
+		return sb;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getServletPath()
 	 */
 	public String getServletPath() {
-		// TODO Auto-generated method stub
-		return null;
+		String ret = null;
+		String matchPattern = requestParser.matchUrlPattern(requestParser.getUrl());
+		if (matchPattern == null)	return ret;
+		else if (matchPattern.endsWith("/*"))	return "";
+		else return matchPattern;
 	}
 
 	/* (non-Javadoc)
@@ -383,8 +396,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getParameterMap()
 	 */
 	public Map getParameterMap() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_params;
 	}
 
 	/* (non-Javadoc)
@@ -405,7 +417,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.ServletRequest#getServerName()
 	 */
 	public String getServerName() {
-		return this.hostName;
+		return socket.getLocalAddress().getHostName();
 	}
 
 	/* (non-Javadoc)
@@ -418,9 +430,13 @@ public class FakeRequest implements HttpServletRequest {
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getReader()
 	 */
+	
 	public BufferedReader getReader() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), getCharacterEncoding()));
+		while (br.readLine() != null && br.readLine().length() != 0) {
+				//Retrieves the body of the request 
+		}
+		return br;
 	}
 
 	/* (non-Javadoc)
@@ -438,9 +454,9 @@ public class FakeRequest implements HttpServletRequest {
 	 */
 	public String getRemoteHost() {
 		if (socket != null)
-			return socket.getInetAddress().getHostAddress();
+			return socket.getInetAddress().getHostName();
 		else 
-			return socket.getInetAddress().toString();
+			return socket.getInetAddress().getHostAddress();
 	}
 
 	/* (non-Javadoc)
@@ -552,7 +568,4 @@ public class FakeRequest implements HttpServletRequest {
 		return ((m_session != null) && m_session.isValid());
 	}
 		
-	public void setLocalName(String name) {
-		this.hostName = name;
-	}
 }

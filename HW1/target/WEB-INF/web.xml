@@ -6,7 +6,7 @@
 </servlet>
 <servlet-mapping>
 <servlet-name>CalculatorServlet</servlet-name>
-<url-pattern>/calculate/*</url-pattern>
+<url-pattern>/calculate</url-pattern>
 </servlet-mapping>
 <servlet-mapping>
 <servlet-name>default</servlet-name>

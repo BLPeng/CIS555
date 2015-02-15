@@ -98,17 +98,24 @@ public class WorkerThread extends Thread{
 		CODE code = requestParser.getCode();
 		/*   test   */
 		FakeRequest freq = new FakeRequest(socket, requestParser);
-		freq.setLocalName(HttpServer.servletContainer.getServerHostName());
-		System.out.println(freq.getLocalPort());
-		System.out.println(freq.getLocalName());
-		System.out.println(freq.getLocalAddr());
-		System.out.println(freq.getRemotePort());
-		System.out.println(freq.getRemoteHost());
-		System.out.println(freq.getRemoteAddr());
-		System.out.println(freq.getServerPort());
-		System.out.println(freq.getServerName());
-		System.out.println(freq.getContentLength());
-		System.out.println(freq.getPathInfo());
+		System.out.println("URL: " + freq.getRequestURL());
+		System.out.println("URI: " + freq.getRequestURI());
+		System.out.println("Scheme: " + freq.getScheme());
+		System.out.println("Server Name: " + freq.getServerName());
+		System.out.println("Port: " + freq.getLocalPort());
+		System.out.println("Context Path: " + freq.getContextPath());
+		System.out.println("Servlet Path: " + freq.getServletPath());
+		System.out.println("Path Info: " + freq.getPathInfo());
+		System.out.println("Query: " + freq.getQueryString());
+		System.out.println("Local Name: " + freq.getLocalName());
+		System.out.println("Local Addr: " + freq.getLocalAddr());
+		System.out.println("Remote Port: " + freq.getRemotePort());
+		System.out.println("Remote Host: " + freq.getRemoteHost());
+		System.out.println("Remote Addr: " + freq.getRemoteAddr());
+		System.out.println("Content-length: " + freq.getContentLength());
+		
+		
+		
 		
 		if (requestParser.getUrl() == null){	//set request url for later use
 			this.reqUrl = "None";
