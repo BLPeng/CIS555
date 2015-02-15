@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 import edu.upenn.cis.cis455.webserver.HttpRequestParser.CODE;
 import edu.upenn.cis.cis455.webserver.WorkerThreadPool.ThreadStats;
 import edu.upenn.cis.cis455.webservletinterface.FakeRequest;
+import edu.upenn.cis.cis455.webservletinterface.FakeResponse;
 
 
 public class WorkerThread extends Thread{
@@ -97,25 +98,6 @@ public class WorkerThread extends Thread{
 		requestParser.parseHttpRequest(socket);
 		CODE code = requestParser.getCode();
 		/*   test   */
-		FakeRequest freq = new FakeRequest(socket, requestParser);
-		System.out.println("URL: " + freq.getRequestURL());
-		System.out.println("URI: " + freq.getRequestURI());
-		System.out.println("Scheme: " + freq.getScheme());
-		System.out.println("Server Name: " + freq.getServerName());
-		System.out.println("Port: " + freq.getLocalPort());
-		System.out.println("Context Path: " + freq.getContextPath());
-		System.out.println("Servlet Path: " + freq.getServletPath());
-		System.out.println("Path Info: " + freq.getPathInfo());
-		System.out.println("Query: " + freq.getQueryString());
-		System.out.println("Local Name: " + freq.getLocalName());
-		System.out.println("Local Addr: " + freq.getLocalAddr());
-		System.out.println("Remote Port: " + freq.getRemotePort());
-		System.out.println("Remote Host: " + freq.getRemoteHost());
-		System.out.println("Remote Addr: " + freq.getRemoteAddr());
-		System.out.println("Content-length: " + freq.getContentLength());
-		
-		
-		
 		
 		if (requestParser.getUrl() == null){	//set request url for later use
 			this.reqUrl = "None";
@@ -124,6 +106,9 @@ public class WorkerThread extends Thread{
 		}
 		if (code == CODE.SERVLET) {		// servlets
 			System.out.println("call servlets" + requestParser.getServletFromURL().toString());
+			FakeRequest freq = new FakeRequest(socket, requestParser);
+			FakeResponse fres = new FakeResponse(socket, freq);
+			fres.sendError(404, "This is a test");
 		}else if (code == CODE.SHUTDOWN) {		//special url
 			shutdownServer();	
 		}else if (code == CODE.FILE) {
@@ -367,6 +352,27 @@ public class WorkerThread extends Thread{
 		logger.info(this.getName() + " terminated.");
 		this.run = false;
 		this.interrupt();
+	}
+	
+	private void test1(Socket socket, HttpRequestParser requestParser) throws IOException {
+		FakeRequest freq = new FakeRequest(socket, requestParser);
+		FakeResponse fres = new FakeResponse(socket, freq);
+		System.out.println("URL: " + freq.getRequestURL());
+		System.out.println("URI: " + freq.getRequestURI());
+		System.out.println("Scheme: " + freq.getScheme());
+		System.out.println("Server Name: " + freq.getServerName());
+		System.out.println("Port: " + freq.getLocalPort());
+		System.out.println("Context Path: " + freq.getContextPath());
+		System.out.println("Servlet Path: " + freq.getServletPath());
+		System.out.println("Path Info: " + freq.getPathInfo());
+		System.out.println("Query: " + freq.getQueryString());
+		System.out.println("Local Name: " + freq.getLocalName());
+		System.out.println("Local Addr: " + freq.getLocalAddr());
+		System.out.println("Remote Port: " + freq.getRemotePort());
+		System.out.println("Remote Host: " + freq.getRemoteHost());
+		System.out.println("Remote Addr: " + freq.getRemoteAddr());
+		System.out.println("Content-length: " + freq.getContentLength());
+
 	}
 
 }

@@ -100,18 +100,25 @@ public class ServletContainer {
 		// deal with two url-pattern
 		for (String pattern : urlPatterns.keySet()) {
 			String regex = pattern;
+			String[] parts = reqUrl.split("/|\\?");
 			if (pattern.length() > 1) {
 				String tailing = pattern.substring(pattern.length() - 2);		// /foo/*
-				if ("/*".equals(tailing)) {
-					regex = pattern.substring(0, pattern.length() - 2);			
+				if (pattern.endsWith("*")) {
+					if ("/*".equals(tailing)) {
+						regex = pattern.substring(0, pattern.length() - 2);	
+					} else {
+						regex = pattern.substring(0, pattern.length() - 1);	
+					}
+					if (("/" + parts[1]).equals(regex)) {		// /calculate/
+						return pattern;
+					}
 				}
-				else if (pattern.endsWith("*")) {								// /foo/abc*   ???
-					regex = pattern.substring(0, pattern.length() - 1);
+				else {								// /foo/abc*   ???
+					if (reqUrl.equals(pattern))
+						return pattern;
 				}	
 			}
-			if (reqUrl.startsWith(regex)) {
-				return pattern;
-			}
+			
 		}	
 		return null;
 	}

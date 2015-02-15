@@ -1,11 +1,24 @@
 package edu.upenn.cis.cis455.webservletinterface;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
+import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.tools.ant.taskdefs.condition.IsSet;
+
+import edu.upenn.cis.cis455.webserver.HttpServerUtils;
 
 /**
  * @author tjgreen
@@ -14,147 +27,194 @@ import javax.servlet.http.HttpServletResponse;
  * Window - Preferences - Java - Code Style - Code Templates
  */
 public class FakeResponse implements HttpServletResponse {
-	private String contentType;
+	private Locale locale;
+	private Socket socket;
+	private FakeRequest servletRequest;
+	private int statusCode = 200;
+	private int bufferSize;
+	private StringBuffer sb;
+	private boolean isCommitted = false;
+	private boolean isHeadersSent = false;
+	private PrintWriter writer;
+	private List<Cookie> cookies = new ArrayList<Cookie>();
+	private HashMap<String, List<String>> headers = new HashMap<String, List<String>>();
+	private SimpleDateFormat format = new SimpleDateFormat("EEE, dd-MMM-yy HH:mm:ss z");
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#addCookie(javax.servlet.http.Cookie)
 	 */
-	public FakeResponse() {
-		contentType = null;
+	
+	public FakeResponse(Socket socket, FakeRequest servletRequest) throws IOException {
+		this.servletRequest = servletRequest;
+		sb = new StringBuffer();
+		this.socket = socket;
 	}
-	public void addCookie(Cookie arg0) {
-		// TODO Auto-generated method stub
-
+	public void addCookie(Cookie cookie) {
+		if (cookie != null){
+			cookies.add(cookie);
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#containsHeader(java.lang.String)
 	 */
-	public boolean containsHeader(String arg0) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean containsHeader(String header) {
+		return headers.containsKey(header);
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#encodeURL(java.lang.String)
 	 */
-	public String encodeURL(String arg0) {
+	public String encodeURL(String arg0) {		//deprecated
 		return arg0;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#encodeRedirectURL(java.lang.String)
 	 */
-	public String encodeRedirectURL(String arg0) {
+	public String encodeRedirectURL(String arg0) {		//deprecated
 		return arg0;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#encodeUrl(java.lang.String)
 	 */
-	public String encodeUrl(String arg0) {
+	public String encodeUrl(String arg0) {				//deprecated
 		return arg0;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#encodeRedirectUrl(java.lang.String)
 	 */
-	public String encodeRedirectUrl(String arg0) {
-		// TODO Auto-generated method stub
+	public String encodeRedirectUrl(String arg0) {		//deprecated
 		return arg0;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#sendError(int, java.lang.String)
 	 */
-	public void sendError(int arg0, String arg1) throws IOException {
-		// TODO Auto-generated method stub
-
+	public void sendError(int code, String msg) throws IOException {
+		if (isCommitted) {
+			throw new IllegalStateException();
+		} else {
+			setStatus(code);
+			PrintWriter pw = getWriter();
+			StringBuilder sb = new StringBuilder();
+			sb.append(HttpServerUtils.genHTTPContent(msg));
+			pw.write(sb.toString());
+		}
+		isCommitted = true;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#sendError(int)
 	 */
-	public void sendError(int arg0) throws IOException {
-		// TODO Auto-generated method stub
-
+	public void sendError(int code) throws IOException {
+		if (isCommitted) {
+			throw new IllegalStateException();
+		} else {
+			sb.setLength(0);
+			setStatus(code);
+			PrintWriter pw = getWriter();
+			pw.flush();
+		}
+		isCommitted = true;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#sendRedirect(java.lang.String)
 	 */
-	public void sendRedirect(String arg0) throws IOException {
-		System.out.println("[DEBUG] redirect to " + arg0 + " requested");
-		System.out.println("[DEBUG] stack trace: ");
-		Exception e = new Exception();
-		StackTraceElement[] frames = e.getStackTrace();
-		for (int i = 0; i < frames.length; i++) {
-			System.out.print("[DEBUG]   ");
-			System.out.println(frames[i].toString());
-		}
+	public void sendRedirect(String url) throws IOException {
+		statusCode = 302;
+		this.setHeader("Location", url);
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#setDateHeader(java.lang.String, long)
 	 */
-	public void setDateHeader(String arg0, long arg1) {
-		// TODO Auto-generated method stub
-
+	public void setDateHeader(String header, long value) {
+		header = header.toLowerCase(Locale.ENGLISH);
+		List<String> values = new ArrayList<String>();
+		values.add(format.format(new Date(value)));
+		headers.put(header, values);
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#addDateHeader(java.lang.String, long)
 	 */
-	public void addDateHeader(String arg0, long arg1) {
-		// TODO Auto-generated method stub
-
+	public void addDateHeader(String header, long value) {
+		header = header.toLowerCase(Locale.ENGLISH);
+		List<String> values = headers.get(header);
+		if (values == null) {
+			values = new ArrayList<String>();
+			values.add(format.format(new Date(value)));
+			headers.put(header, values);
+		} else {
+			headers.get(header).add(format.format(new Date(value)));
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#setHeader(java.lang.String, java.lang.String)
 	 */
-	public void setHeader(String arg0, String arg1) {
-		// TODO Auto-generated method stub
-
+	public void setHeader(String header, String value) {
+		header = header.toLowerCase(Locale.ENGLISH);
+		List<String> values = new ArrayList<String>();
+		values.add(value);
+		headers.put(header, values);
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#addHeader(java.lang.String, java.lang.String)
 	 */
-	public void addHeader(String arg0, String arg1) {
-		// TODO Auto-generated method stub
-
+	public void addHeader(String header, String value) {
+		header = header.toLowerCase(Locale.ENGLISH);
+		List<String> values = headers.get(header);
+		if (values == null) {
+			values = new ArrayList<String>();
+			values.add(value);
+			headers.put(header, values);
+		} else {
+			headers.get(header).add(value);
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#setIntHeader(java.lang.String, int)
 	 */
-	public void setIntHeader(String arg0, int arg1) {
-		// TODO Auto-generated method stub
-
+	public void setIntHeader(String header, int value) {
+		header = header.toLowerCase(Locale.ENGLISH);
+		List<String> values = new ArrayList<String>();
+		values.add(String.valueOf(value));
+		headers.put(header, values);
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#addIntHeader(java.lang.String, int)
 	 */
-	public void addIntHeader(String arg0, int arg1) {
-		// TODO Auto-generated method stub
-
+	public void addIntHeader(String header, int value) {
+		header = header.toLowerCase(Locale.ENGLISH);
+		List<String> values = headers.get(header);
+		if (values == null) {
+			values = new ArrayList<String>();
+			values.add(String.valueOf(value));
+			headers.put(header, values);
+		} else {
+			headers.get(header).add(String.valueOf(value));
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#setStatus(int)
 	 */
-	public void setStatus(int arg0) {
-		// TODO Auto-generated method stub
-
+	public void setStatus(int statusCode) {
+		this.statusCode = statusCode;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletResponse#setStatus(int, java.lang.String)
 	 */
-	public void setStatus(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-
+	public void setStatus(int statusCode, String arg1) {		//deprecated
+		this.statusCode = statusCode;
 	}
 
 	/* (non-Javadoc)
@@ -168,8 +228,9 @@ public class FakeResponse implements HttpServletResponse {
 	 * @see javax.servlet.ServletResponse#getContentType()
 	 */
 	public String getContentType() {
-		if (contentType != null)
-			return contentType;
+		List<String> values = headers.get("content-type");
+		if (values != null)
+			return values.get(0);
 		else
 			return "text/html";
 	}
@@ -185,61 +246,95 @@ public class FakeResponse implements HttpServletResponse {
 	 * @see javax.servlet.ServletResponse#getWriter()
 	 */
 	public PrintWriter getWriter() throws IOException {
-		return new PrintWriter(System.out, true);
+		if (writer == null) {
+			writer = new ResponsePrintWriter(new OutputStreamWriter(
+				    socket.getOutputStream(), getCharacterEncoding()), true);
+		}
+		return writer; 
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#setCharacterEncoding(java.lang.String)
 	 */
-	public void setCharacterEncoding(String arg0) {
-		// TODO Auto-generated method stub
-
+	public void setCharacterEncoding(String encoding) {
+		final String header = "content-type";
+		List<String> values = headers.get(header);
+		if (values == null) {
+			values = new ArrayList<String>();
+			values.add(String.valueOf(encoding));
+			headers.put(header, values);
+		} else {
+			headers.get(header).add(String.valueOf(encoding));
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#setContentLength(int)
 	 */
-	public void setContentLength(int arg0) {
-		// TODO Auto-generated method stub
-
+	public void setContentLength(int length) {
+		final String header = "content-length";
+		List<String> values = headers.get(header);
+		if (values == null) {
+			values = new ArrayList<String>();
+			values.add(String.valueOf(length));
+			headers.put(header, values);
+		} else {
+			headers.get(header).add(String.valueOf(length));
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#setContentType(java.lang.String)
 	 */
 	public void setContentType(String contentType) {
-		this.contentType = contentType;
+		final String header = "content-type";
+		List<String> values = headers.get(header);
+		if (values == null) {
+			values = new ArrayList<String>();
+			values.add(String.valueOf(contentType));
+			headers.put(header, values);
+		} else {
+			headers.get(header).set(0, contentType);
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#setBufferSize(int)
 	 */
-	public void setBufferSize(int arg0) {
-		// TODO Auto-generated method stub
-
+	public void setBufferSize(int size) {
+		if (isCommitted) {
+			throw new IllegalStateException();
+		}
+		this.bufferSize = size;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#getBufferSize()
 	 */
 	public int getBufferSize() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.bufferSize;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#flushBuffer()
 	 */
 	public void flushBuffer() throws IOException {
-		// TODO Auto-generated method stub
-
+		if (writer == null) {
+			writer = getWriter();
+		}
+		writer.flush();
+		isCommitted = true;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#resetBuffer()
 	 */
 	public void resetBuffer() {
-		// TODO Auto-generated method stub
+		if (isCommitted) {
+			throw new  IllegalStateException();
+		} else {
+			sb.setLength(0);
+		}
 
 	}
 
@@ -247,32 +342,154 @@ public class FakeResponse implements HttpServletResponse {
 	 * @see javax.servlet.ServletResponse#isCommitted()
 	 */
 	public boolean isCommitted() {
-		// TODO Auto-generated method stub
-		return false;
+		return isCommitted;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#reset()
 	 */
 	public void reset() {
-		// TODO Auto-generated method stub
-
+		if (isCommitted) {
+			throw new IllegalStateException("Already committed");
+		}
+		cookies = new ArrayList<Cookie>();
+		headers = new HashMap<String,List<String>>();
+		locale = null;
+		statusCode = 200;
+		bufferSize = 0;
+		isCommitted = false;
+		isHeadersSent = false;
+		sb.setLength(0);
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#setLocale(java.util.Locale)
 	 */
-	public void setLocale(Locale arg0) {
-		// TODO Auto-generated method stub
-
+	public void setLocale(Locale locale) {
+		this.locale = locale;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#getLocale()
 	 */
 	public Locale getLocale() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.locale;
 	}
 
+	public String resInitLine() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(servletRequest.getProtocol() + " " + this.statusCode + " " + "Rockin\r\n");
+		return sb.toString();
+	}
+	
+	public String resHeaders() {
+		StringBuilder sb = new StringBuilder();
+		for (String key : headers.keySet()) {
+			List<String> values = headers.get(key);
+			for (String value : values) {
+				sb.append(key + ": " + value + "\r\n");
+			}
+ 		}
+		return sb.toString();
+	}
+	
+	private String getCurrentDate() {
+		SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
+		format.setTimeZone(TimeZone.getTimeZone("GMT"));
+		return format.format(new Date());
+	}
+	public class ResponsePrintWriter extends PrintWriter {
+
+		public ResponsePrintWriter(Writer out, boolean autoflush) {
+			super(out, autoflush);
+		}
+		public void write(int c) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.write(c);
+			super.flush();
+		}
+		
+		public void write(String s) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.write(s);
+			super.flush();
+		}
+		public void write(char[] buf) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.write(buf, 0, buf.length);
+		}
+		public void flush() {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.flush();
+
+		}	
+		public void print(String str) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.print(str);
+		}
+		public void print(char c) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.print(c);
+		}
+		public void print(char[] s) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.print(s);
+		}
+		public void println(String str) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.println(str);
+		}
+		public void println(char c) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.println(c);
+		}	
+		public void println(char[] s) {
+			if (isHeadersSent == false) {
+				isHeadersSent = true;
+				sendHeaders();
+			}
+			super.println(s);
+		} 
+		
+		private void sendHeaders() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(resInitLine());
+			sb.append(resHeaders());
+			sb.append("Date: " + getCurrentDate() + "\r\n");
+			sb.append("Content-Type: " + getContentType() + "\r\n");
+			sb.append("Content-Encoding: " + getCharacterEncoding() + "\r\n");
+			sb.append("\r\n");
+			super.print(sb.toString());
+			super.flush();
+			isCommitted = true;
+			isHeadersSent = true;
+		}
+	}
 }

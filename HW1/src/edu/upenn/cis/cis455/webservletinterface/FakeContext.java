@@ -33,8 +33,7 @@ public class FakeContext implements ServletContext {
 	
 	//uripath - a String specifying the context path of another web application in the container. 
 	public ServletContext getContext(String name) {		
-		//TODO
-		return null;
+		return this;
 	}
 	
 	public String getInitParameter(String name) {		//OK	
