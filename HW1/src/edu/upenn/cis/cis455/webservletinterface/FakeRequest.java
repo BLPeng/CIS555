@@ -74,6 +74,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getDateHeader(java.lang.String)
 	 */
 	public long getDateHeader(String header) {
+		header = header.toLowerCase(Locale.ENGLISH);
 		if (!headers.containsKey(header))		//1. not contains the header
 			return -1;
 		String dateStr = headers.get(header).get(0);		//first ele
@@ -86,6 +87,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getHeader(java.lang.String)
 	 */
 	public String getHeader(String header) {
+		header = header.toLowerCase(Locale.ENGLISH);
 		if (!headers.containsKey(header))
 			return null;
 		else {
@@ -98,6 +100,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getHeaders(java.lang.String)
 	 */
 	public Enumeration getHeaders(String header) {
+		header = header.toLowerCase(Locale.ENGLISH);
 		if (!headers.containsKey(header))
 			return Collections.emptyEnumeration();
 		else {
@@ -121,6 +124,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getIntHeader(java.lang.String)
 	 */
 	public int getIntHeader(String header) {
+		header = header.toLowerCase(Locale.ENGLISH);
 		if (!headers.containsKey(header)) {
 			return -1;
 		}

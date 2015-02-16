@@ -95,7 +95,7 @@ public class ServletContainer {
 	}
 	public String matchUrlPattern(String reqUrl) {
 		// reqUrl always starts with '/'
-		if (reqUrl == null || reqUrl.charAt(0) != '/')	//must start with '/' for this assignment
+		if (reqUrl == null || reqUrl.charAt(0) != '/' || reqUrl.length() == 1)	//must start with '/' for this assignment
 			return null;
 		// deal with two url-pattern
 		for (String pattern : urlPatterns.keySet()) {
@@ -121,5 +121,13 @@ public class ServletContainer {
 			
 		}	
 		return null;
+	}
+	
+	public void shutdown() {
+		if (servlets != null) {
+			for(HttpServlet servlet : servlets.values()) {
+				servlet.destroy();
+			}
+		}
 	}
 }

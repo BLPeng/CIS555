@@ -115,12 +115,14 @@ public class WorkerThread extends Thread{
 			}
 			try {
 				servlet.service(freq, fres);
-			} catch (ServletException e) {
-				String res = genResponse(requestParser.getMethod(), requestParser.getProtocol(), "500", "Internal Server Error!", null);
+			} catch (Exception e) {
+				String res = genResponse(requestParser.getMethod(), requestParser.getProtocol(), "500", "Internal Server Error!", "Internal Server Error!");
 				responseToClient(res, socket);		
 			}
-			System.out.println("call servlets" + servlet.toString());
+			logger.info("call servlets" + servlet.toString());
 		}else if (code == CODE.SHUTDOWN) {		//special url
+			String res  = genResMessage(requestParser);
+			responseToClient(res, socket);
 			shutdownServer();	
 		}else if (code == CODE.FILE) {
 			resFileContent(requestParser, socket);

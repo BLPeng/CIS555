@@ -100,6 +100,7 @@ public class HttpServer {
 			logger.info("shutdown server.");
 			httpServer.requestReceiver.shutdown();
 			httpServer.workerThreadPool.shutdown();
+			httpServer.servletContainer.shutdown();
 		}	
 	}
 	private static void usage() {

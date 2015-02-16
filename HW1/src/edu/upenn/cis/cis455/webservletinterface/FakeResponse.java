@@ -241,7 +241,6 @@ public class FakeResponse implements HttpServletResponse {
 	public ServletOutputStream getOutputStream() throws IOException {		//ignore
 		return null;
 	}
-
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletResponse#getWriter()
 	 */
@@ -375,10 +374,10 @@ public class FakeResponse implements HttpServletResponse {
 	public Locale getLocale() {
 		return this.locale;
 	}
-
+	
 	public String resInitLine() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(servletRequest.getProtocol() + " " + this.statusCode + " " + "Rockin\r\n");
+		sb.append(servletRequest.getProtocol() + " " + this.statusCode + " " + HttpServerUtils.getPhraseFromStatus(this.statusCode) + "\r\n");
 		return sb.toString();
 	}
 	

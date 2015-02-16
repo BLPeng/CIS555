@@ -110,4 +110,19 @@ public class HttpServerUtils {
 		}
 	}
 	
+	public static String getPhraseFromStatus(int status) {
+		if (status == 200)	return "OK";
+		else if (status == 500)	return "Internal Server Error";
+		else if (status == 302) return "Redirect";
+		else if (status == 100) return "Continue";
+		else if (status == 202) return "Accepted";
+		else if (status == 304) return "Not Modified";
+		else if (status == 400) return "Bad Request";
+		else if (status == 401) return "Unauthorized";
+		else if (status == 403) return "Forbidden";
+		else if (status == 404) return "Not Found";
+		else if (status == 405) return "Method Not Allowed";
+		else return "unknown";
+	}
+	
 }

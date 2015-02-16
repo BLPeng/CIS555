@@ -24,7 +24,7 @@ public class HttpRequestParser {
 	private String reqUrl;
 	private String method;
 	private String urlPattern;
-	private HashMap<String, List<String>> headers;
+	private HashMap<String, List<String>> headers;		//all to lower case
 	private ServletContainer servletContainer;
 //	private String body;				do not deal with body
 	private CODE code;			
