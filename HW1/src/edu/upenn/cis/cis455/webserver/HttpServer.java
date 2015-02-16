@@ -10,15 +10,18 @@ package edu.upenn.cis.cis455.webserver;
  * 5. RequestReceiver.java : receive requests, producer
  */
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import edu.upenn.cis.cis455.webservletinterface.ServletContainer;
 
@@ -31,6 +34,7 @@ public class HttpServer {
 	public static HashMap<String, String> fileTypes;
 	public static HashSet<String> acceptMethods;
 	public static ServletContainer servletContainer;
+	private String errorLog = "serverErrorLog.log";
 	private final int blockingQueueSize = 2000;
 	private RequestReceiver requestReceiver;
 	private WorkerThreadPool workerThreadPool;	
@@ -44,6 +48,7 @@ public class HttpServer {
 		initBasicSetting();		//for file type and method type
 		portNumber = Integer.valueOf(portNum);
 		rootDir = root;
+		errorLog = root + "/" + errorLog;
 		servletContainer = new ServletContainer(webdotxml);
 		blockingQueue = new MyBlockingQueue<Socket>(blockingQueueSize);
 		requestReceiver = new RequestReceiver(portNumber, rootDir, blockingQueue);
@@ -60,6 +65,7 @@ public class HttpServer {
 			httpServer = new HttpServer(args[0], args[1], args[2]);
 			httpServer.start();
 		} catch (IOException e) {
+			logger.error(HttpServerUtils.getServerDate());
 			logger.error("Could not initialize server");
 			e.printStackTrace();
 		}
@@ -81,6 +87,7 @@ public class HttpServer {
 		//validate port number
 		int portNum = Integer.valueOf(args[0]);
 		if (portNum < 0 || portNum >= 65536){
+			logger.error(HttpServerUtils.getServerDate());
 			logger.error("Port Number is invalid!");
 			System.out.println("Valid port number range:[0, 65535], [1024, 65535] is recommended!");
 			System.exit(-1);
@@ -89,7 +96,8 @@ public class HttpServer {
         System.out.println("Port: " + portNum + "\rRoot Directory: " + args[1]);
 	}
 	//let's run server
-	private void start() {
+	private void start() throws IOException {
+		specifyLogFile(this.errorLog);
 		requestReceiver.start();
 		workerThreadPool.start();	
 	}
@@ -144,5 +152,13 @@ public class HttpServer {
         All other strings are used for exact matches only.
 
 	 */
+	private void specifyLogFile(String logFileName) throws IOException{
+	     
+	    Properties log4jprops = new Properties();
+	    InputStream is = this.getClass().getResourceAsStream("/log4j.properties");
+	    log4jprops.load( is );
+	    log4jprops.setProperty("log4j.appender.file.File", logFileName);
+	    PropertyConfigurator.configure(log4jprops);
+	}
 	
 }

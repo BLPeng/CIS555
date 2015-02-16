@@ -9,7 +9,7 @@ public class MyBlockingQueue<T> {
 	
 	private Queue<T> bq;
 	private int capacity;
-	static final Logger logger = Logger.getLogger(HttpServer.class.getName());
+//	private final Logger logger = HttpServer.logger;
 	
 	public MyBlockingQueue(int capacity){
 		this.capacity = capacity;

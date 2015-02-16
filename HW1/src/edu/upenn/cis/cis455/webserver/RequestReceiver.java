@@ -16,7 +16,7 @@ public class RequestReceiver extends Thread{
 	//shared blockingQueue
 	private MyBlockingQueue<Socket> taskQueue;
 	
-	static final Logger logger = Logger.getLogger(RequestReceiver.class.getName());
+	static final Logger logger = HttpServer.logger;
 	
 	public int getPortNumber() {
 		return portNumber;

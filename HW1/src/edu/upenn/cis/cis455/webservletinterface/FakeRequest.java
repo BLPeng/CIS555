@@ -155,8 +155,9 @@ public class FakeRequest implements HttpServletRequest {
 				sz = sz - 1;
 			}
 			String ret = reqUrl.substring(sz);
-			if (ret.length() == 0 || ret.charAt(0) != '/');
-			ret = "/" + ret;
+			ret = ret.split("\\?")[0];
+			if (ret.length() == 0 || ret.charAt(0) != '/')
+				ret = "/" + ret;
 			return ret;
 		}
 	}
@@ -247,7 +248,7 @@ public class FakeRequest implements HttpServletRequest {
 		String ret = null;
 		String matchPattern = requestParser.matchUrlPattern(requestParser.getUrl());
 		if (matchPattern == null)	return ret;
-		else if (matchPattern.endsWith("/*"))	return "";
+		else if (matchPattern.endsWith("/*"))	return matchPattern.substring(0, matchPattern.length() - 2);		//???
 		else return matchPattern;
 	}
 

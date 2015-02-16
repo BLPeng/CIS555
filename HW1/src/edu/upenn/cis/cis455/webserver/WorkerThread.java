@@ -32,7 +32,7 @@ public class WorkerThread extends Thread{
 	private String reqUrl;
 	private Socket task;
 	private Boolean run;
-	static final Logger logger = Logger.getLogger(WorkerThread.class.getName());
+	static final Logger logger = HttpServer.logger;
 	
 	public WorkerThread(MyBlockingQueue<Socket> requestQueue, WorkerThreadPool pool, int label){
 		super("Thread " + String.valueOf(label));
@@ -370,21 +370,7 @@ public class WorkerThread extends Thread{
 	private void test1(Socket socket, HttpRequestParser requestParser) throws IOException {
 		FakeRequest freq = new FakeRequest(socket, requestParser);
 		FakeResponse fres = new FakeResponse(socket, freq);
-		System.out.println("URL: " + freq.getRequestURL());
-		System.out.println("URI: " + freq.getRequestURI());
-		System.out.println("Scheme: " + freq.getScheme());
-		System.out.println("Server Name: " + freq.getServerName());
-		System.out.println("Port: " + freq.getLocalPort());
-		System.out.println("Context Path: " + freq.getContextPath());
-		System.out.println("Servlet Path: " + freq.getServletPath());
-		System.out.println("Path Info: " + freq.getPathInfo());
-		System.out.println("Query: " + freq.getQueryString());
-		System.out.println("Local Name: " + freq.getLocalName());
-		System.out.println("Local Addr: " + freq.getLocalAddr());
-		System.out.println("Remote Port: " + freq.getRemotePort());
-		System.out.println("Remote Host: " + freq.getRemoteHost());
-		System.out.println("Remote Addr: " + freq.getRemoteAddr());
-		System.out.println("Content-length: " + freq.getContentLength());
+		
 
 	}
 
