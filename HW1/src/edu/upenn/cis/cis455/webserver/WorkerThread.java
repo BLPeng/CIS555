@@ -353,6 +353,8 @@ public class WorkerThread extends Thread{
 		sb.append(System.getProperty("line.separator"));
 		sb.append("<a href=\"/shutdown\">");
 		sb.append("<button>Shutdown</button></a>");
+		sb.append("<a href=\"/servererrorlog\">");
+		sb.append("<button>ServerErrorLog</button></a>");
 		return sb.toString();
 	}
 	

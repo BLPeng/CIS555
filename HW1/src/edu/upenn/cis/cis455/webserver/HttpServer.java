@@ -34,7 +34,7 @@ public class HttpServer {
 	public static HashMap<String, String> fileTypes;
 	public static HashSet<String> acceptMethods;
 	public static ServletContainer servletContainer;
-	private String errorLog = "serverErrorLog.log";
+	public static String errorLog = "serverErrorLog.log";
 	private final int blockingQueueSize = 2000;
 	private RequestReceiver requestReceiver;
 	private WorkerThreadPool workerThreadPool;	

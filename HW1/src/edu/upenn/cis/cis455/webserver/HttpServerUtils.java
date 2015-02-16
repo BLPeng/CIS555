@@ -1,6 +1,10 @@
 package edu.upenn.cis.cis455.webserver;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -125,4 +129,22 @@ public class HttpServerUtils {
 		else return "unknown";
 	}
 	
+	public static String getFileContent(String file) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(file)); 
+		StringBuilder sb = new StringBuilder();
+		try
+		{
+			String line = null;
+		    while((line = br.readLine()) != null)
+		    {
+		    	sb.append(line);
+		    	sb.append(System.lineSeparator());
+		    }
+		}catch(Exception ex) {
+			//
+		}finally {
+			br.close();
+		}
+		return sb.toString();
+	}
 }
