@@ -65,7 +65,28 @@ public class HttpRequestParser {
 	public CODE getCode() {
 		return code;
 	}
-
+	
+	private void parseParameters2(String url, String method, BufferedReader in) throws IOException {
+		if (method.equalsIgnoreCase("GET")) {
+			parseParameters(url);
+		} else if (method.equalsIgnoreCase("POST")) {
+			int len = 0;
+			if (headers.containsKey("content-length")) {
+				len = Integer.valueOf(headers.get("content-length").get(0));
+			}
+			char[] postContent = new char[len]; 
+			in.read(postContent, 0, len);
+			System.out.println(postContent);
+			paraValues = new ArrayList<String>();
+			String paras[] = (new String(postContent)).split("&|=");
+			if (paras.length % 2 == 0) {
+				for (int i = 0; i < paras.length; i++) {
+					paraValues.add(paras[i]);
+				}
+			}
+		}
+	}
+	
 	private void parseParameters(String url) {
 		if (url == null)	return;
 		String parts[] = url.split("\\?");
@@ -93,9 +114,9 @@ public class HttpRequestParser {
 		String line = in.readLine();
 //		System.out.println(line);
 		parseInitialLine(line);			//need to be extend to handle multi-line headers
-		parseParameters(this.reqUrl);
-		//get the headers
 		parseHeaders(in);
+		parseParameters2(this.reqUrl, this.method, in);
+		//get the headers		
 		filterRequest();	
 	}
 	

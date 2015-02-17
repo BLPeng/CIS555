@@ -16,6 +16,10 @@
 <servlet-name>ServerErrorLog</servlet-name>
 <servlet-class>edu.upenn.cis.cis455.webservlet.ServerLogServlet</servlet-class>
 </servlet>
+<servlet>
+<servlet-name>LoginServlet</servlet-name>
+<servlet-class>edu.upenn.cis.cis455.webservlet.LoginServlet</servlet-class>
+</servlet>
 <servlet-mapping>
 <servlet-name>TestServlet</servlet-name>
 <url-pattern>/test/*</url-pattern>
@@ -33,7 +37,14 @@
 <url-pattern>/servererrorlog</url-pattern>
 </servlet-mapping>
 <servlet-mapping>
+<servlet-name>LoginServlet</servlet-name>
+<url-pattern>/login/*</url-pattern>
+</servlet-mapping>
+<servlet-mapping>
 <servlet-name>default</servlet-name>
 <url-pattern>*.html</url-pattern>
 </servlet-mapping>
+<session-config>
+<session-timeout>10</session-timeout>
+</session-config>
 </web-app>

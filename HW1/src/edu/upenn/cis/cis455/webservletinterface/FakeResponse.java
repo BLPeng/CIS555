@@ -53,7 +53,8 @@ public class FakeResponse implements HttpServletResponse {
 		this.socket = socket;
 		Cookie[] cookie = servletRequest.getCookies();
 		if (cookie != null)
-			cookies = Arrays.asList();
+			for (int i = 0; i < cookie.length; i++)
+				cookies.add(cookie[i]);
 	}
 	public void addCookie(Cookie cookie) {
 		if (cookie != null){
@@ -406,6 +407,7 @@ public class FakeResponse implements HttpServletResponse {
 		if (cookies != null && servletRequest.hasSession()) {
 			sb.append("set-cookie: ");
 			sb.append("JSESSIONID = " + session.getId());
+			sb.append(", ");
 			for (Cookie cookie : cookies) {
 				sb.append(cookie.getName() + "=" + cookie.getValue());
 				sb.append(", ");

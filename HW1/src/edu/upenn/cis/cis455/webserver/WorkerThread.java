@@ -116,6 +116,8 @@ public class WorkerThread extends Thread{
 			try {
 				servlet.service(freq, fres);
 			} catch (Exception e) {
+				logger.error(HttpServerUtils.getServerDate());
+				logger.error("Internal Server Error!\r\n");
 				String res = genResponse(requestParser.getMethod(), requestParser.getProtocol(), "500", "Internal Server Error!", "Internal Server Error!");
 				responseToClient(res, socket);		
 			}
