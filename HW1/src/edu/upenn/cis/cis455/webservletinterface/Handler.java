@@ -11,16 +11,20 @@ public class Handler extends DefaultHandler {
 	private String m_servletName;
 	public String m_serverName;
 	private String m_paramName;
+	private int sessionTimeOut;
 	public HashMap<String,String> m_servlets = new HashMap<String,String>();
 	public HashMap<String,String> m_urlMappings = new HashMap<String,String>();
 	public HashMap<String,String> m_contextParams = new HashMap<String,String>();
 	public HashMap<String,HashMap<String,String>> m_servletParams = new HashMap<String,HashMap<String,String>>();
 	
+	public int getSessionTimeout() {
+		return sessionTimeOut;
+	}
 	public void startDocument() throws SAXException {
 		super.startDocument();
         System.out.println("start processing xml. ");
     }
-
+	
     public void endDocument() throws SAXException {
     	super.endDocument();
         System.out.println("end processing xml. ");
@@ -42,7 +46,9 @@ public class Handler extends DefaultHandler {
 			m_state = 5;
 		} else if (qName.compareTo("display-name") == 0) {
 			m_state = 6;
-		} 
+		} else if (qName.compareTo("session-timeout") == 0) {
+			m_state = 7;
+		}
 	}
 	public void characters(char[] ch, int start, int length) {
 		String value = new String(ch, start, length);
@@ -57,6 +63,9 @@ public class Handler extends DefaultHandler {
 			m_state = 0;
 		} else if (m_state == 6) {
 			m_serverName = value;
+			m_state = 0;
+		} else if (m_state == 7) {
+			sessionTimeOut = Integer.valueOf(value) * 60;
 			m_state = 0;
 		} else if (m_state == 10 || m_state == 20) {
 			m_paramName = value;

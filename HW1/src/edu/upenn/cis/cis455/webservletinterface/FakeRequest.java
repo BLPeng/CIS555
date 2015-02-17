@@ -20,11 +20,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-
-
-
-
 import edu.upenn.cis.cis455.webserver.HttpRequestParser;
+import edu.upenn.cis.cis455.webserver.HttpServer;
 import edu.upenn.cis.cis455.webserver.HttpServerUtils;
 
 /**
@@ -39,14 +36,18 @@ public class FakeRequest implements HttpServletRequest {
 	private HashMap<String, List<String>> m_params = new HashMap<String, List<String>>();
 	private HashMap<String, Object> m_props = new HashMap<String, Object>();
 	private FakeSession m_session = null;
+	private List<Cookie> cookies;
+	private Date date;
+	private boolean fromCookie;
 	
 	public FakeRequest(Socket socket, HttpRequestParser requestParser) {
 		init(socket, requestParser);
 	}
 	
 	public FakeRequest(Socket socket, HttpRequestParser requestParser, FakeSession session) {
-		m_session = session;
 		init(socket, requestParser);
+		m_session = session;
+		fromCookie = false;
 	}
 	
 	private void init(Socket socket, HttpRequestParser requestParser) {
@@ -54,6 +55,17 @@ public class FakeRequest implements HttpServletRequest {
 		this.requestParser = requestParser;
 		characterEncoding = null;
 		headers = requestParser.getHeaders();
+		cookies = getCookiesFromHeaders(headers);
+		date = new Date();
+		if (cookies != null) {
+			for (Cookie cookie: cookies) {
+				if (cookie.getName().equalsIgnoreCase("JSESSIONID")) {
+					m_session = (FakeSession) HttpServer.servletContainer.getSession(cookie.getValue());
+					fromCookie = true;
+				}
+			}
+		}
+		
 	}
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getAuthType()
@@ -66,8 +78,10 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getCookies()
 	 */
 	public Cookie[] getCookies() {
-		// TODO Auto-generated method stub
-		return null;
+		if (cookies != null)
+			return cookies.toArray(new Cookie[cookies.size()]);
+		else 
+			return null;
 	}
 
 	/* (non-Javadoc)
@@ -214,7 +228,11 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getRequestedSessionId()
 	 */
 	public String getRequestedSessionId() {
-		// TODO Auto-generated method stub
+		for (Cookie cookie : cookies) {
+			if("JSESSIONID".equalsIgnoreCase(cookie.getName())){
+		       return cookie.getValue();
+		    }
+		}
 		return null;
 	}
 
@@ -257,14 +275,16 @@ public class FakeRequest implements HttpServletRequest {
 	 */
 	public HttpSession getSession(boolean arg0) {
 		if (arg0) {
-			if (! hasSession()) {
-				m_session = new FakeSession();
+			if (!hasSession()) {
+				m_session = new FakeSession(HttpServer.servletContainer.getContext());
 			}
 		} else {
 			if (! hasSession()) {
 				m_session = null;
 			}
 		}
+		if (m_session != null)
+			m_session.setLastAccessTime(date.getTime());
 		return m_session;
 	}
 
@@ -279,16 +299,14 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdValid()
 	 */
 	public boolean isRequestedSessionIdValid() {
-		// TODO Auto-generated method stub
-		return false;
+		return hasSession();
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
 	 */
 	public boolean isRequestedSessionIdFromCookie() {
-		// TODO Auto-generated method stub
-		return false;
+		return fromCookie;
 	}
 
 	/* (non-Javadoc)
@@ -566,6 +584,26 @@ public class FakeRequest implements HttpServletRequest {
 	
 	public boolean hasSession() {
 		return ((m_session != null) && m_session.isValid());
+	}
+	
+	private List<Cookie> getCookiesFromHeaders(HashMap<String, List<String>> headers) {
+		if (headers != null) {
+			List<String> values = headers.get("cookie");
+			if (values != null) {
+				List<Cookie> cookies = new ArrayList<Cookie>();
+				for (String value : values) {			// multi-value for header
+					String[] cookiess = value.split("[;,]");		//A server should also accept comma (,) as the separator between cookie-values for future compatibility.
+					for (String v : cookiess) {			// multi-cookie value
+						String[] pair = v.trim().split("=");
+						if (pair.length != 2)	continue;	// invalid value
+						Cookie cookie = new Cookie(pair[0], pair[1]);
+						cookies.add(cookie);
+					}
+				}
+				return cookies;
+			}
+		}
+		return null;
 	}
 		
 }

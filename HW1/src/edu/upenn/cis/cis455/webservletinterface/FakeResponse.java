@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +17,10 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.tools.ant.taskdefs.condition.IsSet;
+//TODO cookies 
+
+
+import javax.servlet.http.HttpSession;
 
 import edu.upenn.cis.cis455.webserver.HttpServerUtils;
 
@@ -47,6 +51,9 @@ public class FakeResponse implements HttpServletResponse {
 		this.servletRequest = servletRequest;
 		sb = new StringBuffer();
 		this.socket = socket;
+		Cookie[] cookie = servletRequest.getCookies();
+		if (cookie != null)
+			cookies = Arrays.asList();
 	}
 	public void addCookie(Cookie cookie) {
 		if (cookie != null){
@@ -290,7 +297,7 @@ public class FakeResponse implements HttpServletResponse {
 		List<String> values = headers.get(header);
 		if (values == null) {
 			values = new ArrayList<String>();
-			values.add(String.valueOf(contentType));
+			values.add(contentType);
 			headers.put(header, values);
 		} else {
 			headers.get(header).set(0, contentType);
@@ -375,13 +382,13 @@ public class FakeResponse implements HttpServletResponse {
 		return this.locale;
 	}
 	
-	public String resInitLine() {
+	private String resInitLine() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(servletRequest.getProtocol() + " " + this.statusCode + " " + HttpServerUtils.getPhraseFromStatus(this.statusCode) + "\r\n");
 		return sb.toString();
 	}
 	
-	public String resHeaders() {
+	private String resHeaders() {
 		StringBuilder sb = new StringBuilder();
 		for (String key : headers.keySet()) {
 			List<String> values = headers.get(key);
@@ -389,6 +396,25 @@ public class FakeResponse implements HttpServletResponse {
 				sb.append(key + ": " + value + "\r\n");
 			}
  		}
+		sb.append(resCookieHeader());
+		return sb.toString();
+	}
+	
+	private String resCookieHeader() {
+		StringBuilder sb = new StringBuilder();	
+		HttpSession session = servletRequest.getSession();
+		if (cookies != null && servletRequest.hasSession()) {
+			sb.append("set-cookie: ");
+			sb.append("JSESSIONID = " + session.getId());
+			for (Cookie cookie : cookies) {
+				sb.append(cookie.getName() + "=" + cookie.getValue());
+				sb.append(", ");
+			}
+		}
+		if (sb.length() > 0) {
+			sb.setLength(sb.length() - 2); 	//remove last ", "
+		}
+		sb.append(System.lineSeparator());
 		return sb.toString();
 	}
 	

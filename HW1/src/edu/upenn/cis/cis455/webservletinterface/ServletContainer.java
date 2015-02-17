@@ -2,16 +2,24 @@ package edu.upenn.cis.cis455.webservletinterface;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpSession;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 public class ServletContainer {
 	private HashMap<String, HttpServlet> servlets;
 	private HashMap<String, String> urlPatterns;
+	private HashMap<String, FakeSession> sessions;
+	private int sessionTimeout;
 	private String serverHostName;
 	private FakeContext fContext;
+	
+	public int getSesstionTimeout() {
+		return sessionTimeout;
+	}
 	
 	public String getServerHostName() {
 		return serverHostName;
@@ -29,7 +37,7 @@ public class ServletContainer {
 		return urlPatterns;
 	}
 
-	public FakeContext getfContext() {
+	public FakeContext getContext() {
 		return fContext;
 	}
 
@@ -39,6 +47,8 @@ public class ServletContainer {
 		servlets = createServlets(handler, fContext);
 		urlPatterns = getUrlPatterns(handler);
 		serverHostName = handler.m_serverName;
+		sessionTimeout = handler.getSessionTimeout();
+		sessions = new HashMap<String, FakeSession>();
 	}
 	
 	private Handler parseWebdotxml(String webdotxml) throws Exception {
@@ -129,5 +139,19 @@ public class ServletContainer {
 				servlet.destroy();
 			}
 		}
+	}
+	
+	public void addSession(String sessionID, FakeSession session) {
+		if (sessionID != null && session != null) {
+			sessions.put(sessionID, session);
+		}
+	}
+	
+	public FakeSession getSession(String sessionID) {
+		return sessions.get(sessionID);
+	}
+	
+	public void removeSession(String sessionID) {
+		sessions.remove(sessionID);
 	}
 }
