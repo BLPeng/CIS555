@@ -61,7 +61,11 @@ public class FakeRequest implements HttpServletRequest {
 			for (Cookie cookie: cookies) {
 				if (cookie.getName().equalsIgnoreCase("JSESSIONID")) {
 					m_session = (FakeSession) HttpServer.servletContainer.getSession(cookie.getValue());
-					fromCookie = true;
+					if (m_session != null){
+						fromCookie = true;
+						m_session.setIsNew(false);
+						break;
+					}
 				}
 			}
 		}
@@ -277,6 +281,7 @@ public class FakeRequest implements HttpServletRequest {
 		if (arg0) {
 			if (!hasSession()) {
 				m_session = new FakeSession(HttpServer.servletContainer.getContext());
+				HttpServer.servletContainer.addSession(m_session.getId(), m_session);
 			}
 		} else {
 			if (! hasSession()) {

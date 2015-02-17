@@ -67,6 +67,7 @@ public class HttpRequestParser {
 	}
 	
 	private void parseParameters2(String url, String method, BufferedReader in) throws IOException {
+		if (method == null)	return;
 		if (method.equalsIgnoreCase("GET")) {
 			parseParameters(url);
 		} else if (method.equalsIgnoreCase("POST")) {
@@ -114,10 +115,11 @@ public class HttpRequestParser {
 		String line = in.readLine();
 //		System.out.println(line);
 		parseInitialLine(line);			//need to be extend to handle multi-line headers
+		filterRequest();
 		parseHeaders(in);
 		parseParameters2(this.reqUrl, this.method, in);
 		//get the headers		
-		filterRequest();	
+			
 	}
 	
 	public String matchUrlPattern(String reqUrl) {

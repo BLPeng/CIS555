@@ -187,4 +187,8 @@ public class FakeSession implements HttpSession {
 		this.lastAccessTime = time;
 	}
 	
+	public void setIsNew(boolean isNew) {
+		this.isNew = isNew;
+	}
+	
 }

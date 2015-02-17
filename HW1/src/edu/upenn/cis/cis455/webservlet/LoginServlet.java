@@ -22,12 +22,12 @@ public class LoginServlet extends HttpServlet {
     	long cur = System.currentTimeMillis();
         if(expire > cur && !session.isNew()){
             session.setMaxInactiveInterval(10*60);
-            Cookie cookie = new Cookie("user", user);
+/*            Cookie cookie = new Cookie("user", user);
             cookie.setMaxAge(10*60);
             response.addCookie(cookie);
             cookie = new Cookie("sid", session.getId());
             cookie.setMaxAge(10*60);
-            response.addCookie(cookie);
+            response.addCookie(cookie);*/
             welcomePage(response);   
         }else{
         	loginPage(response);  
