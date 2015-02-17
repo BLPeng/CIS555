@@ -20,7 +20,8 @@ public class LoginServlet extends HttpServlet {
     	HttpSession session = request.getSession();
     	long expire = session.getLastAccessedTime() + session.getMaxInactiveInterval() * 1000;
     	long cur = System.currentTimeMillis();
-        if(expire > cur && !session.isNew()){
+    	String login = (String) session.getAttribute("login");
+        if(expire > cur && !session.isNew() && login != null && login.equals("ok")){
             session.setMaxInactiveInterval(10*60);
 /*            Cookie cookie = new Cookie("user", user);
             cookie.setMaxAge(10*60);
@@ -42,6 +43,7 @@ public class LoginServlet extends HttpServlet {
         if(user.equals(user) && pwd.equals(pwd)){
             HttpSession session = request.getSession();
             session.setMaxInactiveInterval(10*60);
+            session.setAttribute("login", "ok");
             Cookie cookie = new Cookie("user", user);
             cookie.setMaxAge(10*60);
             response.addCookie(cookie);

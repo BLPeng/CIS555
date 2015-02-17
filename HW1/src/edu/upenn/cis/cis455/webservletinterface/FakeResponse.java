@@ -405,9 +405,11 @@ public class FakeResponse implements HttpServletResponse {
 		StringBuilder sb = new StringBuilder();	
 		HttpSession session = servletRequest.getSession();
 		if (cookies != null && servletRequest.hasSession()) {
-			sb.append("set-cookie: ");
-			sb.append("JSESSIONID = " + session.getId());
-			sb.append(", ");
+			if (session.isNew()) {
+				sb.append("set-cookie: ");
+				sb.append("JSESSIONID = " + session.getId());
+				sb.append(", ");
+			}
 			for (Cookie cookie : cookies) {
 				sb.append(cookie.getName() + "=" + cookie.getValue());
 				sb.append(", ");
