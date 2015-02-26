@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -192,8 +194,14 @@ public class HttpRequestParser {
 		}
 		String tmpUrl = this.reqUrl.toUpperCase(Locale.ENGLISH);
 		if (tmpUrl.contains("HTTP://")){
-			this.code = CODE.BADDIR;
-			return;
+			URI uri;
+			try {
+				uri = new URI(tmpUrl);
+				this.reqUrl = uri.getPath();
+			} catch (URISyntaxException e) {
+				this.code = CODE.BADDIR;
+				return;
+			}
 		}
 		// security check
 		this.reqUrl = parseURL(this.reqUrl);		

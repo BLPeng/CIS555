@@ -79,7 +79,7 @@ public class WorkerThread extends Thread{
 			if ("GET".equalsIgnoreCase(requestParser.getMethod())) {
 				Date date = HttpServerUtils.convertDataFormat(headers.get("If-Modified-Since".toLowerCase(Locale.ENGLISH)).get(0), 1);
 				File file = new File(url);
-				if (date != null && file != null && date.getTime() > file.lastModified()) {
+				if (date != null && file != null && date.getTime() >= file.lastModified()) {
 					return "304";
 				}
 			}
