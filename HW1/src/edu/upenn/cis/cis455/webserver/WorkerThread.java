@@ -218,8 +218,11 @@ public class WorkerThread extends Thread{
 	
 	private String genResponse(String method, String protocol, String code, String reasonPhrase, String body) {
 		StringBuilder sb = new StringBuilder();
-		byte[] bytes = body.getBytes(Charset.forName("UTF-8"));
-	    int length = bytes.length;
+		int length = 0;
+		if (body != null) {
+			byte[] bytes = body.getBytes(Charset.forName("UTF-8"));
+		    length = bytes.length;
+		}
 		sb.append(protocol + " ");
 		sb.append(code + " "); sb.append(reasonPhrase);
 		sb.append(System.getProperty("line.separator"));
@@ -291,7 +294,11 @@ public class WorkerThread extends Thread{
 	private void readBinaryContent(PrintStream pstream ,String url) throws IOException {
 		File fi = new File(url);
 		byte[] fileContent = Files.readAllBytes(fi.toPath());
-		pstream.write(("content-length:" + fileContent.length + "\r\n").getBytes(Charset.forName("UTF-8"))); 
+		int length = 0;
+		if (fileContent != null) {
+			length = fileContent.length;
+		}
+		pstream.write(("content-length:" + length + "\r\n").getBytes(Charset.forName("UTF-8"))); 
 		pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
 		pstream.write(fileContent);
 		pstream.flush();
