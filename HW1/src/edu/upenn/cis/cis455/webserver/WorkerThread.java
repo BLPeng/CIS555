@@ -214,6 +214,8 @@ public class WorkerThread extends Thread{
 	
 	private String genResponse(String method, String protocol, String code, String reasonPhrase, String body) {
 		StringBuilder sb = new StringBuilder();
+		byte[] bytes = body.getBytes(Charset.forName("UTF-8"));
+	    int length = bytes.length;
 		sb.append(protocol + " ");
 		sb.append(code + " "); sb.append(reasonPhrase);
 		sb.append(System.getProperty("line.separator"));
@@ -223,6 +225,7 @@ public class WorkerThread extends Thread{
 		sb.append(System.getProperty("line.separator"));		//not support yet
 		sb.append("Content-Type : text/html"); 
 		sb.append(System.getProperty("line.separator"));
+		sb.append("content-length:" + length + "\r\n"); 
 		sb.append("Connection: close"); 
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Last-Modified: " + HttpServerUtils.getLastModifiedTime(this.reqUrl));		//last-modified
@@ -270,7 +273,7 @@ public class WorkerThread extends Thread{
 		} else {
 			pstream.write(("Content-Type : " + fileType + "\r\n").getBytes(Charset.forName("UTF-8")));
 		}
-		pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
+		
 		if (fileType == null || ".gif".equals(ext) || ".png".equals(ext) || ".jpg".equals(ext)
 				|| ".pdf".equals(ext) || ".ico".equals(ext)) {
 			readBinaryContent(pstream, this.reqUrl);
@@ -284,19 +287,31 @@ public class WorkerThread extends Thread{
 	private void readBinaryContent(PrintStream pstream ,String url) throws IOException {
 		File fi = new File(url);
 		byte[] fileContent = Files.readAllBytes(fi.toPath());
+		pstream.write(("content-length:" + fileContent.length + "\r\n").getBytes(Charset.forName("UTF-8"))); 
+		pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
 		pstream.write(fileContent);
 		pstream.flush();
 	}
 	
 	private void readFileContent(PrintStream pstream, String url) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(url)); 
+		StringBuilder sb = new StringBuilder();
 		try
 		{
+			
 			String line = null;
 		    while((line = br.readLine()) != null)
 		    {
-		    	pstream.println(line);
+		    	sb.append(line);
+		    	sb.append(System.lineSeparator());
+		    //	pstream.println(line);
 		    }
+		    String ret = sb.toString();
+		    byte[] bytes = ret.getBytes(Charset.forName("UTF-8"));
+		    int length = bytes.length;
+		    pstream.write(("content-length:" + length + "\r\n").getBytes(Charset.forName("UTF-8"))); 
+		    pstream.write("\r\n".getBytes(Charset.forName("UTF-8")));
+		    pstream.println(ret);
 		    br.close();
 		}catch(Exception ex) {
 			//
