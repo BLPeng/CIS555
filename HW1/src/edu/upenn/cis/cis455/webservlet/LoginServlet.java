@@ -18,6 +18,12 @@ public class LoginServlet extends HttpServlet {
     	/*String user = request.getParameter("user");
         String pwd = request.getParameter("pwd");*/
     	HttpSession session = request.getSession();
+    	String pathinfo = request.getPathInfo();
+    	if ("/invalidate".equals(pathinfo)) {
+    		session.invalidate();
+    		loginPage(response);  
+    		return;
+    	}
     	long expire = session.getLastAccessedTime() + session.getMaxInactiveInterval() * 1000;
     	long cur = System.currentTimeMillis();
     	String login = (String) session.getAttribute("login");
@@ -65,8 +71,8 @@ public class LoginServlet extends HttpServlet {
         writer.println("</head>");
         writer.println("<body>");
 
-        writer.println("Login Page! timout = 10 min");
-        writer.println("<form action=\"login\" method=\"post\">");
+        writer.println("Login Page! timout = 10 min, user name: test, password : test.");
+        writer.println("<form action=\"/login\" method=\"post\">");
         writer.println("Username: <input type=\"text\" name=\"user\"><br>");
         writer.println("Password: <input type=\"password\" name=\"pwd\"><br>");
         writer.println("<input type=\"submit\" value=\"Login\">");
@@ -85,7 +91,7 @@ public class LoginServlet extends HttpServlet {
 
         writer.println("Welcone! timout = 10 min");
         writer.println("Hello World.");
-
+        writer.println("<a href=\"/login/invalidate\">logout</a>");
         writer.println("</body>");
         writer.println("</html>");
     }

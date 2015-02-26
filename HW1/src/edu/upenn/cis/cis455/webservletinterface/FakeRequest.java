@@ -31,6 +31,7 @@ public class FakeRequest implements HttpServletRequest {
 	
 	private String characterEncoding;
 	private Socket socket;
+	private String method;
 	private HttpRequestParser requestParser;
 	private HashMap<String, List<String>> headers;
 	private HashMap<String, List<String>> m_params = new HashMap<String, List<String>>();
@@ -49,13 +50,22 @@ public class FakeRequest implements HttpServletRequest {
 		m_session = session;
 		fromCookie = false;
 	}
+	// for test
+	public void setHeaders(HashMap<String, List<String>> headers) {
+		this.headers = headers;
+	}
+	public void setMethod(String method) {
+		this.method = method;
+	}
 	
 	private void init(Socket socket, HttpRequestParser requestParser) {
+		if (socket == null || requestParser == null) return;
 		this.socket = socket;
 		this.requestParser = requestParser;
 		characterEncoding = null;
 		headers = requestParser.getHeaders();
 		cookies = getCookiesFromHeaders(headers);
+		method = requestParser.getMethod();
 		date = new Date();
 		if (cookies != null) {
 			for (Cookie cookie: cookies) {
@@ -155,7 +165,7 @@ public class FakeRequest implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getMethod()
 	 */
 	public String getMethod() {
-		return requestParser.getMethod();
+		return method;
 	}
 
 	/* (non-Javadoc)

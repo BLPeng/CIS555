@@ -24,11 +24,11 @@ public final class HelloServlet extends HttpServlet {
         PrintWriter writer = response.getWriter();        
         writer.println("<html>");
         writer.println("<head>");
-        writer.println("<title>Sample Application Servlet Page</title>");
+        writer.println("<title>Test Servlet </title>");
         writer.println("</head>");
-        writer.println("<body bgcolor=white>");
+        writer.println("<body>");
 
-        writer.println("This is the output of a servlet that is part of");
+        writer.println("just test ");
         writer.println("the Hello, World application.");
 
         writer.println("</body>");

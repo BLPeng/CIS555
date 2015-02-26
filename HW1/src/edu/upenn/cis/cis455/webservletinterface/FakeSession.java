@@ -35,7 +35,8 @@ public class FakeSession implements HttpSession {
 		lastAccessTime = creationTime;
 		m_valid = true;
 		isNew = true;
-		maxInactiveInterval = HttpServer.servletContainer.getSesstionTimeout();
+		if (HttpServer.servletContainer != null)
+			maxInactiveInterval = HttpServer.servletContainer.getSesstionTimeout();
 		UID = UUID.randomUUID();
 	}
 	
