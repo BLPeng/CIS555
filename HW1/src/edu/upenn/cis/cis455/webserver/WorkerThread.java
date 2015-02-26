@@ -156,6 +156,10 @@ public class WorkerThread extends Thread{
 			content = "<h1>Unknown headers</h1>";
 			return genResponse(method, protocol, "400", "Unknown headers!", content);
 		}
+		case BADVERSION: {	//unknown version
+			content = "<h1>Unsupport version!</h1>";
+			return genResponse(method, protocol, "505", "Unknown version!", content);
+		}
 		case BADHEADER2: {	//not host header in http/1.1
 			content = "<h1>HTTP/1.1 without host header!</h1>";
 			return genResponse(method, protocol, "400", "HTTP/1.1 without host header!", content);

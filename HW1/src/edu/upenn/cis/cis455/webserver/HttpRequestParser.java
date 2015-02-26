@@ -103,7 +103,7 @@ public class HttpRequestParser {
 	}
 	
 	public enum CODE {
-		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, NOIMPLEMENT,
+		BADREQ, BADDIR, SHUTDOWN, CONTROL, NOFOUND, HEAD, NOIMPLEMENT, BADVERSION,
 		LISTDIR, FILE, NORMAL, NOALLOW, BADHEADER1, BADHEADER2, SERVLET		//BADHEADER1 unknown	BADHEADER2 http1.1 not host
 	}
 	
@@ -178,7 +178,7 @@ public class HttpRequestParser {
 
 	// filter out invalid request
 	private void filterRequest(){
-		if (this.code == CODE.BADREQ || this.code == CODE.BADHEADER1 || this.code == CODE.BADHEADER2){
+		if (this.code == CODE.BADVERSION || this.code == CODE.BADREQ || this.code == CODE.BADHEADER1 || this.code == CODE.BADHEADER2){
 			return;
 		}
 		if (!HttpServer.acceptMethods.contains(this.method.toUpperCase(Locale.ENGLISH))) {
@@ -292,6 +292,11 @@ public class HttpRequestParser {
 			method = tmp[0];
 			reqUrl = java.net.URLDecoder.decode(tmp[1], "UTF-8");
 			protocol = tmp[2];
+			String version = protocol.substring(5);
+			if (!("1.0".equals(version) || "1.1".equals(version))) {
+				this.code = CODE.BADVERSION;
+				return;
+			}
 		}
 	}
 	
