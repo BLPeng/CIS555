@@ -58,11 +58,11 @@ public class XPathServlet extends HttpServlet {
         writer.println("<title>Welcome XPath</title>");
         writer.println("</head>");
         writer.println("<body>");
-        writer.println("<h1> Full name: Xiaobin Chen </h1>");
-        writer.println("<h2> SEAS login: xiaobinc </h2>");
+        writer.println("<h1> Xiaobin Chen </h1>");
+        writer.println("<h2> SEAS: xiaobinc </h2>");
         writer.println("<form action=\"/xpath\" method=\"post\">");
-        writer.println("XPath");
-        writer.println("<textarea rows=\"4\" cols=\"50\" name=\"xpath\"></textarea><br/>");
+        writer.println("XPath:");
+        writer.println("<textarea rows=\"5\" cols=\"30\" name=\"xpath\"></textarea><br/>");
         writer.println("URL: <input type=\"text\" name=\"url\"><br/>");
         writer.println("<input type=\"submit\" value=\"submit\">");
         writer.println("</form>");

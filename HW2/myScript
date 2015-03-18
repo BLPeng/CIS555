@@ -1,2 +1,5 @@
+/home/cis455/workspace/apache-tomcat-8.0.20/bin/shutdown.sh
 ant build
-sudo cp servlet.war /home/cis455/workspace/apache-tomcat-8.0.20/webapps
+rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/servlet
+sudo cp -f servlet.war /home/cis455/workspace/apache-tomcat-8.0.20/webapps
+/home/cis455/workspace/apache-tomcat-8.0.20/bin/startup.sh
