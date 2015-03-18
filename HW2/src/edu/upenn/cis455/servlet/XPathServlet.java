@@ -7,7 +7,10 @@ import java.net.URLDecoder;
 
 import javax.servlet.http.*;
 
+
 import edu.upenn.cis455.xpathengine.XPathEngineImpl;
+
+
 
 @SuppressWarnings("serial")
 public class XPathServlet extends HttpServlet {
@@ -63,7 +66,7 @@ public class XPathServlet extends HttpServlet {
         writer.println("<form action=\"/xpath\" method=\"post\">");
         writer.println("XPath:");
         writer.println("<textarea rows=\"5\" cols=\"30\" name=\"xpath\"></textarea><br/>");
-        writer.println("URL: <input type=\"text\" name=\"url\"><br/>");
+        writer.println("URL:  <input type=\"text\" name=\"url\"><br/>");
         writer.println("<input type=\"submit\" value=\"submit\">");
         writer.println("</form>");
         writer.println("</body>");
