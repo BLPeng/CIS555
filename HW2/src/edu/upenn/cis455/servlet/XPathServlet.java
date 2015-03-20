@@ -7,7 +7,7 @@ import java.net.URLDecoder;
 
 import javax.servlet.http.*;
 
-
+import edu.upenn.cis455.xpathengine.XPathEngineFactory;
 import edu.upenn.cis455.xpathengine.XPathEngineImpl;
 
 
@@ -32,7 +32,7 @@ public class XPathServlet extends HttpServlet {
 		}
 		
 		String[] xpaths = xpath.split("\r\n");
-		XPathEngineImpl xpEngine = new XPathEngineImpl();
+		XPathEngineImpl xpEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine();
 		
 		//check validity of xpaths
 
