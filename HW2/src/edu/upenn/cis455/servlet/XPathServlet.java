@@ -90,6 +90,7 @@ public class XPathServlet extends HttpServlet {
 		}
         writer.println("</body>");
         writer.println("</html>");
+        writer.close();
 	}
 
 	@Override
@@ -155,7 +156,7 @@ public class XPathServlet extends HttpServlet {
 			Socket socket = new Socket(myURL.getHost(), 80);
 			OutputStream theOutput = socket.getOutputStream();
 	        PrintWriter out = new PrintWriter(theOutput, false);
-	        String req = "GET " + myURL + " HTTP/1.1\r\n";
+	        String req = "GET " + myURL + " HTTP/1.0\r\n";
 	        out.print(req); 
 	        out.print("Host:" + myURL.getHost() + "\r\n");
 	        out.print("Accept: application/xml, text/html, text/html, application/rss+xml\r\n");
@@ -165,11 +166,18 @@ public class XPathServlet extends HttpServlet {
 			      new InputStreamReader(socket.getInputStream()));
 			String line;
 			boolean isHead = true;
-			boolean isHTML = false;
+			boolean isXML = false;
 			while ((line = in.readLine()) != null) {
-				sb.append(line);
 				if (isHead) {
-					if (line.contains("xml"));
+					if (line.contains("xml")) {				//check header
+						isXML = true;						
+					}
+					if (line.isEmpty()) {
+						isHead = false;
+					}
+				} else {
+					sb.append(line);
+					sb.append(System.lineSeparator());
 				}
 			}
 			socket.close();
@@ -181,18 +189,7 @@ public class XPathServlet extends HttpServlet {
 		mTidy.setForceOutput(true);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(page.getBytes("UTF-8"));
 		document = mTidy.parseDOM(inputStream, null);
-		
-	/*	FileOutputStream fop = null;
-		File file;
-		try {
-			file = new File("newfile.txt");
-			fop = new FileOutputStream(file);
-			printDocument(document, fop);
-			fop.close();
-		} catch (IOException | TransformerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+
 		return page;
 	}
 	
