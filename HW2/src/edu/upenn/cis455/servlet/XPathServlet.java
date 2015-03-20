@@ -16,32 +16,49 @@ import edu.upenn.cis455.xpathengine.XPathEngineImpl;
 public class XPathServlet extends HttpServlet {
 	
 	/* TODO: Implement user interface for XPath engine here */
-	
+	private XPathEngineImpl xpathEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine(); 
 	/* You may want to override one or both of the following methods */
-
+	
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) {
-		String xpath = request.getParameter("xpath");
-		String xml = request.getParameter("xml");
+		String xpath = request.getParameter("xpaths");
+		String url = request.getParameter("url");
+		response.setContentType("text/html");
+		PrintWriter writer;
 		try {
-			xpath = URLDecoder.decode(xpath, "utf-8");
-			xml = URLDecoder.decode(xml, "utf-8");
+			writer = response.getWriter();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		try {
+			xpath = URLDecoder.decode(xpath, "utf-8").trim();
+			url = URLDecoder.decode(url, "utf-8").trim();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 			return;
 		}
-		
-		String[] xpaths = xpath.split("\r\n");
-		XPathEngineImpl xpEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine();
-		
-		//check validity of xpaths
-
-		
-		//match xml and xpaths
-
-
-	
-		
+		writer.println("<html>");
+        writer.println("<head>");
+        writer.println("<title>XPath Result</title>");
+        writer.println("</head>");
+        writer.println("<body>");
+        writer.println("<h2> Xiaobin Chen </h2>");
+        writer.println("<h2> SEAS: xiaobinc </h2>");
+        writer.println("<h3> XPath Result: </h3>");
+		if (xpath.isEmpty()) {
+			writer.println("Error: Empty xpath <br/>");
+		} else if (url.isEmpty()) {
+			writer.println("Error: Empty URL <br/>");
+		} else {
+			String[] xpaths = xpath.split(";");
+			XPathEngineImpl xpEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine();
+			xpEngine.setXPaths(xpaths);
+			writer.println(getXPathValidities(xpaths, xpEngine));
+		}
+        writer.println("</body>");
+        writer.println("</html>");
 	}
 
 	@Override
@@ -61,12 +78,13 @@ public class XPathServlet extends HttpServlet {
         writer.println("<title>Welcome XPath</title>");
         writer.println("</head>");
         writer.println("<body>");
-        writer.println("<h1> Xiaobin Chen </h1>");
+        writer.println("<h2> Xiaobin Chen </h2>");
         writer.println("<h2> SEAS: xiaobinc </h2>");
-        writer.println("<form action=\"/xpath\" method=\"post\">");
-        writer.println("XPath:");
-        writer.println("<textarea rows=\"5\" cols=\"30\" name=\"xpath\"></textarea><br/>");
-        writer.println("URL:  <input type=\"text\" name=\"url\"><br/>");
+        writer.println("<form method=\"post\">");
+        writer.println("XPaths: separate by semicolons<br/>");
+        writer.println("<input type=\"text\" name=\"xpaths\" size=\"100\" ><br/>");
+        writer.println("URL:<br/>");
+        writer.println("<input type=\"text\" name=\"url\" size=\"100\"><br/>");
         writer.println("<input type=\"submit\" value=\"submit\">");
         writer.println("</form>");
         writer.println("</body>");
@@ -74,6 +92,25 @@ public class XPathServlet extends HttpServlet {
 			
 	}
 
+	private String getXPathValidities(String[] xpaths, XPathEngineImpl xpEngine) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<table>");
+		sb.append("<tr><th>XPath</th><th>IsValid</th></tr>");
+		for (int i = 0; i < xpaths.length; i++) {
+			sb.append("<tr><td>" + xpaths[i] + "</td><td>" + xpEngine.isValid(i) + "</td></tr>");
+		}
+		return sb.toString();
+	}
+	
+	private String getXPathMatches(String[] xpaths, XPathEngineImpl xpEngine) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<table>");
+		sb.append("<tr><th>XPath</th><th>IsMatched</th></tr>");
+		for (int i = 0; i < xpaths.length; i++) {
+			sb.append("<tr><td>" + xpaths[i] + "</td><td>" + xpEngine.isValid(i) + "</td></tr>");
+		}
+		return sb.toString();
+	}
 }
 
 
