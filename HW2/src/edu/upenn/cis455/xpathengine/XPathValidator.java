@@ -134,6 +134,7 @@ public class XPathValidator {
 				if (peekNoneSpaceChar('[')) {
 					st.push(getChar());
 				}
+				ret.add(predicate);
 				continue;
 			} else {
 				return null;
