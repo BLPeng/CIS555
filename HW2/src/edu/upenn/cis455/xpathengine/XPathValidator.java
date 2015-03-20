@@ -79,7 +79,7 @@ public class XPathValidator {
 		if (peekNextNoneSpaceChar() == null || peekNextNoneSpaceChar() == ']') {		// teminate
 			return step;
 		}
-		step.next = getStep();
+		step.next = getNode();
 		if (step.next == null) {
 			return null;
 		}
@@ -170,6 +170,9 @@ public class XPathValidator {
 			sb.append(getChar());
 		}
 		attribute.attrName = sb.toString();
+		if (attribute.attrName.length() == 0) {
+			return null;
+		}
 		if (!matchNoneSpaceChar('=')) {			//check "="
 			return null;
 		}
@@ -268,9 +271,9 @@ public class XPathValidator {
 	
 	// get the name of element
 	private String getElementName() {
-		char c = peekNextNoneSpaceChar();
+		Character c = peekNextNoneSpaceChar();
 		//invalid start char
-		if (!Character.isLetter(c) && c != '_') {
+		if (c == null || !Character.isLetter(c) && c != '_') {
 			return null;
 		}
 		StringBuilder sb = new StringBuilder();

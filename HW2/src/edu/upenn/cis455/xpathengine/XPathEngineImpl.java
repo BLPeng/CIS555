@@ -46,7 +46,7 @@ public class XPathEngineImpl implements XPathEngine {
 	
 	public static void main(String[ ] args)
 	{
-		 String[] xpaths0 = {null};
+		 String[] xpaths0 = {"/abc/ab[@=\"hello\"]"};
 	      XPathEngineImpl xpathEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine();
 	      xpathEngine.setXPaths(xpaths0);
 	      for (int i = 0; i < xpaths0.length; i++) {
@@ -79,14 +79,14 @@ public class XPathEngineImpl implements XPathEngine {
 	      System.out.println("----------------------------------------------------------");
 	      String[] xpaths1 = {"/catalog","/catalog[text]","/catalog/cd[@title=\"Empire Burlesque\"]",
 	    		  "/catalog/cd[@title=\"Empire Burlesque\"][@artist=\"Bob Dylan\"]",
-	    		  "/catalog/cd[@title=Empire Burlesque\"]",
+	    		  "/catalog/cd[@title=\"Empire Burlesque\"]",
 	    		  "/catalog/cd[@year=\"1988\"][@price=\"9.90\"]/country[text()=\"UK\"]",
-	    		  "/catalog/cd[@title=Empire Burlesque\"]",
+	    		  "/catalog/cd[@title=\"Empire Burlesque\"]",
 	    		  "/catalog/cd[@year=\"1988\"][@price=\"9.90\"]/country[text()=\"UK\"]",
 	    		  "/catalog/badelem",
 	    		  "/frenchbread/unicorns",
 	    		  "/abc/bad",
-	    		  "/hello world",
+	    		  "/hello.world",
 	    		  "/check-these_chars",
 	    		  "/illegal",
 	    		  "/illegal",
