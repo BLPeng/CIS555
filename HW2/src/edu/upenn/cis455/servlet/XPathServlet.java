@@ -82,7 +82,7 @@ public class XPathServlet extends HttpServlet {
 			writer.println(getXPathValidities(xpaths, xpEngine));
 			writer.println(url);
 			try {
-				writer.println(getDOMFromURL(url));
+				writer.println(getXPathMatches(xpaths, getDOMFromURL(url), xpEngine));
 			} catch (UnsupportedEncodingException e) {
 				writer.println("Failed to fetch page");
 				e.printStackTrace();
@@ -136,20 +136,23 @@ public class XPathServlet extends HttpServlet {
 	}
 	
 	//show xpath match result
-	private String getXPathMatches(String[] xpaths, XPathEngineImpl xpEngine) {
+	private String getXPathMatches(String[] xpaths, Document document, XPathEngineImpl xpEngine) {
+		xpEngine.setXPaths(xpaths);
+		boolean[] ret = xpEngine.evaluate(document);
 		StringBuilder sb = new StringBuilder();
 		sb.append("<table>");
 		sb.append("<tr><th>XPath</th><th>IsMatched</th></tr>");
 		for (int i = 0; i < xpaths.length; i++) {
-			sb.append("<tr><td>" + xpaths[i] + "</td><td>" + xpEngine.isValid(i) + "</td></tr>");
+			sb.append("<tr><td>" + xpaths[i] + "</td><td>" + ret[i] + "</td></tr>");
 		}
 		return sb.toString();
 	}
 	
 	
 	
-	private String getDOMFromURL(String URL) throws UnsupportedEncodingException {
+	private Document getDOMFromURL(String URL) throws UnsupportedEncodingException {
 		StringBuilder sb = new StringBuilder();
+		boolean isXML = false;
 		try {
 			// http client
 			URL myURL = new URL(URL);
@@ -166,7 +169,7 @@ public class XPathServlet extends HttpServlet {
 			      new InputStreamReader(socket.getInputStream()));
 			String line;
 			boolean isHead = true;
-			boolean isXML = false;
+			
 			while ((line = in.readLine()) != null) {
 				if (isHead) {
 					if (line.contains("xml")) {				//check header
@@ -182,28 +185,20 @@ public class XPathServlet extends HttpServlet {
 			}
 			socket.close();
 		}catch(Exception e) {
-			return "Fail to fetch HTML/XML page";
+			return null;
+		}
+		if (isXML) {
+			mTidy.setXmlTags(true);
 		}
 		String page = sb.toString();
 		mTidy.setInputEncoding("UTF-8");
 		mTidy.setForceOutput(true);
+		mTidy.setPrintBodyOnly(true);
+		mTidy.setXmlOut(true);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(page.getBytes("UTF-8"));
 		document = mTidy.parseDOM(inputStream, null);
 
-		return page;
-	}
-	
-	public static void printDocument(Document doc, OutputStream out) throws IOException, TransformerException {
-	    TransformerFactory tf = TransformerFactory.newInstance();
-	    Transformer transformer = tf.newTransformer();
-	    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-	    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-	    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-	    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-	    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-	    
-	    transformer.transform(new DOMSource(doc), 
-	         new StreamResult(new OutputStreamWriter(out, "UTF-8")));
+		return document;
 	}
 	
 }

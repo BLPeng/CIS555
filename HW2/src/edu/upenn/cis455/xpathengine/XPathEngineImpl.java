@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import edu.upenn.cis455.xpathengine.XPathComponents.Step;
 
@@ -40,8 +41,16 @@ public class XPathEngineImpl implements XPathEngine {
 	}
 	
 	public boolean[] evaluate(Document d) { 
-	  /* TODO: Check whether the document matches the XPath expressions */
-		return null; 
+		if (xpaths == null) {
+			return null;
+		}
+	    boolean[] result = new boolean[xpaths.length];
+	    for (int i = 0; i < xpaths.length; i++) {
+	    	XPathParser xpParser = new XPathParser(d, xpathSteps.get(i));
+	    	List<Element> ret = xpParser.evaluate();
+	    	result[i] = ret.size() > 0 ? true : false;
+	    }	    
+		return result; 
 	}
 	
 	public static void main(String[ ] args)
