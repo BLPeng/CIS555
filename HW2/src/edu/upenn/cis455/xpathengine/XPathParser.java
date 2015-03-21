@@ -112,7 +112,8 @@ public class XPathParser {
 	}
 	// arguments should not be null, check before pass in
 	private boolean matchText(Element element, Predicate predicate) {
-		String value = element.getElementsByTagName(element.getTagName()).item(0).getTextContent();
+		String value = element.getFirstChild().getNodeValue();
+	//	String value = element.getElementsByTagName(name).item(0).getTextContent();
 		if (value == null) {
 			return false;
 		}
@@ -120,7 +121,8 @@ public class XPathParser {
 	}
 	// arguments should not be null, check before pass in
 	private boolean matchContainsText(Element element, Predicate predicate) {
-		String value = element.getElementsByTagName(element.getTagName()).item(0).getTextContent();
+		String value = element.getFirstChild().getNodeValue();
+	//	String value = element.getElementsByTagName(element.getTagName()).item(0).getTextContent();
 		if (value == null) {
 			return false;
 		}
