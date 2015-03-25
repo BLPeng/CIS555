@@ -42,9 +42,9 @@ public class XPathParser {
 			if (!isPredicate)
 				ret.add(parent);	//end node
 			return true;	
-			} else {	
-				if (elements.getLength() == 0) {
-					return false;
+		} else {	
+			if (elements.getLength() == 0) {
+				return false;
 			}
 		}
 		//for this assignment, only consider step -> nodename ([ test ])* (axis step)?

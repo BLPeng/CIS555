@@ -181,7 +181,7 @@ public class XPathValidator {
 			return null;
 		}
 		sb.setLength(0);
-		while (peekNextChar() != '\"' && peekNextChar() != null && isValidChar(peekNextChar(), true)) {
+		while (peekNextChar() != '\"' && peekNextChar() != null ) {
 			sb.append(getChar());
 		}
 		if (matchNoneSpaceChar('\"')) {			// check "\""
@@ -214,7 +214,7 @@ public class XPathValidator {
 			return null;
 		}
 		sb.setLength(0);
-		while (peekNextChar() != '\"' && peekNextChar() != null && isValidChar(peekNextChar(), true)) {
+		while (peekNextChar() != '\"' && peekNextChar() != null ) {
 			sb.append(getChar());
 		}
 		if (matchNoneSpaceChar('\"')) {			// check "\""
@@ -257,7 +257,7 @@ public class XPathValidator {
 			return null;
 		}
 		sb.setLength(0);
-		while (peekNextChar() != '\"' && peekNextChar() != null && isValidChar(peekNextChar(), true)) {
+		while (peekNextChar() != '\"' && peekNextChar() != null ) {
 			sb.append(getChar());
 		}
 		if (!matchNoneSpaceChar('\"')) {			// check "\""

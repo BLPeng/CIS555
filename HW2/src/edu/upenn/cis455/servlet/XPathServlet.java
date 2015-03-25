@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -195,10 +196,25 @@ public class XPathServlet extends HttpServlet {
 		mTidy.setForceOutput(true);
 		mTidy.setPrintBodyOnly(true);
 		mTidy.setXmlOut(true);
+		writeToFile(page);
+	//	System.out.println(page);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(page.getBytes("UTF-8"));
 		document = mTidy.parseDOM(inputStream, null);
 
 		return document;
+	}
+	
+	
+	private void writeToFile(String content) {
+		PrintWriter writer;
+		try {
+			writer = new PrintWriter("page.txt", "UTF-8");
+			writer.println(content);
+			writer.close();
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 	
 	}
 	
 }

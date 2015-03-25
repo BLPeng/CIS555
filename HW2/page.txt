@@ -1,0 +1,28 @@
+<html><head><title>
+Very simple HTML page.
+</title></head>
+<body>
+
+<p>You can look at the source of this page by: Right clicking anywhere
+out in space on this page then selecting "View" in the menu.</p>
+<p>This works on any page, but sometimes
+what you see may be very complex
+and seem confusing.</p>
+
+<p>
+<b>Please,</b> look at the source and what you see with the browser.
+You should understand and see the effect of every tag. Use the little
+Icons up in the right of your browser screen to change the size of the
+window and see the effect, and how the browser displays this page.</p>
+<p align="right">
+Yes, this is a <b>Very Plain</b> page. <i>But it works!</i></p>
+<p><i><b>Remember. We are just getting started,</b> and I haven't used
+anything more than I have talked about in a couple pages!</i>
+Yes. You will want to be more fancy.
+Just be patient, we'll get there.
+
+<p align="center">Now create a page like
+this of your own. <b>Have fun!</b></p
+
+</body></html>
+
