@@ -9,17 +9,17 @@ import com.sleepycat.persist.PrimaryIndex;
 import com.sleepycat.persist.StoreConfig;
 
 // class to access User database
-public class UserDA {
+public class ChannelDA {
 	private static EntityStore store;
-	private static PrimaryIndex<String, User> primaryIndex;
-	private final static String envDirectory = "data/userDB";
+	private static PrimaryIndex<String, Channel> primaryIndex;
+	private final static String envDirectory = "data/channelDB";
 
-	public static PrimaryIndex<String, User> getPrimaryIndex() {
+	public static PrimaryIndex<String, Channel> getPrimaryIndex() {
 		return primaryIndex;
 	}
 
-	public static void setPrimaryIndex(PrimaryIndex<String, User> primaryIndex) {
-		UserDA.primaryIndex = primaryIndex;
+	public static void setPrimaryIndex(PrimaryIndex<String, Channel> primaryIndex) {
+		ChannelDA.primaryIndex = primaryIndex;
 	}
 
 	// this block only run one time for a class when it is loaded
@@ -38,18 +38,18 @@ public class UserDA {
 		envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
 		Environment env = new Environment(file, envConfig);
-		UserDA.store = new EntityStore(env, "UserStore", storeConfig);
-		primaryIndex = store.getPrimaryIndex(String.class, User.class);
+		ChannelDA.store = new EntityStore(env, "ChannelStore", storeConfig);
+		primaryIndex = store.getPrimaryIndex(String.class, Channel.class);
 		
 		DatabaseShutdownHook dbShutdownHook = new DatabaseShutdownHook(env, store);
 		Runtime.getRuntime().addShutdownHook(dbShutdownHook);
 	}
 		
-	public static void putEntry(User user) {
-		primaryIndex.put(user);
+	public static void putEntry(Channel channel) {
+		primaryIndex.put(channel);
 	}
 	
-	public static User getEntry(String userName) {
+	public static Channel getEntry(String userName) {
 		return primaryIndex.get(userName);
 	}
 	

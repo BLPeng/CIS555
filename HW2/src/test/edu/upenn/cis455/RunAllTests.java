@@ -16,7 +16,8 @@ public class RunAllTests extends TestCase
     		  XPathValidatorTest.class,
     		  XPathParserTest.class,
     		  XPathInValidParserTests.class,
-    		  UserDATest.class
+    		  UserDATest.class,
+    		  ChannelDATest.class
       };   
       
       return new TestSuite(testClasses);

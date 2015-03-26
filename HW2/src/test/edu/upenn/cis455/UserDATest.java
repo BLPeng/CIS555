@@ -27,8 +27,8 @@ public class UserDATest extends TestCase {
 			return;
 		}
 	    User user = new User(username, password);
-	    UserDA.putUser(user);
-	    User user1 = UserDA.getUser("xb");
+	    UserDA.putEntry(user);
+	    User user1 = UserDA.getEntry("xb");
 	    assertEquals(user.toString(), user1.toString());
 	}
 	
@@ -43,8 +43,8 @@ public class UserDATest extends TestCase {
 			return;
 		}
 	    User user = new User(username, password);
-	    UserDA.putUser(user);
-	    User user1 = UserDA.getUser("xb");
+	    UserDA.putEntry(user);
+	    User user1 = UserDA.getEntry("xb");
 	    assertEquals(user.toString(), user1.toString());
 	}
 
@@ -59,11 +59,11 @@ public class UserDATest extends TestCase {
 			return;
 		}
 	    User user = new User(username, password);
-	    UserDA.putUser(user);
-	    User user1 = UserDA.getUser("aa");
+	    UserDA.putEntry(user);
+	    User user1 = UserDA.getEntry("aa");
 	    assertEquals(user.toString(), user1.toString());
-	    UserDA.deleteUser("aa");
-	    user1 = UserDA.getUser("aa");
+	    UserDA.deleteEntry("aa");
+	    user1 = UserDA.getEntry("aa");
 	    assertNull(user1);
 	}
 }
