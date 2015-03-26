@@ -1,7 +1,5 @@
 package test.edu.upenn.cis455;
 
-import static org.junit.Assert.*;
-
 import java.util.Date;
 import junit.framework.TestCase;
 import org.junit.Test;
