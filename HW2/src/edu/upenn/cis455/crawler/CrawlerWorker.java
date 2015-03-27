@@ -82,6 +82,7 @@ public class CrawlerWorker extends Thread{
 		}
 	}
 	
+	// apply robot rule to this url crawling
 	private boolean applyRobotRule(String url) {
 		RobotsTxtInfo robotInfo = getRobotsInfo(url);
 		int delay = 0;
@@ -89,10 +90,10 @@ public class CrawlerWorker extends Thread{
 			if (robotInfo.getDisallowedLinks(url) != null) {
 				return false;
 			}
-			if (robotInfo.getCrawlDelay("*") != null) {
-				delay = robotInfo.getCrawlDelay("*") * 1000;
-			} else if (robotInfo.getCrawlDelay(USER_AGENT) != null) {
+			if (robotInfo.getCrawlDelay(USER_AGENT) != null) {
 				delay = robotInfo.getCrawlDelay(USER_AGENT) * 1000;
+			} else if (robotInfo.getCrawlDelay("*") != null) {
+				delay = robotInfo.getCrawlDelay("*") * 1000;
 			}
 		}
 		long wait = robotInfo.getAccessedDate().getTime() + delay - System.currentTimeMillis();
@@ -149,7 +150,7 @@ public class CrawlerWorker extends Thread{
 		robotInfo = new RobotInfo(url, content, new Date());
 		RobotInfoDA.putEntry(robotInfo);
 //		System.out.println(RobotInfoDA.containsEntry(url));
-//		this.run = false;
+		this.run = false;
 
 		return robotTxtInfo;
     }

@@ -41,8 +41,8 @@ public class HTTPClient {
 		content = null;
 		url = null;
 		method = "GET";
-		headers.clear();
-		reqHeaders.clear();
+		reqHeaders = new HashMap<String, List<String>>();
+		headers = new HashMap<String, List<String>>();
 		resCode = null;
 		initRequestHeaders(); 
 	}
@@ -87,6 +87,7 @@ public class HTTPClient {
 			 
 				   while ((input = br.readLine()) != null){
 				      sb.append(input);
+				      sb.append(System.lineSeparator());
 				   }
 				   br.close();
 				   content = sb.toString();
