@@ -1,5 +1,7 @@
 package edu.upenn.cis455.crawler;
 
+import edu.upenn.cis455.storage.DBWrapper;
+
 
 public class XPathCrawler {
 	
@@ -35,12 +37,13 @@ public class XPathCrawler {
 					return;
 				}				
 			}
-			CrawlerWorker crawler = new CrawlerWorker();
-			crawler.setUrl(url);
-			crawler.setDir(dir);
-			crawler.setMaxSize(maxSize);
-			crawler.setMaxPage(numOfFiles);
-			crawler.start();
+			DBWrapper.setupDirectory(dir);
+			CrawlerWorkerPool crawlerPool = new CrawlerWorkerPool();
+			crawlerPool.setUrl(url);
+			crawlerPool.setDir(dir);
+			crawlerPool.setMaxSize(maxSize);
+			crawlerPool.setMaxPage(numOfFiles);
+			crawlerPool.start();
 		}
 	}
 }

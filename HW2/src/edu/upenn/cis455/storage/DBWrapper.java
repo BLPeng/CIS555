@@ -10,6 +10,12 @@ public class DBWrapper {
 	private static Environment myEnv;
 	private static EntityStore store;
 	
-	/* TODO: write object store wrapper for BerkeleyDB */
+	public static void setupDirectory(String dir) {
+		DBWrapper.envDirectory = dir;
+		UserDA.init(dir);
+		ChannelDA.init(dir);
+		ContentDA.init(dir);
+		RobotInfoDA.init(dir);
+	}
 	
 }

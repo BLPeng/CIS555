@@ -1,6 +1,7 @@
 package edu.upenn.cis455.crawler.info;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 public class RobotsTxtInfo {
@@ -11,6 +12,8 @@ public class RobotsTxtInfo {
 	private HashMap<String,Integer> crawlDelays;
 	private ArrayList<String> sitemapLinks;
 	private ArrayList<String> userAgents;
+	
+	private Date accessedDate;
 	
 	public RobotsTxtInfo(){
 		disallowedLinks = new HashMap<String,ArrayList<String>>();
@@ -74,7 +77,7 @@ public class RobotsTxtInfo {
 		return allowedLinks.get(key);
 	}
 	
-	public int getCrawlDelay(String key){
+	public Integer getCrawlDelay(String key){
 		return crawlDelays.get(key);
 	}
 	
@@ -102,5 +105,13 @@ public class RobotsTxtInfo {
 	
 	public boolean crawlContainAgent(String key){
 		return crawlDelays.containsKey(key);
+	}
+
+	public Date getAccessedDate() {
+		return accessedDate;
+	}
+
+	public void setAccessedDate(Date accessedDate) {
+		this.accessedDate = accessedDate;
 	}
 }

@@ -9,17 +9,17 @@ import com.sleepycat.persist.PrimaryIndex;
 import com.sleepycat.persist.StoreConfig;
 
 // class to access User database
-public class ChannelDA {
+public class RobotInfoDA {
 	private static EntityStore store;
-	private static PrimaryIndex<String, Channel> primaryIndex;
-	public static String envDirectory = "data/channelDB";
-    
-	public static PrimaryIndex<String, Channel> getPrimaryIndex() {
+	private static PrimaryIndex<String, RobotInfo> primaryIndex;
+	public static String envDirectory = "data/robotDB";
+
+	public static PrimaryIndex<String, RobotInfo> getPrimaryIndex() {
 		return primaryIndex;
 	}
 
-	public static void setPrimaryIndex(PrimaryIndex<String, Channel> primaryIndex) {
-		ChannelDA.primaryIndex = primaryIndex;
+	public static void setPrimaryIndex(PrimaryIndex<String, RobotInfo> primaryIndex) {
+		RobotInfoDA.primaryIndex = primaryIndex;
 	}
 
 	public static void init(String envDirectory) {
@@ -37,26 +37,27 @@ public class ChannelDA {
 		envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
 		Environment env = new Environment(file, envConfig);
-		ChannelDA.store = new EntityStore(env, "ChannelStore", storeConfig);
-		primaryIndex = store.getPrimaryIndex(String.class, Channel.class);
+		RobotInfoDA.store = new EntityStore(env, "RobotStore", storeConfig);
+		primaryIndex = store.getPrimaryIndex(String.class, RobotInfo.class);
 		
 		DatabaseShutdownHook dbShutdownHook = new DatabaseShutdownHook(env, store);
 		Runtime.getRuntime().addShutdownHook(dbShutdownHook);
 	}
 		
-	public static void putEntry(Channel channel) {
-		primaryIndex.put(channel);
+	public static void putEntry(RobotInfo robotInfo) {
+		primaryIndex.put(robotInfo);
 	}
 	
-	public static Channel getEntry(String userName) {
+	public static RobotInfo getEntry(String userName) {
 		return primaryIndex.get(userName);
 	}
 	
 	public static void deleteEntry(String userName) {
 		primaryIndex.delete(userName);
 	}
-
-	public static boolean containsEntry(String userName) {
-		return primaryIndex.contains(userName);
+	
+	public static boolean containsEntry(String url) {
+		return primaryIndex.contains(url);
 	}
+
 }

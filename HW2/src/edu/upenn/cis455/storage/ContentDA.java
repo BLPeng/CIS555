@@ -12,7 +12,7 @@ import com.sleepycat.persist.StoreConfig;
 public class ContentDA {
 	private static EntityStore store;
 	private static PrimaryIndex<String, Content> primaryIndex;
-	private final static String envDirectory = "data/contentDB";
+	public static String envDirectory = "data/contentDB";
 
 	public static PrimaryIndex<String, Content> getPrimaryIndex() {
 		return primaryIndex;
@@ -22,8 +22,7 @@ public class ContentDA {
 		ContentDA.primaryIndex = primaryIndex;
 	}
 
-	// this block only run one time for a class when it is loaded
-	static {
+	public static void init(String envDirectory) {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
 		File file = new File(dir, envDirectory);
@@ -57,4 +56,8 @@ public class ContentDA {
 		primaryIndex.delete(url);
 	}
 
+	public static boolean containsEntry(String url) {
+		return primaryIndex.contains(url);
+	}
+	
 }

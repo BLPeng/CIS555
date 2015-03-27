@@ -20,8 +20,7 @@ public class ContentDATest extends TestCase {
 		Date date = new Date();
 	    Content content = new Content(url, pageContent, date, type);
 	    ContentDA.putEntry(content);
-	    Content content1 = ContentDA.getEntry(url);
-	    assertEquals(content.toString(), content1.toString());
+	    assertTrue(ContentDA.containsEntry(url));
 	}
 	
 	@Test
