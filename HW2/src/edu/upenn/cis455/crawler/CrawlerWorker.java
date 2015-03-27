@@ -122,29 +122,35 @@ public class CrawlerWorker extends Thread{
 			return new RobotsTxtInfo();
 		}
 		url = myUrl.getProtocol() + "://" + myUrl.getHost() + "/robots.txt";
+		httpClient.init();
+		httpClient.setURL(url);
+		httpClient.setMethod("GET");
+		RobotInfo robotInfo = null;
+		String content = null;
 		if (RobotInfoDA.containsEntry(url)) {
-			RobotInfo robotInfo = RobotInfoDA.getEntry(url);
-			//update access time
+			robotInfo = RobotInfoDA.getEntry(url);
+			content = robotInfo.getRobotInfo();
+			String date = HTTPClient.dateToString(robotInfo.getDate());
+			httpClient.setRequestHeaders("If-Modified-Since", date);			
+		} 
+		httpClient.fetchContent();
+		if ("304".equals(httpClient.getResCode())) {
 			robotTxtInfo = parseRobotsContent(robotInfo.getRobotInfo());
-			robotTxtInfo.setAccessedDate(robotInfo.getDate());
-			robotInfo.setDate(new Date());
-			RobotInfoDA.putEntry(robotInfo);
 		} else {
-			httpClient.init();
-			httpClient.setURL(url);
-			httpClient.setMethod("GET");
-			httpClient.fetchContent();
-			String content = httpClient.getContent();
-			if (content == null) {
+			content = httpClient.getContent();
+			if (content == null || httpClient.getResCode().startsWith("4")
+					|| httpClient.getResCode().startsWith("5")) {
 				return new RobotsTxtInfo();
 			}
 			robotTxtInfo = parseRobotsContent(content);
-			robotTxtInfo.setAccessedDate(new Date());
-			RobotInfo robotInfo = new RobotInfo(url, content, new Date());
-			RobotInfoDA.putEntry(robotInfo);
-			System.out.println(RobotInfoDA.containsEntry(url));
-			this.run = false;
 		}
+		//update access time
+		robotTxtInfo.setAccessedDate(new Date());
+		robotInfo = new RobotInfo(url, content, new Date());
+		RobotInfoDA.putEntry(robotInfo);
+//		System.out.println(RobotInfoDA.containsEntry(url));
+//		this.run = false;
+
 		return robotTxtInfo;
     }
     
@@ -199,7 +205,8 @@ public class CrawlerWorker extends Thread{
 			httpClient.setRequestHeaders("If-Modified-Since", date);
 		}
 		httpClient.fetchContent();
-		if ("304".equals(httpClient.getResCode())) {
+		if ("304".equals(httpClient.getResCode()) || httpClient.getResCode().startsWith("4")
+				|| httpClient.getResCode().startsWith("5")) {
 			return false;
 		}
 		Map<String, List<String>> headers = httpClient.getHeaders();
