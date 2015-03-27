@@ -2,6 +2,7 @@ package edu.upenn.cis455.storage;
 
 import java.io.File;
 
+import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.persist.EntityStore;
@@ -22,15 +23,15 @@ public class ContentDA {
 		ContentDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(String envDirectory) {
+	public static void init(String envDirectory)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
-		File file = new File(dir, envDirectory);
+		File file = new File(dir, DBWrapper.envDirectory);
 		boolean noExist = file.mkdirs();
 		if (noExist) {
 			//
 		} else {
-			System.out.println("already created");
+	//		System.out.println("already created");
 		}
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		StoreConfig storeConfig = new StoreConfig();
@@ -59,5 +60,8 @@ public class ContentDA {
 	public static boolean containsEntry(String url) {
 		return primaryIndex.contains(url);
 	}
-	
+
+	public static void close() {
+		ContentDA.store.close();
+	}
 }

@@ -143,6 +143,7 @@ public class CrawlerWorker extends Thread{
 			RobotInfo robotInfo = new RobotInfo(url, content, new Date());
 			RobotInfoDA.putEntry(robotInfo);
 			System.out.println(RobotInfoDA.containsEntry(url));
+			this.run = false;
 		}
 		return robotTxtInfo;
     }

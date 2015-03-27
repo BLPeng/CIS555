@@ -10,7 +10,7 @@ import com.sleepycat.persist.StoreConfig;
 
 // class to access User database
 public class UserDA {
-	private static EntityStore store;
+	public static EntityStore store;
 	private static PrimaryIndex<String, User> primaryIndex;
 	public static String envDirectory = "data/userDB";
 
@@ -30,7 +30,7 @@ public class UserDA {
 		if (noExist) {
 			//
 		} else {
-			System.out.println("already created");
+	//		System.out.println("already created");
 		}
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		StoreConfig storeConfig = new StoreConfig();
@@ -58,5 +58,8 @@ public class UserDA {
 
 	public static boolean containsEntry(String userName) {
 		return primaryIndex.contains(userName);
+	}
+	public static void close() {
+		UserDA.store.close();
 	}
 }

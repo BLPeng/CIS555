@@ -5,14 +5,21 @@ import java.security.spec.InvalidKeySpecException;
 
 import junit.framework.TestCase;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.PasswordHash;
+import edu.upenn.cis455.storage.RobotInfoDA;
 import edu.upenn.cis455.storage.User;
 import edu.upenn.cis455.storage.UserDA;
 
 public class UserDATest extends TestCase {
-
+	@BeforeClass
+	public void setUp() {
+		UserDA.init("testDatabase");
+	}
 	
 	@Test
 	public void testPut() {
@@ -64,4 +71,9 @@ public class UserDATest extends TestCase {
 	    user1 = UserDA.getEntry("aa");
 	    assertNull(user1);
 	}
+	
+	@AfterClass
+    public void tearDown() {
+		UserDA.close();
+    }
 }

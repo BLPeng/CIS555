@@ -9,7 +9,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class CrawlerWorkerPool {
-	private final int threadPoolSize = 2;	//for multi-processor /core, increase this number
+	private final int threadPoolSize = 1;	//for multi-processor /core, increase this number
 	private final int queueSize = 4096;
 	private CrawlerWorker[] pools;
 	private String dir;

@@ -22,15 +22,15 @@ public class RobotInfoDA {
 		RobotInfoDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(String envDirectory) {
+	public static void init(String envDirectory)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
-		File file = new File(dir, envDirectory);
+		File file = new File(dir, DBWrapper.envDirectory);
 		boolean noExist = file.mkdirs();
 		if (noExist) {
 			//
 		} else {
-			System.out.println("already created");
+	//		System.out.println("already created");
 		}
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		StoreConfig storeConfig = new StoreConfig();
@@ -56,8 +56,12 @@ public class RobotInfoDA {
 		primaryIndex.delete(userName);
 	}
 	
-	public static boolean containsEntry(String url) {
-		return primaryIndex.contains(url);
+	public static boolean containsEntry(String userName) {
+		return primaryIndex.contains(userName);
+	}
+
+	public static void close() {
+		RobotInfoDA.store.close();
 	}
 
 }

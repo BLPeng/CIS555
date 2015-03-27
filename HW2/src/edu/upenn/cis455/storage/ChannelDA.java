@@ -10,7 +10,7 @@ import com.sleepycat.persist.StoreConfig;
 
 // class to access User database
 public class ChannelDA {
-	private static EntityStore store;
+	public static EntityStore store;
 	private static PrimaryIndex<String, Channel> primaryIndex;
 	public static String envDirectory = "data/channelDB";
     
@@ -22,15 +22,15 @@ public class ChannelDA {
 		ChannelDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(String envDirectory) {
+	public static void init(String envDirectory)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
-		File file = new File(dir, envDirectory);
+		File file = new File(dir, DBWrapper.envDirectory);
 		boolean noExist = file.mkdirs();
 		if (noExist) {
 			//
 		} else {
-			System.out.println("already created");
+	//		System.out.println("already created");
 		}
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		StoreConfig storeConfig = new StoreConfig();
@@ -58,5 +58,9 @@ public class ChannelDA {
 
 	public static boolean containsEntry(String userName) {
 		return primaryIndex.contains(userName);
+	}
+
+	public static void close() {
+		ChannelDA.store.close();
 	}
 }

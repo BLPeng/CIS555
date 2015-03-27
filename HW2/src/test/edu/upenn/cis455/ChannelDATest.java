@@ -1,14 +1,25 @@
 package test.edu.upenn.cis455;
 
 import java.util.Date;
+
 import junit.framework.TestCase;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
 import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
+import edu.upenn.cis455.storage.ContentDA;
+import edu.upenn.cis455.storage.RobotInfoDA;
+import edu.upenn.cis455.storage.UserDA;
 
 
 public class ChannelDATest extends TestCase {
-
+	@BeforeClass
+	public void setUp() {
+		ChannelDA.init("testDatabase");
+	}
 	
 	@Test
 	public void testPut() {
@@ -48,4 +59,10 @@ public class ChannelDATest extends TestCase {
 	    channel1 = ChannelDA.getEntry("aa");
 	    assertNull(channel1);
 	}
+	
+	@AfterClass
+    public void tearDown() {
+		ChannelDA.close();
+    }
+
 }
