@@ -18,7 +18,6 @@ import org.w3c.dom.NodeList;
 import org.w3c.tidy.Tidy;
 
 import edu.upenn.cis455.crawler.info.RobotsTxtInfo;
-import edu.upenn.cis455.servlet.HTTPClient;
 import edu.upenn.cis455.storage.Content;
 import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.RobotInfo;

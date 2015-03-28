@@ -37,7 +37,7 @@ public class ChannelDA {
 		envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
 	//	Environment env = new Environment(file, envConfig);
-		DBWrapper.myEnv = env;
+	//	DBWrapper.myEnv = env;
 		ChannelDA.store = new EntityStore(env, "ChannelStore", storeConfig);
 		primaryIndex = store.getPrimaryIndex(String.class, Channel.class);
 		
