@@ -2,6 +2,7 @@ package edu.upenn.cis455.crawler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
@@ -10,16 +11,19 @@ import java.util.concurrent.BlockingQueue;
 
 public class CrawlerWorkerPool {
 	private final int threadPoolSize = 10;	//for multi-processor /core, increase this number
-	private final int queueSize = 4096;
+	private final int queueSize = 409600;
 	private CrawlerWorker[] pools;
 	private String dir;
 	private String url;
 	private int maxSize = -1;
 	private int maxPage = -1;
+	private int curPage = 0;
 	private int workingThread = 0;
 	private final Object lock = new Object();
+	private final Object lockForPage = new Object();
 	private Set<String> syncSet = Collections.newSetFromMap(new Hashtable<String, Boolean>());
 	private BlockingQueue<String> pendingURLs = new ArrayBlockingQueue<String>(queueSize);
+	private Hashtable<String, Long> lastCrawled = new Hashtable<String, Long>();
 	
 	public CrawlerWorkerPool() { 		
 		pools = new CrawlerWorker[threadPoolSize];
@@ -109,6 +113,14 @@ public class CrawlerWorkerPool {
         }
     }
 
+	public void increaseCrawledPage() {
+		synchronized (lockForPage) {
+			this.curPage++;
+			if (this.maxPage > 0 && this.curPage > this.maxPage) {
+				this.shutdown();
+			}
+		}
+	}
     public void decreaseCnt() {
         synchronized (lock) {
         	this.workingThread--;
@@ -116,5 +128,18 @@ public class CrawlerWorkerPool {
         		shutdown();
         	}
         }
+    }
+    
+    public long getLastCrawledDate(String url) {
+    	Long time = lastCrawled.get(url);
+    	if (time == null) {
+    		return 0;
+    	} else {
+    		return time;
+    	}
+    }
+    
+    public void setLastCrawledDate(String url, long l) {
+    	lastCrawled.put(url, l);
     }
 }

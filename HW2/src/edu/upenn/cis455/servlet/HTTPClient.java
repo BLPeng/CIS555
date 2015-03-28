@@ -71,6 +71,7 @@ public class HTTPClient {
 			}
 			connection.setInstanceFollowRedirects(false);
 			connection.setRequestMethod(method);
+			connection.setConnectTimeout(10000);
 			for (String header : reqHeaders.keySet()) {
 	        	for (String value : reqHeaders.get(header)) {
 	        		connection.setRequestProperty(header, value);
@@ -93,11 +94,13 @@ public class HTTPClient {
 				   br.close();
 				   content = sb.toString();
 				} catch (IOException e) {
-				   e.printStackTrace();
+			//	   e.printStackTrace();
+				   return;
 				}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+		//	e.printStackTrace();
+			return;
 		}
 	}
 	
@@ -108,6 +111,7 @@ public class HTTPClient {
 			// http client
 			URLInfo myURL = new URLInfo(url);
 			Socket socket = new Socket(myURL.getHostName(), myURL.getPortNo());
+			socket.setSoTimeout(10000);
 			OutputStream theOutput = socket.getOutputStream();
 	        PrintWriter out = new PrintWriter(theOutput, false);
 	        String req = method + " " + url + " HTTP/1.0\r\n";

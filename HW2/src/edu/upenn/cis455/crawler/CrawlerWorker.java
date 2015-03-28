@@ -10,9 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.tidy.Tidy;
+
 import edu.upenn.cis455.crawler.info.RobotsTxtInfo;
 import edu.upenn.cis455.servlet.HTTPClient;
 import edu.upenn.cis455.storage.Content;
@@ -47,6 +51,7 @@ public class CrawlerWorker extends Thread{
 		mTidy.setPrintBodyOnly(true);
 		mTidy.setXHTML(true);
 		mTidy.setQuiet(true);
+		mTidy.setShowWarnings(false);
 		this.crawlerWorkerPool = crawlerWorkerPool;
 //		mTidy.setErrout(null);
 	}
@@ -139,13 +144,17 @@ public class CrawlerWorker extends Thread{
 				delay = robotInfo.getCrawlDelay("*") * 1000;
 			}
 		}
-		long wait = robotInfo.getAccessedDate().getTime() + delay - System.currentTimeMillis();
+		Long lastCrawled = crawlerWorkerPool.getLastCrawledDate(myURL.getHost());
+		long wait = lastCrawled + delay - System.currentTimeMillis();
 		if (wait > 0) {
 			try {
+				crawlerWorkerPool.setLastCrawledDate(myURL.getHost(), lastCrawled + delay);
 				sleep(wait);
 			} catch (InterruptedException e) {
 				//
 			}
+		} else {
+			crawlerWorkerPool.setLastCrawledDate(myURL.getHost(), new Date().getTime());
 		}
 		return true;
 	}
@@ -176,6 +185,7 @@ public class CrawlerWorker extends Thread{
 		}
 	}
 	
+	// crawl page to fetch content and extract links
     private void crawlPage(String url) {
     	if (fetchedURLSet.contains(url)) {
 			return;
@@ -235,6 +245,7 @@ public class CrawlerWorker extends Thread{
 		}	
     }
     
+    // to extract links from html page
     private void extractURL(Document document, String baseURI) {
     	URL baseUrl;
 		try {
@@ -246,12 +257,14 @@ public class CrawlerWorker extends Thread{
     	NodeList elements = document.getElementsByTagName("a");
     	List<String> urls = new ArrayList<String>();
     	for (int i = 0; i < elements.getLength(); i++) {
-    		String tmp = elements.item(i).getAttributes().getNamedItem("href").getNodeValue();
+    		Node node = elements.item(i).getAttributes().getNamedItem("href");
+    		if (node == null) continue;
+    		String tmp = node.getNodeValue();
     		try {
 				URL url = new URL( baseUrl , tmp);
 				urls.add(url.toString());
 			} catch (MalformedURLException e) {
-				e.printStackTrace();
+		//		e.printStackTrace();
 				continue;
 			}
     		
@@ -295,6 +308,7 @@ public class CrawlerWorker extends Thread{
 		if ("304".equals(httpClient.getResCode())) {
 			robotTxtInfo = parseRobotsContent(robotInfo.getRobotInfo());
 		} else {
+			crawlerWorkerPool.setLastCrawledDate(myUrl.getHost(), new Date().getTime());
 			content = httpClient.getContent();
 			if (content == null || httpClient.getResCode().startsWith("4")
 					|| httpClient.getResCode().startsWith("5")) {
@@ -342,7 +356,14 @@ public class CrawlerWorker extends Thread{
 				}
 			} else if("Crawl-delay".equalsIgnoreCase(key)) {
 				if (curUserAgent != null) {
-					robotInfo.addCrawlDelay(curUserAgent, Integer.valueOf(value));
+					int delay = 0;
+					try {
+						delay = Integer.valueOf(value);
+					} catch (Exception e) {
+						//
+					} finally {
+						robotInfo.addCrawlDelay(curUserAgent, delay);
+					}
 				}
 			}
     	}
@@ -373,14 +394,18 @@ public class CrawlerWorker extends Thread{
 		}
 		Map<String, List<String>> headers = httpClient.getHeaders();
 		if ("301".equals(httpClient.getResCode()) || "302".equals(httpClient.getResCode())) {
-			String newUrl = headers.get("Location").get(0);
-			if (newUrl == null) {
+			fetchedURLSet.add(url);
+			String newUrl = null;
+			if (headers.get("Location") != null) {
+				newUrl = headers.get("Location").get(0);
+			} else if (headers.get("location") != null) {
 				newUrl = headers.get("location").get(0);
+			} else {
+				return false;
 			}
 			if (newUrl == null) {
 				return false;
 			} else {
-				fetchedURLSet.add(url);
 				pendingURLs.add(newUrl);
 				return false;
 			}
