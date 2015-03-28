@@ -1,28 +1,17 @@
 package edu.upenn.cis455.servlet;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLDecoder;
-
 import javax.servlet.http.*;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.tidy.Tidy;
@@ -190,13 +179,15 @@ public class XPathServlet extends HttpServlet {
 		}
 		if (isXML) {
 			mTidy.setXmlTags(true);
+		} else {
+			mTidy.setXmlTags(false);
 		}
 		String page = sb.toString();
-		mTidy.setInputEncoding("UTF-8");
+	//	mTidy.setInputEncoding("UTF-8");
 		mTidy.setForceOutput(true);
 		mTidy.setPrintBodyOnly(true);
-		mTidy.setXmlOut(true);
-		writeToFile(page);
+		mTidy.setXHTML(true);
+	//	writeToFile(page);
 	//	System.out.println(page);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(page.getBytes("UTF-8"));
 		document = mTidy.parseDOM(inputStream, null);
