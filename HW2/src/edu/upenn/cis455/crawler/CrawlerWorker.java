@@ -35,9 +35,10 @@ public class CrawlerWorker extends Thread{
 	private BlockingQueue<String> pendingURLs;
 	private Set<String> fetchedURLSet;
 	private boolean ifDownloaded;
+	private CrawlerWorkerPool crawlerWorkerPool;
 	
 	// crawlers share the same frontURL queue, the same fetched url set
-	public CrawlerWorker(BlockingQueue<String> pendingURLs, Set<String> syncSet, int label) {
+	public CrawlerWorker(CrawlerWorkerPool crawlerWorkerPool, BlockingQueue<String> pendingURLs, Set<String> syncSet, int label) {
 		super("Crawler " + String.valueOf(label));
 		httpClient = new HTTPClient();
 		this.pendingURLs = pendingURLs;
@@ -46,7 +47,8 @@ public class CrawlerWorker extends Thread{
 		mTidy.setPrintBodyOnly(true);
 		mTidy.setXHTML(true);
 		mTidy.setQuiet(true);
-		mTidy.setErrout(null);
+		this.crawlerWorkerPool = crawlerWorkerPool;
+//		mTidy.setErrout(null);
 	}
 
 	public String getUrl() {
@@ -84,7 +86,9 @@ public class CrawlerWorker extends Thread{
 	public void run() {
 		while (run) {
 			try {
+				crawlerWorkerPool.decreaseCnt();
 				this.url = pendingURLs.take();
+				crawlerWorkerPool.increaseCnt();
 				if (ifCrawlPage(url) && applyRobotRule(url)) {
 					printProcess(url, 0);
 					crawlPage(url);
@@ -95,7 +99,8 @@ public class CrawlerWorker extends Thread{
 					printProcess(url, 2);
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+		//		e.printStackTrace();
+				System.out.println(this.getName() + " Shutdown");
 			}
 		}
 	}
@@ -112,18 +117,18 @@ public class CrawlerWorker extends Thread{
 		}
 		int delay = 0;
 		if (robotInfo.containsUserAgent("*") || robotInfo.containsUserAgent(USER_AGENT)) {
-			String path = myURL.getPath().toLowerCase();
+			String path = myURL.getPath();
 			if (robotInfo.getDisallowedLinks(USER_AGENT) != null) {
 				List<String> urls = robotInfo.getDisallowedLinks(USER_AGENT);
 				for (String nUrl : urls) {
-					if (path.startsWith(nUrl.toLowerCase())) {
+					if (path.startsWith(nUrl)) {
 						return false;
 					}
 				}
 			} else if (robotInfo.getDisallowedLinks(url) != null) {
 				List<String> urls = robotInfo.getDisallowedLinks("*");
 				for (String nUrl : urls) {
-					if (path.startsWith(nUrl.toLowerCase())) {
+					if (path.startsWith(nUrl)) {
 						return false;
 					}
 				}
@@ -147,10 +152,12 @@ public class CrawlerWorker extends Thread{
 	
 	// get local copy for url
 	private void crawlLocalContent(String url) {
+		boolean isXML = false;
 		if (ContentDA.containsEntry(url)) {
 			Content content = ContentDA.getEntry(url);
 			if (content.getType().equals("xml")) {
 				mTidy.setXmlTags(true);
+				isXML = true;
 			} else {
 				mTidy.setXmlTags(false);
 			}
@@ -161,9 +168,11 @@ public class CrawlerWorker extends Thread{
 				return;
 		//		e.printStackTrace();
 			}
-			document = mTidy.parseDOM(inputStream, null);
-		//	mTidy.pprint(document, System.out);
-			extractURL(document, url); 
+			if (!isXML) {
+				document = mTidy.parseDOM(inputStream, null);
+				//	mTidy.pprint(document, System.out);
+				extractURL(document, url); 
+			}
 		}
 	}
 	
@@ -219,9 +228,11 @@ public class CrawlerWorker extends Thread{
 			return;
 	//		e.printStackTrace();
 		}
-		document = mTidy.parseDOM(inputStream, null);
-	//	mTidy.pprint(document, System.out);
-		extractURL(document, url); 
+		if (!isXML) {
+			document = mTidy.parseDOM(inputStream, null);
+			//	mTidy.pprint(document, System.out);
+			extractURL(document, url); 
+		}	
     }
     
     private void extractURL(Document document, String baseURI) {
@@ -235,7 +246,7 @@ public class CrawlerWorker extends Thread{
     	NodeList elements = document.getElementsByTagName("a");
     	List<String> urls = new ArrayList<String>();
     	for (int i = 0; i < elements.getLength(); i++) {
-    		String tmp = elements.item(i).getAttributes().getNamedItem("href").getNodeValue().toLowerCase();
+    		String tmp = elements.item(i).getAttributes().getNamedItem("href").getNodeValue();
     		try {
 				URL url = new URL( baseUrl , tmp);
 				urls.add(url.toString());
@@ -321,7 +332,7 @@ public class CrawlerWorker extends Thread{
     			continue;
     		}
     		String key = pairs[0].trim();
-			String value = pairs[1].trim().toLowerCase();
+			String value = pairs[1].trim();
     		if (("User-agent").equalsIgnoreCase(key)) {
     			robotInfo.addUserAgent(value);
     			curUserAgent = value;

@@ -9,13 +9,15 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class CrawlerWorkerPool {
-	private final int threadPoolSize = 1;	//for multi-processor /core, increase this number
+	private final int threadPoolSize = 10;	//for multi-processor /core, increase this number
 	private final int queueSize = 4096;
 	private CrawlerWorker[] pools;
 	private String dir;
 	private String url;
 	private int maxSize = -1;
 	private int maxPage = -1;
+	private int workingThread = 0;
+	private final Object lock = new Object();
 	private Set<String> syncSet = Collections.newSetFromMap(new Hashtable<String, Boolean>());
 	private BlockingQueue<String> pendingURLs = new ArrayBlockingQueue<String>(queueSize);
 	
@@ -25,13 +27,14 @@ public class CrawlerWorkerPool {
 	
 	public void start() {
 		for (int i = 0; i < threadPoolSize; i++){
-			pools[i] = new CrawlerWorker(pendingURLs, syncSet, i);
+			pools[i] = new CrawlerWorker(this, pendingURLs, syncSet, i + 1);
 			pools[i].setDir(dir);
 			pools[i].setMaxPage(maxPage);
 			pools[i].setMaxSize(maxSize);
 		}
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].start();
+			workingThread++;
 		}		
 	}
 	
@@ -98,5 +101,20 @@ public class CrawlerWorkerPool {
     		this.threadStatus = status;
     		this.reqUrl = url;
     	}
+    }
+	
+	public void increaseCnt() {
+        synchronized (lock) {
+            this.workingThread++;
+        }
+    }
+
+    public void decreaseCnt() {
+        synchronized (lock) {
+        	this.workingThread--;
+        	if (this.workingThread == 0 && this.pendingURLs.size() == 0) {
+        		shutdown();
+        	}
+        }
     }
 }

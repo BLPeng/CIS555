@@ -50,7 +50,7 @@ public class HTTPClient {
 	private void initRequestHeaders() {		
 		List<String> tmp = new ArrayList<String>();
 		tmp.add(USER_AGENT);
-		reqHeaders.put("User-Agent".toLowerCase(), tmp);
+		reqHeaders.put("User-Agent", tmp);
 	}
 	
 	public void fetchContent() {
@@ -202,10 +202,10 @@ public class HTTPClient {
 		if (url == null || url.length() < 8) {
 			return;
 		}
-		this.url = url.trim().toLowerCase();
-		if (url.startsWith("http://")) {
+		this.url = url.trim();
+		if (url.toLowerCase().startsWith("http://")) {
 			type = 0;
-		} else if (url.startsWith("https://")){
+		} else if (url.toLowerCase().startsWith("https://")){
 			type = 1;
 		} else {
 			return;
