@@ -1,9 +1,12 @@
 package edu.upenn.cis455.storage;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.persist.EntityCursor;
 import com.sleepycat.persist.EntityStore;
 import com.sleepycat.persist.PrimaryIndex;
 import com.sleepycat.persist.StoreConfig;
@@ -59,6 +62,20 @@ public class ChannelDA {
 
 	public static boolean containsEntry(String userName) {
 		return primaryIndex.contains(userName);
+	}
+	
+	public static List<Channel> getEntries() {
+		EntityCursor<Channel> pi_cursor = primaryIndex.entities();
+		List<Channel> ret = new ArrayList<Channel>();
+		try {
+		    for (Channel seci : pi_cursor) {
+		    	ret.add(seci);
+		    }
+		// Always make sure the cursor is closed when we are done with it.
+		} finally {
+		pi_cursor.close();
+		}
+		return ret;
 	}
 
 	public static void close() {

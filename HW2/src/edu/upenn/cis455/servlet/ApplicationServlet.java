@@ -13,7 +13,7 @@ public class ApplicationServlet extends HttpServlet{
 	public User user;
 	protected boolean checkLogin(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		User user = (User) session.getAttribute("user");
+		user = (User) session.getAttribute("user");
 		Date createTime = new Date(session.getCreationTime());
 	    Date lastAccessTime = new Date(session.getLastAccessedTime());
 	    if (session.isNew() || user == null || user.getUserName() == null || user.getUserName().length() == 0){   

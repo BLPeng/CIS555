@@ -34,39 +34,42 @@ public class ChannelDATest extends TestCase {
 	@Test
 	public void testPut() {
 		String username = "xb";
+		String name = "1";
 		String[] xpaths = {"/book/s", "test/test1[test() = \"1\"]"};
 		String url = "http://www.google.com";
 		Date date = new Date();
-	    Channel channel = new Channel(username, url, date, xpaths);
+	    Channel channel = new Channel(name, username, url, date, xpaths);
 	    ChannelDA.putEntry(channel);
-	    Channel channel1 = ChannelDA.getEntry("xb");
+	    Channel channel1 = ChannelDA.getEntry("1");
 	    assertEquals(channel.toString(), channel1.toString());
 	}
 	
 	@Test
 	public void testGet() {
 		String username = "xb";
+		String name = "1";
 		String[] xpaths = {"/book/s", "test/test1[test() = \"1\"]"};
 		String url = "http://www.google.com";
 		Date date = new Date();
-	    Channel channel = new Channel(username, url, date, xpaths);
+	    Channel channel = new Channel(name, username, url, date, xpaths);
 	    ChannelDA.putEntry(channel);
-	    Channel channel1 = ChannelDA.getEntry("xb");
+	    Channel channel1 = ChannelDA.getEntry("1");
 	    assertEquals(channel.toString(), channel1.toString());
 	}
 
 	@Test
 	public void testDelete() {
 		String username = "aa";
+		String name = "1";
 		String[] xpaths = {"/book/s", "test/test1[test() = \"1\"]"};
 		String url = "http://www.google.com";
 		Date date = new Date();
-	    Channel channel = new Channel(username, url, date, xpaths);
+	    Channel channel = new Channel(name, username, url, date, xpaths);
 	    ChannelDA.putEntry(channel);
-	    Channel channel1 = ChannelDA.getEntry("aa");
+	    Channel channel1 = ChannelDA.getEntry("1");
 	    assertEquals(channel.toString(), channel1.toString());
-	    ChannelDA.deleteEntry("aa");
-	    channel1 = ChannelDA.getEntry("aa");
+	    ChannelDA.deleteEntry("1");
+	    channel1 = ChannelDA.getEntry("1");
 	    assertNull(channel1);
 	}
 	

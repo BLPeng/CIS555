@@ -3,12 +3,12 @@ package edu.upenn.cis455.storage;
 import java.util.Date;
 
 import com.sleepycat.persist.model.Entity;
-import com.sleepycat.persist.model.Persistent;
 import com.sleepycat.persist.model.PrimaryKey;
 
 @Entity
 public class Channel {
 	@PrimaryKey
+	private String name;
 	private String userName;
 	private String Url;
 	private Date createdAt;
@@ -18,13 +18,20 @@ public class Channel {
 		
 	}
 	
-	public Channel (String userName, String Url, Date date, String[] xpaths) {
+	public Channel (String name, String userName, String Url, Date date, String[] xpaths) {
+		this.name = name;
 		this.userName = userName;
 		this.Url = Url;
 		this.createdAt = date;
 		this.xpaths = xpaths;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
 	public String getUserName() {
 		return userName;
 	}
@@ -56,6 +63,6 @@ public class Channel {
 		for (int i = 0; xpaths != null && i < xpaths.length; i++) {
 			xpath += xpaths[i] + " ";
 		}
-		return this.userName + ", " + this.Url + ", " + this.createdAt.toString() + ", " + xpath;
+		return this.name + this.userName + ", " + this.Url + ", " + this.createdAt.toString() + ", " + xpath;
 	}
 }
