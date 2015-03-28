@@ -22,7 +22,7 @@ public class ChannelDA {
 		ChannelDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(String envDirectory)  {
+	public static void init(Environment env)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
 		File file = new File(dir, DBWrapper.envDirectory);
@@ -36,7 +36,8 @@ public class ChannelDA {
 		StoreConfig storeConfig = new StoreConfig();
 		envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+	//	Environment env = new Environment(file, envConfig);
+		DBWrapper.myEnv = env;
 		ChannelDA.store = new EntityStore(env, "ChannelStore", storeConfig);
 		primaryIndex = store.getPrimaryIndex(String.class, Channel.class);
 		
@@ -61,6 +62,8 @@ public class ChannelDA {
 	}
 
 	public static void close() {
-		ChannelDA.store.close();
+		if (ChannelDA.store != null) {
+			ChannelDA.store.close();
+		}
 	}
 }

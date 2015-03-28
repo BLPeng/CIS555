@@ -1,21 +1,47 @@
 package edu.upenn.cis455.storage;
 
+import java.io.File;
+
 import com.sleepycat.je.Environment;
+import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.persist.EntityStore;
+import com.sleepycat.persist.StoreConfig;
 
 public class DBWrapper {
 	
 	public static String envDirectory = "database";
 	
-	private static Environment myEnv;
+	public static Environment myEnv;
 	private static EntityStore store;
 	
 	public static void setupDirectory(String dir) {
 		DBWrapper.envDirectory = dir;
-		RobotInfoDA.init(dir);
-		ContentDA.init(dir);
-		ChannelDA.init(dir);
-		UserDA.init(dir);
+		String basedir = System.getProperty("user.dir");
+		File file = new File(basedir, dir);
+		boolean noExist = file.mkdirs();
+		if (noExist) {
+			//
+		} else {
+	//		System.out.println("already created");
+		}
+		EnvironmentConfig envConfig = new EnvironmentConfig();
+		envConfig.setAllowCreate(true);
+		Environment env = new Environment(file, envConfig);
+		RobotInfoDA.init(env);
+		ContentDA.init(env);
+		ChannelDA.init(env);
+		UserDA.init(env);
+	}
+	
+	public static void closeDBs() {
+		if (DBWrapper.myEnv != null) {
+			DBWrapper.myEnv.close();
+			DBWrapper.myEnv = null;
+		}	
+		RobotInfoDA.close();
+		ContentDA.close();
+		ChannelDA.close();
+		UserDA.close();
 	}
 	
 }

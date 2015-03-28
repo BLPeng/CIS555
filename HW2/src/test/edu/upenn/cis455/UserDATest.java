@@ -1,5 +1,6 @@
 package test.edu.upenn.cis455;
 
+import java.io.File;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
@@ -8,6 +9,9 @@ import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.sleepycat.je.Environment;
+import com.sleepycat.je.EnvironmentConfig;
 
 import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.PasswordHash;
@@ -18,7 +22,13 @@ import edu.upenn.cis455.storage.UserDA;
 public class UserDATest extends TestCase {
 	@BeforeClass
 	public void setUp() {
-		UserDA.init("testDatabase");
+		String basedir = System.getProperty("user.dir");
+		File file = new File(basedir, "testDatabase");
+		boolean noExist = file.mkdirs();
+		EnvironmentConfig envConfig = new EnvironmentConfig();
+		envConfig.setAllowCreate(true);
+		Environment env = new Environment(file, envConfig);
+		UserDA.init(env);
 	}
 	
 	@Test

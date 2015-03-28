@@ -23,7 +23,7 @@ public class ContentDA {
 		ContentDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(String envDirectory)  {
+	public static void init(Environment env)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
 		File file = new File(dir, DBWrapper.envDirectory);
@@ -37,7 +37,7 @@ public class ContentDA {
 		StoreConfig storeConfig = new StoreConfig();
 		envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+//		ContentDA.env = new Environment(file, envConfig);
 		ContentDA.store = new EntityStore(env, "ContentStore", storeConfig);
 		primaryIndex = store.getPrimaryIndex(String.class, Content.class);
 		
@@ -62,6 +62,8 @@ public class ContentDA {
 	}
 
 	public static void close() {
-		ContentDA.store.close();
+		if (ContentDA.store != null) {
+			ContentDA.store.close();
+		}
 	}
 }

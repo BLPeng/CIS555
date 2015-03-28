@@ -22,7 +22,7 @@ public class RobotInfoDA {
 		RobotInfoDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(String envDirectory)  {
+	public static void init(Environment env)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
 		File file = new File(dir, DBWrapper.envDirectory);
@@ -36,7 +36,7 @@ public class RobotInfoDA {
 		StoreConfig storeConfig = new StoreConfig();
 		envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+//		env = new Environment(file, envConfig);
 		RobotInfoDA.store = new EntityStore(env, "RobotStore", storeConfig);
 		primaryIndex = store.getPrimaryIndex(String.class, RobotInfo.class);
 		
@@ -61,7 +61,9 @@ public class RobotInfoDA {
 	}
 
 	public static void close() {
-		RobotInfoDA.store.close();
+		if (RobotInfoDA.store != null) {
+			RobotInfoDA.store.close();
+		}
 	}
 
 }

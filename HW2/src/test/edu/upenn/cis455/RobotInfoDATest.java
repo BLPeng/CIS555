@@ -1,5 +1,6 @@
 package test.edu.upenn.cis455;
 
+import java.io.File;
 import java.util.Date;
 
 import junit.framework.TestCase;
@@ -8,17 +9,27 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.sleepycat.je.Environment;
+import com.sleepycat.je.EnvironmentConfig;
+
 import edu.upenn.cis455.storage.ChannelDA;
 import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.RobotInfo;
 import edu.upenn.cis455.storage.RobotInfoDA;
+import edu.upenn.cis455.storage.UserDA;
 
 
 public class RobotInfoDATest extends TestCase {
 
 	@BeforeClass
 	public void setUp() {
-		RobotInfoDA.init("testDatabase");
+		String basedir = System.getProperty("user.dir");
+		File file = new File(basedir, "testDatabase");
+		boolean noExist = file.mkdirs();
+		EnvironmentConfig envConfig = new EnvironmentConfig();
+		envConfig.setAllowCreate(true);
+		Environment env = new Environment(file, envConfig);
+		RobotInfoDA.init(env);
 	}
 	
 	@Test

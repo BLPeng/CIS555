@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import edu.upenn.cis455.storage.DBWrapper;
+
 public class CrawlerWorkerPool {
 	private final int threadPoolSize = 10;	//for multi-processor /core, increase this number
 	private final int queueSize = 409600;
@@ -53,6 +55,7 @@ public class CrawlerWorkerPool {
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].shutdown();
 		}
+	//	DBWrapper.closeDBs();
 	}
 	
     public String getUrl() {

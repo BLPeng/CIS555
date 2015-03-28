@@ -22,7 +22,7 @@ public class UserDA {
 		UserDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(String envDirectory) {
+	public static void init(Environment env) {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
 		File file = new File(dir, envDirectory);
@@ -36,7 +36,7 @@ public class UserDA {
 		StoreConfig storeConfig = new StoreConfig();
 		envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+//		env = new Environment(file, envConfig);
 		UserDA.store = new EntityStore(env, "UserStore", storeConfig);
 		primaryIndex = store.getPrimaryIndex(String.class, User.class);
 		
@@ -60,6 +60,8 @@ public class UserDA {
 		return primaryIndex.contains(userName);
 	}
 	public static void close() {
-		UserDA.store.close();
+		if (UserDA.store != null) {
+			UserDA.store.close();
+		}
 	}
 }

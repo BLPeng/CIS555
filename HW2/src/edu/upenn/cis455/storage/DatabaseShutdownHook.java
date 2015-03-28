@@ -19,6 +19,7 @@ public class DatabaseShutdownHook extends Thread{
 				store.close();
 				env.cleanLog();
 				env.close();
+	//			System.out.println("db closed");
 			}
 		} catch (Exception e) {
 			//
