@@ -69,6 +69,7 @@ public class HTTPClient {
 			if (connection == null) {
 				return;
 			}
+			connection.setInstanceFollowRedirects(false);
 			connection.setRequestMethod(method);
 			for (String header : reqHeaders.keySet()) {
 	        	for (String value : reqHeaders.get(header)) {

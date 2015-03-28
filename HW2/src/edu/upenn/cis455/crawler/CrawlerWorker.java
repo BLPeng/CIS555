@@ -364,7 +364,7 @@ public class CrawlerWorker extends Thread{
 			httpClient.setRequestHeaders("If-Modified-Since", date);
 		}
 		httpClient.fetchContent();
-		if ("304".equals(httpClient.getResCode())) {
+	    if ("304".equals(httpClient.getResCode())) {
 			ifDownloaded = true;
 			return false;
 		} else if (httpClient.getResCode().startsWith("4")
@@ -372,6 +372,19 @@ public class CrawlerWorker extends Thread{
 			return false;
 		}
 		Map<String, List<String>> headers = httpClient.getHeaders();
+		if ("301".equals(httpClient.getResCode()) || "302".equals(httpClient.getResCode())) {
+			String newUrl = headers.get("Location").get(0);
+			if (newUrl == null) {
+				newUrl = headers.get("location").get(0);
+			}
+			if (newUrl == null) {
+				return false;
+			} else {
+				fetchedURLSet.add(url);
+				pendingURLs.add(newUrl);
+				return false;
+			}
+		}
 		if (headers.containsKey("Content-Length")) {
 			int len = Integer.valueOf(headers.get("Content-Length").get(0));
 			if (len > this.maxSize * 1024 * 1024) {
