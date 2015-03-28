@@ -10,6 +10,7 @@ import java.security.spec.InvalidKeySpecException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import edu.upenn.cis455.storage.DBWrapper;
 import edu.upenn.cis455.storage.PasswordHash;
@@ -43,7 +44,11 @@ public class LoginServlet extends ApplicationServlet{
 			e.printStackTrace();
 			return;
 		}
-		if (checkLogin(request)) {
+		if (username == null || username.length() == 0 ) {
+			printErrorPage(writer, "empty username");
+		} else if (pwd == null || pwd.length() == 0 ){
+			printErrorPage(writer, "password username");
+		} else if (checkLogin(request)) {
 			printWelcomePage(writer);	
 		} else {
 			User user = UserDA.getEntry(username);
@@ -52,6 +57,8 @@ public class LoginServlet extends ApplicationServlet{
 				hash = PasswordHash.hashPassword(pwd);
 				if (user != null && user.getPassword().endsWith(hash)) {
 					printWelcomePage(writer);
+					HttpSession session = request.getSession(true);
+					session.setAttribute("user", user);
 				} else {
 					printLoginPage(writer, "user no exist / password incorrect");
 				}

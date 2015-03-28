@@ -45,7 +45,11 @@ public class RegisterServlet extends ApplicationServlet {
 			e.printStackTrace();
 			return;
 		}
-		if (!checkLogin(request)) {
+		if (username == null || username.length() == 0 ) {
+			printErrorPage(writer, "empty username");
+		} else if (pwd == null || pwd.length() == 0 ){
+			printErrorPage(writer, "password username");
+		} else if (!checkLogin(request)) {
 			if (UserDA.getEntry(username) != null) {
 				printErrorPage(writer, "Username exists.");
 				return;
@@ -86,17 +90,6 @@ public class RegisterServlet extends ApplicationServlet {
 			
 	}
 	
-	private void printErrorPage(PrintWriter writer, String error) {
-		writer.println("<html>");
-        writer.println("<head>");
-        writer.println("<title>Welcome</title>");
-        writer.println("</head>");
-        writer.println("<body>");
-        writer.println(error);
-        writer.println("</body>");
-        writer.println("</html>");
-        writer.close();
-	}
 	private void printRegisterPage(PrintWriter writer) {
 		writer.println("<html>");
         writer.println("<head>");

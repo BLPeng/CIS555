@@ -10,7 +10,9 @@
      <param-name>BDBstore</param-name>
      <param-value>database</param-value>
    </context-param>
-    
+   <session-config>
+	 <session-timeout>20</session-timeout>
+   </session-config>
    <servlet>
      <servlet-name>xpath</servlet-name>
      <servlet-class>edu.upenn.cis455.servlet.XPathServlet</servlet-class> 
@@ -25,6 +27,10 @@
      <servlet-class>edu.upenn.cis455.servlet.RegisterServlet</servlet-class> 
      <load-on-startup>2</load-on-startup>
    </servlet>
+   <servlet>
+     <servlet-name>logout</servlet-name>
+     <servlet-class>edu.upenn.cis455.servlet.LogoutServlet</servlet-class> 
+   </servlet>
    
    <servlet-mapping>
      <servlet-name>xpath</servlet-name>
@@ -37,8 +43,12 @@
    <servlet-mapping>
      <servlet-name>register</servlet-name>
      <url-pattern>/register</url-pattern>
-   </servlet-mapping> 
+   </servlet-mapping>
+   <servlet-mapping>
+     <servlet-name>logout</servlet-name>
+     <url-pattern>/logout</url-pattern>
+   </servlet-mapping>   
 
    <!-- add any additional servlets and servlet mappings here -->
-
+	
 </web-app>
