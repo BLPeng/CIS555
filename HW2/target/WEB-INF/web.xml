@@ -18,6 +18,7 @@
    <servlet>
      <servlet-name>login</servlet-name>
      <servlet-class>edu.upenn.cis455.servlet.LoginServlet</servlet-class> 
+     <load-on-startup>2</load-on-startup>
    </servlet>
    <servlet>
      <servlet-name>register</servlet-name>

@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import edu.upenn.cis455.storage.DBWrapper;
+import edu.upenn.cis455.storage.PasswordHash;
 import edu.upenn.cis455.storage.User;
 import edu.upenn.cis455.storage.UserDA;
 
@@ -50,6 +53,12 @@ public class RegisterServlet extends ApplicationServlet {
 			if (!pwd.equals(pwd_confirm)) {
 				printErrorPage(writer, "two passwords not the same.");
 				return;
+			}
+			try {
+				pwd = PasswordHash.hashPassword(pwd);
+			} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+				printErrorPage(writer, "password invalid.");
+				return; 
 			}
 			User user = new User(username, pwd);
 			UserDA.putEntry(user);
@@ -101,7 +110,7 @@ public class RegisterServlet extends ApplicationServlet {
         writer.println("Username: <input type=\"text\" name=\"user\"><br>");
         writer.println("Password: <input type=\"password\" name=\"pwd\"><br>");
         writer.println("Password: <input type=\"password\" name=\"pwd_confirm\"><br>");
-        writer.println("<input type=\"submit\" value=\"Login\">");
+        writer.println("<input type=\"submit\" value=\"Register\">");
         writer.println("</form>");
         writer.println("</body>");
         writer.println("</html>");
