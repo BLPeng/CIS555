@@ -2,7 +2,6 @@ package edu.upenn.cis455.crawler;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
@@ -18,9 +17,8 @@ public class CrawlerWorkerPool {
 	private int maxSize = -1;
 	private int maxPage = -1;
 	private int curPage = 0;
-	private int workingThread = 0;
+	private int workingThread = threadPoolSize;
 	private final Object lock = new Object();
-	private final Object lockForPage = new Object();
 	private Set<String> syncSet = Collections.newSetFromMap(new Hashtable<String, Boolean>());
 	private BlockingQueue<String> pendingURLs = new ArrayBlockingQueue<String>(queueSize);
 	private Hashtable<String, Long> lastCrawled = new Hashtable<String, Long>();
@@ -38,7 +36,6 @@ public class CrawlerWorkerPool {
 		}
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].start();
-			workingThread++;
 		}		
 	}
 	
@@ -107,23 +104,24 @@ public class CrawlerWorkerPool {
     	}
     }
 	
-	public void increaseCnt() {
+	public void increaseCnt() throws InterruptedException {
         synchronized (lock) {
             this.workingThread++;
         }
     }
 
-	public void increaseCrawledPage() {
-		synchronized (lockForPage) {
-			this.curPage++;
-			if (this.maxPage > 0 && this.curPage > this.maxPage) {
-				this.shutdown();
-			}
-		}
-	}
-    public void decreaseCnt() {
+    public void decreaseCnt() throws InterruptedException {
         synchronized (lock) {
         	this.workingThread--;
+        	this.curPage++;
+        	if (this.curPage > this.maxPage && this.maxPage > 0) {
+        		if (this.workingThread > 0) {
+        			lock.wait();
+        		} else {
+        			shutdown();
+        		}
+        		
+        	}
         	if (this.workingThread == 0 && this.pendingURLs.size() == 0) {
         		shutdown();
         	}

@@ -10,7 +10,7 @@ public class XPathCrawler {
 		String url;
 		String dir;
 		int maxSize;
-		int numOfFiles = 10;			// default 10 pages
+		int numOfFiles = -1;			// default unlimited pages
 		if (size < 3) {
 			System.out.println("Usage:");
 			System.out.println("1.The URL of the Web page at which to start");
@@ -33,7 +33,7 @@ public class XPathCrawler {
 				try {
 					numOfFiles = Integer.parseInt(args[3]);
 				} catch (NumberFormatException e) {
-					System.err.println("Invalid number " + args[2]);
+					System.err.println("Invalid number " + args[3]);
 					return;
 				}				
 			}
