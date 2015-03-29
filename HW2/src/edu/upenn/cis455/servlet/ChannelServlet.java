@@ -135,7 +135,8 @@ public class ChannelServlet extends ApplicationServlet{
 				writer.println("</document>");
 			}
 		}
-		
+		writer.println("</documentcollection>");
+		writer.close();
 	}
 	
 	private void printChannelsPage(PrintWriter writer, boolean login, String banner) {
@@ -165,9 +166,9 @@ public class ChannelServlet extends ApplicationServlet{
 	
 	private String getHiddenForm(String user, String name) {
 		StringBuilder sb = new StringBuilder();
-		if (this.user.getUserName().equals(user)) {
+		if (this.user != null && this.user.getUserName().equals(user)) {
 			sb.append("<form method=\"post\">");
-			sb.append("<input type=\"hidden\" name=\"operation\" value=\"display\"/>");
+			sb.append("<input type=\"hidden\" name=\"operation\" value=\"delete\"/>");
 			sb.append("<input type=\"hidden\" name=\"name\" value=\"" + name + "\" ><br/>");
 			sb.append("<input type=\"submit\" value=\"Delete\">");
 			sb.append("</form>");

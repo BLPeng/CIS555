@@ -181,12 +181,16 @@ public class CrawlerWorker extends Thread{
 				return;
 		//		e.printStackTrace();
 			}
-			document = mTidy.parseDOM(inputStream, null);
-			if (!isXML) {	
-				//	mTidy.pprint(document, System.out);
-				extractURL(document, url); 
-			} else {
-				matchChannel(document, url);
+			try {
+				document = mTidy.parseDOM(inputStream, null);
+				if (!isXML) {	
+					//	mTidy.pprint(document, System.out);
+					extractURL(document, url); 
+				} else {
+					matchChannel(document, url);
+				}
+			} catch (Exception e) {
+				return;
 			}
 		}
 	}
@@ -260,12 +264,16 @@ public class CrawlerWorker extends Thread{
 			return;
 	//		e.printStackTrace();
 		}
-		document = mTidy.parseDOM(inputStream, null);
-		if (!isXML) {	
-			//	mTidy.pprint(document, System.out);
-			extractURL(document, url); 
-		} else {
-			matchChannel(document, url);
+		try {
+			document = mTidy.parseDOM(inputStream, null);
+			if (!isXML) {	
+				//	mTidy.pprint(document, System.out);
+				extractURL(document, url); 
+			} else {
+				matchChannel(document, url);
+			}
+		} catch (Exception e) {
+			return;
 		}
     }
     
