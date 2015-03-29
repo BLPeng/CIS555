@@ -45,6 +45,7 @@ public class ChannelServlet extends ApplicationServlet{
 	public void doPost(HttpServletRequest request, HttpServletResponse response) {
 		String xpath = request.getParameter("xpaths");
 		String url = request.getParameter("url");
+		String name = request.getParameter("name");
 		response.setContentType("text/html");
 		PrintWriter writer;
 		try {
@@ -61,6 +62,7 @@ public class ChannelServlet extends ApplicationServlet{
 		try {
 			xpath = URLDecoder.decode(xpath, "utf-8").trim();
 			url = URLDecoder.decode(url, "utf-8").trim();
+			name = URLDecoder.decode(name, "utf-8").trim();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 			return;
@@ -69,6 +71,10 @@ public class ChannelServlet extends ApplicationServlet{
 			printErrorPage(writer, "Empty xpath <br/>");
 		} else if (url.isEmpty()) {
 			printErrorPage(writer, "Error: Empty URL <br/>");
+		} else if (name.isEmpty()) { 
+			printErrorPage(writer, "Error: Empty Name <br/>");
+		} else if (ChannelDA.getEntry(name) != null) { 
+			printErrorPage(writer, "Name exists <br/>");
 		} else {
 			if (!url.toLowerCase().startsWith("http://")) {
 				url = "http://" + url;
@@ -77,7 +83,7 @@ public class ChannelServlet extends ApplicationServlet{
 			for (int i = 0; i < xpaths.length; i++) {
 				xpaths[i] = xpaths[i].trim();
 			}
-			Channel channel = new Channel(user.getUserName(), url, new Date(), xpaths);
+			Channel channel = new Channel(name, user.getUserName(), url, new Date(), xpaths);
 			ChannelDA.putEntry(channel);
 		}
 		printChannelsPage(writer, true);
@@ -92,6 +98,8 @@ public class ChannelServlet extends ApplicationServlet{
         if (login) {
         	writer.println("Create new channel<br/>");
             writer.println("<form action=\"channel\" method=\"post\">");
+            writer.println("Channel name:<br/>");
+            writer.println("<input type=\"text\" name=\"name\" size=\"100\" ><br/>");
             writer.println("XPaths: separate by semicolons<br/>");
             writer.println("<input type=\"text\" name=\"xpaths\" size=\"100\" ><br/>");
             writer.println("URL:<br/>");
@@ -104,21 +112,29 @@ public class ChannelServlet extends ApplicationServlet{
         writer.println("</html>");
 		writer.close();	
 	}
+	
+	private String getHiddenForm(String user, String name) {
+		StringBuilder sb = new StringBuilder();
+		if (this.user.getUserName().equals(user)) {
+			sb.append("<form action=\"channel/delete\" method=\"post\">");
+			sb.append("<input type=\"hidden\" name=\"name\" value=\"" + name + "\" ><br/>");
+			sb.append("<input type=\"submit\" value=\"Delete\">");
+			sb.append("</form>");
+		}
+		return sb.toString();
+	}
 	private String getChannels() {
 		List<Channel> channels = ChannelDA.getEntries();
 		StringBuilder sb = new StringBuilder();
 		sb.append("<table>");
-		sb.append("<tr><th>XPaths</th><th>URL</th><th>Created_at</th></tr>");
+		sb.append("<tr><th>Name</th><th>XPaths</th><th>URL</th><th>Created_at</th><th>Action</th></tr>");
 		for (int i = 0; i < channels.size(); i++) {
 			StringBuilder tmp = new StringBuilder();
 			for (String xpath : channels.get(i).getXpaths()) {
 				tmp.append(xpath + System.lineSeparator());
 			}
-			sb.append("<tr><td>" + tmp.toString() + "</td><td>" + channels.get(i).getUrl() + "</td><td>" + channels.get(i).getCreatedAt() + "</td></tr>");
-			if (channels.get(i).getUserName().equals(user.getUserName())) {
-				sb.append("<a href=\"delete\">");
-				sb.append("<button>Delete</button></a>");
-			}
+			sb.append("<tr><td>" + channels.get(i).getName() + "</td><td>" + tmp.toString() + "</td><td>" + channels.get(i).getUrl() + "</td><td>" + channels.get(i).getCreatedAt() + "</td>"
+					+ "<td>" + getHiddenForm(channels.get(i).getUserName(), channels.get(i).getName()) + "</td></tr>");
 		}
 		sb.append("</table><br/><br/>");
 		return sb.toString();
