@@ -1,7 +1,9 @@
 package test.edu.upenn.cis455;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -73,6 +75,22 @@ public class ChannelDATest extends TestCase {
 	    assertNull(channel1);
 	}
 	
+	@Test
+	public void testAddXML() {
+		String username = "aa";
+		String name = "1";
+		String[] xpaths = {"/book/s", "test/test1[test() = \"1\"]"};
+		String url = "http://www.google.com";
+		Date date = new Date();
+	    Channel channel = new Channel(name, username, url, date, xpaths);
+	    List<String> xml = new ArrayList<String>();
+	    xml.add("aaa");
+	    ChannelDA.putEntry(channel);
+	    ChannelDA.addXMLs("1", xml);
+	    channel = ChannelDA.getEntry("1");
+	    String[] tmp = channel.getXmlFiles();
+	    assertEquals(tmp[0], "aaa");
+	}
 	@AfterClass
     public void tearDown() {
 		ChannelDA.close();

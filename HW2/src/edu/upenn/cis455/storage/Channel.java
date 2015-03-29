@@ -13,6 +13,7 @@ public class Channel {
 	private String Url;
 	private Date createdAt;
 	private String[] xpaths;
+	private String[] xmlFiles;
 
 	public Channel () {
 		
@@ -24,6 +25,7 @@ public class Channel {
 		this.Url = Url;
 		this.createdAt = date;
 		this.xpaths = xpaths;
+		this.xmlFiles = new String[0];
 	}
 	
 	public String getName() {
@@ -64,5 +66,13 @@ public class Channel {
 			xpath += xpaths[i] + " ";
 		}
 		return this.name + this.userName + ", " + this.Url + ", " + this.createdAt.toString() + ", " + xpath;
+	}
+
+	public String[] getXmlFiles() {
+		return xmlFiles;
+	}
+
+	public void setXmlFiles(String[] xmlFiles) {
+		this.xmlFiles = xmlFiles;
 	}
 }
