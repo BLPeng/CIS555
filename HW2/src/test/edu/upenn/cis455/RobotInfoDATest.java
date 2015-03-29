@@ -20,7 +20,7 @@ import edu.upenn.cis455.storage.UserDA;
 
 
 public class RobotInfoDATest extends TestCase {
-
+	private Environment env;
 	@BeforeClass
 	public void setUp() {
 		String basedir = System.getProperty("user.dir");
@@ -28,7 +28,7 @@ public class RobotInfoDATest extends TestCase {
 		boolean noExist = file.mkdirs();
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		envConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+		env = new Environment(file, envConfig);
 		RobotInfoDA.init(env);
 	}
 	
@@ -73,5 +73,6 @@ public class RobotInfoDATest extends TestCase {
 	@AfterClass
     public void tearDown() {
 		RobotInfoDA.close();
+		env.close();
     }
 }

@@ -18,7 +18,7 @@ import edu.upenn.cis455.storage.RobotInfoDA;
 
 
 public class ContentDATest extends TestCase {
-
+	private Environment env;
 	@BeforeClass
 	public void setUp() {
 		String basedir = System.getProperty("user.dir");
@@ -26,7 +26,7 @@ public class ContentDATest extends TestCase {
 		boolean noExist = file.mkdirs();
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		envConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+		env = new Environment(file, envConfig);
 		ContentDA.init(env);
 	}
 	
@@ -72,5 +72,6 @@ public class ContentDATest extends TestCase {
 	@AfterClass
     public void tearDown() {
 		ContentDA.close();
+		env.close();
     }
 }

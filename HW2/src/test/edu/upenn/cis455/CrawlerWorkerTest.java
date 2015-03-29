@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 
 import junit.framework.TestCase;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -16,6 +17,7 @@ import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
 import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.DBWrapper;
+import edu.upenn.cis455.storage.RobotInfoDA;
 
 public class CrawlerWorkerTest extends TestCase{
 	private CrawlerWorker worker;
@@ -66,5 +68,9 @@ public class CrawlerWorkerTest extends TestCase{
 		channel = ChannelDA.getEntry("1");
 		assertTrue(channel.getXmlFiles().length == 1); // this page contains 9 links if the page is not changed
 	}
+	@AfterClass
+    public void tearDown() {
+		DBWrapper.closeDBs();
+    }
 
 }

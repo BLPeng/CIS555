@@ -22,6 +22,7 @@ import edu.upenn.cis455.storage.UserDA;
 
 
 public class ChannelDATest extends TestCase {
+	private Environment env;
 	@BeforeClass
 	public void setUp() {
 		String basedir = System.getProperty("user.dir");
@@ -29,7 +30,7 @@ public class ChannelDATest extends TestCase {
 		boolean noExist = file.mkdirs();
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		envConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+		env = new Environment(file, envConfig);
 		ChannelDA.init(env);
 	}
 	
@@ -94,6 +95,7 @@ public class ChannelDATest extends TestCase {
 	@AfterClass
     public void tearDown() {
 		ChannelDA.close();
+		env.close();
     }
 
 }

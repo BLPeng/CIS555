@@ -20,6 +20,7 @@ import edu.upenn.cis455.storage.User;
 import edu.upenn.cis455.storage.UserDA;
 
 public class UserDATest extends TestCase {
+	private Environment env;
 	@BeforeClass
 	public void setUp() {
 		String basedir = System.getProperty("user.dir");
@@ -27,7 +28,7 @@ public class UserDATest extends TestCase {
 		boolean noExist = file.mkdirs();
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		envConfig.setAllowCreate(true);
-		Environment env = new Environment(file, envConfig);
+		env = new Environment(file, envConfig);
 		UserDA.init(env);
 	}
 	
@@ -85,5 +86,6 @@ public class UserDATest extends TestCase {
 	@AfterClass
     public void tearDown() {
 		UserDA.close();
+		env.close();
     }
 }
