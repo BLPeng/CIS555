@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -13,10 +17,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
+import edu.upenn.cis455.storage.Content;
+import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.DBWrapper;
 
 
 public class ChannelServlet extends ApplicationServlet{
+	private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+	private static Pattern xmlInstructionPtn = Pattern.compile("<\\?xml.*\\?>",
+			Pattern.CASE_INSENSITIVE); 	
 	@Override
 	public void init() throws ServletException {
 	    super.init();
@@ -35,9 +44,9 @@ public class ChannelServlet extends ApplicationServlet{
 			return;
 		}     
 		if (checkLogin(request)) {
-			printChannelsPage(writer, true);	
+			printChannelsPage(writer, true, getBanner(request));	
 		} else {
-			printChannelsPage(writer, false);
+			printChannelsPage(writer, false, getBanner(request));
 		}
 	}
 	
@@ -56,17 +65,24 @@ public class ChannelServlet extends ApplicationServlet{
 			e.printStackTrace();
 			return;
 		}
+		if ("display".equals(op)) { 
+    		name = request.getParameter("name"); 		
+			Channel channel = ChannelDA.getEntry(name);
+			if (channel == null) {
+				printErrorPage(writer, getBanner(request), "not xml files found");
+			}
+			response.setContentType("application/xml");
+			printMatchXMLs(writer, channel);
+			return;
+    	}
 		if (!checkLogin(request)) {
-			printChannelsPage(writer, false);
+			printChannelsPage(writer, false, getBanner(request));
 			return;
 		}
     	if ("delete".equals(op)) {
     		name = request.getParameter("name"); 		
 			ChannelDA.deleteEntry(name);
-    	} else if ("display".equals(op)) { 
-    		name = request.getParameter("name"); 		
-			
-    	} else {
+    	}  else {
     		try {
     			xpath = URLDecoder.decode(xpath, "utf-8").trim();
     			url = URLDecoder.decode(url, "utf-8").trim();
@@ -76,13 +92,13 @@ public class ChannelServlet extends ApplicationServlet{
     			return;
     		}
     		if (xpath.isEmpty()) {
-    			printErrorPage(writer, "Empty xpath <br/>");
+    			printErrorPage(writer, getBanner(request), "Empty xpath <br/>");
     		} else if (url.isEmpty()) {
-    			printErrorPage(writer, "Error: Empty URL <br/>");
+    			printErrorPage(writer, getBanner(request), "Error: Empty URL <br/>");
     		} else if (name.isEmpty()) { 
-    			printErrorPage(writer, "Error: Empty Name <br/>");
+    			printErrorPage(writer, getBanner(request), "Error: Empty Name <br/>");
     		} else if (ChannelDA.getEntry(name) != null) { 
-    			printErrorPage(writer, "Name exists <br/>");
+    			printErrorPage(writer, getBanner(request), "Name exists <br/>");
     		} else {
     			if (!url.toLowerCase().startsWith("http://")) {
     				url = "http://" + url;
@@ -95,16 +111,40 @@ public class ChannelServlet extends ApplicationServlet{
     			ChannelDA.putEntry(channel);
     		}
     	}	
-		printChannelsPage(writer, true);
+		printChannelsPage(writer, true, getBanner(request));
 	}
 	
+	private void printMatchXMLs(PrintWriter writer, Channel channel) {
+		String[] xmls = channel.getXmlFiles();
+		writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		writer.print("<?xml-stylesheet type=\"text/xsl\" href=\"");
+		writer.print(channel.getUrl());
+		writer.println("\"?>");
+		writer.println("<documentcollection>");
+		if (xmls != null) {
+			for(String xml : xmls) {
+				Content content = ContentDA.getEntry(xml);
+				if(content == null) {
+					continue;
+				}
+				writer.print("<document crawled=\"");
+				writer.print(dateFormat.format(content.getLastAccessedAt()));
+				writer.print("\" location=\"" + content.getUrl() + "\">");
+				Matcher m = xmlInstructionPtn.matcher(content.getContent());
+				writer.print(m.replaceAll(""));
+				writer.println("</document>");
+			}
+		}
+		
+	}
 	
-	private void printChannelsPage(PrintWriter writer, boolean login) {
+	private void printChannelsPage(PrintWriter writer, boolean login, String banner) {
 		writer.println("<html>");
         writer.println("<head>");
         writer.println("<title>Login Page</title>");
         writer.println("</head>");
         writer.println("<body>");
+        writer.println(banner+"<br/>");
         if (login) {
         	writer.println("Create new channel<br/>");
             writer.println("<form method=\"post\">");

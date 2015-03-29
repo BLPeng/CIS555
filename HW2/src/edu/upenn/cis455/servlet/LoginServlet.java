@@ -45,25 +45,25 @@ public class LoginServlet extends ApplicationServlet{
 			return;
 		}
 		if (username == null || username.length() == 0 ) {
-			printErrorPage(writer, "empty username");
+			printErrorPage(writer, getBanner(request), "empty username");
 		} else if (pwd == null || pwd.length() == 0 ){
-			printErrorPage(writer, "password username");
+			printErrorPage(writer, getBanner(request), "password username");
 		} else if (checkLogin(request)) {
-			printWelcomePage(writer);	
+			printWelcomePage(writer, getBanner(request));	
 		} else {
 			User user = UserDA.getEntry(username);
 			String hash;
 			try {
 				hash = PasswordHash.hashPassword(pwd);
 				if (user != null && user.getPassword().endsWith(hash)) {
-					printWelcomePage(writer);
+					printWelcomePage(writer, getBanner(request));
 					HttpSession session = request.getSession(true);
 					session.setAttribute("user", user);
 				} else {
-					printLoginPage(writer, "user no exist / password incorrect");
+					printLoginPage(writer, getBanner(request), "user no exist / password incorrect");
 				}
 			} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-				printLoginPage(writer, "password incorrect!");
+				printLoginPage(writer, getBanner(request), "password incorrect!");
 				e.printStackTrace();
 			}
 			
@@ -82,28 +82,26 @@ public class LoginServlet extends ApplicationServlet{
 			return;
 		}     
 		if (checkLogin(request)) {
-			printWelcomePage(writer);	
+			printWelcomePage(writer, getBanner(request));	
 		} else {
-			printLoginPage(writer, null);
+			printLoginPage(writer, getBanner(request), null);
 		}
 	}
 	
-	private void printLoginPage(PrintWriter writer, String banner) {
+	private void printLoginPage(PrintWriter writer, String banner, String msg) {
 		writer.println("<html>");
         writer.println("<head>");
         writer.println("<title>Login Page</title>");
         writer.println("</head>");
         writer.println("<body>");
-
         writer.println(banner+"<br/>");
+        writer.println(msg+"<br/>");
         writer.println("Login Page! timout = 10 min<br/>");
         writer.println("<form method=\"post\">");
         writer.println("Username: <input type=\"text\" name=\"user\"><br>");
         writer.println("Password: <input type=\"password\" name=\"pwd\"><br>");
         writer.println("<input type=\"submit\" value=\"Login\">");
         writer.println("</form>");
-        writer.println("<a href=\"register\">");
-        writer.println("<button>Register</button></a>");
         writer.println("</body>");
         writer.println("</html>");
 		writer.close();	

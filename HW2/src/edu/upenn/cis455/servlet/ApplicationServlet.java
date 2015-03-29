@@ -26,19 +26,36 @@ public class ApplicationServlet extends HttpServlet{
 	    }
 	}
 	
-	protected void printErrorPage(PrintWriter writer, String error) {
+	protected String getBanner(HttpServletRequest request) {
+		StringBuilder sb = new StringBuilder();
+		if (checkLogin(request)) {
+			sb.append("<a href=\"/servlet/logout\">");
+			sb.append("<button>Logout</button></a>");
+		} else {
+			sb.append("<a href=\"/servlet/login\">");
+			sb.append("<button>Login</button></a>");
+		}
+		sb.append("<a href=\"/servlet/register\">");
+		sb.append("<button>Register</button></a>");
+		sb.append("<a href=\"/servlet/channel\">");
+		sb.append("<button>Channel</button></a>");
+		return sb.toString();
+	}
+	
+	protected void printErrorPage(PrintWriter writer, String banner, String error) {
 		writer.println("<html>");
         writer.println("<head>");
         writer.println("<title>Welcome</title>");
         writer.println("</head>");
         writer.println("<body>");
+        writer.println(banner+"<br/>");
         writer.println(error);
         writer.println("</body>");
         writer.println("</html>");
         writer.close();
 	}
 	
-	protected void printWelcomePage(PrintWriter writer) {
+	protected void printWelcomePage(PrintWriter writer, String banner) {
 		writer.println("<html>");
         writer.println("<head>");
         writer.println("<title>Welcome</title>");
@@ -47,8 +64,7 @@ public class ApplicationServlet extends HttpServlet{
         if (user != null) {
         	writer.println("User:" + user.getUserName());
         }
-        writer.println("<a href=\"logout\">");
-        writer.println("<button>logout</button></a>");
+        writer.println(banner+"<br/>");
         writer.println("</body>");
         writer.println("</html>");
         writer.close();
