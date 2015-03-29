@@ -99,7 +99,7 @@ public class RegisterServlet extends ApplicationServlet {
         writer.println("<h2> Xiaobin Chen </h2>");
         writer.println("<h2> SEAS: xiaobinc </h2>");
         writer.println("Register Page.");
-        writer.println("<form action=\"register\" method=\"post\">");
+        writer.println("<form action=\"\" method=\"post\">");
         writer.println("Username: <input type=\"text\" name=\"user\"><br>");
         writer.println("Password: <input type=\"password\" name=\"pwd\"><br>");
         writer.println("Password: <input type=\"password\" name=\"pwd_confirm\"><br>");

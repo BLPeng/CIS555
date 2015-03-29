@@ -97,7 +97,7 @@ public class LoginServlet extends ApplicationServlet{
 
         writer.println(banner+"<br/>");
         writer.println("Login Page! timout = 10 min<br/>");
-        writer.println("<form action=\"login\" method=\"post\">");
+        writer.println("<form method=\"post\">");
         writer.println("Username: <input type=\"text\" name=\"user\"><br>");
         writer.println("Password: <input type=\"password\" name=\"pwd\"><br>");
         writer.println("<input type=\"submit\" value=\"Login\">");

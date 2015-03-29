@@ -46,6 +46,7 @@ public class ChannelServlet extends ApplicationServlet{
 		String xpath = request.getParameter("xpaths");
 		String url = request.getParameter("url");
 		String name = request.getParameter("name");
+		String op = request.getParameter("operation");
 		response.setContentType("text/html");
 		PrintWriter writer;
 		try {
@@ -59,33 +60,38 @@ public class ChannelServlet extends ApplicationServlet{
 			printChannelsPage(writer, false);
 			return;
 		}
-		try {
-			xpath = URLDecoder.decode(xpath, "utf-8").trim();
-			url = URLDecoder.decode(url, "utf-8").trim();
-			name = URLDecoder.decode(name, "utf-8").trim();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			return;
-		}
-		if (xpath.isEmpty()) {
-			printErrorPage(writer, "Empty xpath <br/>");
-		} else if (url.isEmpty()) {
-			printErrorPage(writer, "Error: Empty URL <br/>");
-		} else if (name.isEmpty()) { 
-			printErrorPage(writer, "Error: Empty Name <br/>");
-		} else if (ChannelDA.getEntry(name) != null) { 
-			printErrorPage(writer, "Name exists <br/>");
-		} else {
-			if (!url.toLowerCase().startsWith("http://")) {
-				url = "http://" + url;
-			}
-			String[] xpaths = xpath.split(";");
-			for (int i = 0; i < xpaths.length; i++) {
-				xpaths[i] = xpaths[i].trim();
-			}
-			Channel channel = new Channel(name, user.getUserName(), url, new Date(), xpaths);
-			ChannelDA.putEntry(channel);
-		}
+    	if ("delete".equals(op)) {
+    		name = request.getParameter("name"); 		
+			ChannelDA.deleteEntry(name);
+    	} else {
+    		try {
+    			xpath = URLDecoder.decode(xpath, "utf-8").trim();
+    			url = URLDecoder.decode(url, "utf-8").trim();
+    			name = URLDecoder.decode(name, "utf-8").trim();
+    		} catch (UnsupportedEncodingException e) {
+    			e.printStackTrace();
+    			return;
+    		}
+    		if (xpath.isEmpty()) {
+    			printErrorPage(writer, "Empty xpath <br/>");
+    		} else if (url.isEmpty()) {
+    			printErrorPage(writer, "Error: Empty URL <br/>");
+    		} else if (name.isEmpty()) { 
+    			printErrorPage(writer, "Error: Empty Name <br/>");
+    		} else if (ChannelDA.getEntry(name) != null) { 
+    			printErrorPage(writer, "Name exists <br/>");
+    		} else {
+    			if (!url.toLowerCase().startsWith("http://")) {
+    				url = "http://" + url;
+    			}
+    			String[] xpaths = xpath.split(";");
+    			for (int i = 0; i < xpaths.length; i++) {
+    				xpaths[i] = xpaths[i].trim();
+    			}
+    			Channel channel = new Channel(name, user.getUserName(), url, new Date(), xpaths);
+    			ChannelDA.putEntry(channel);
+    		}
+    	}	
 		printChannelsPage(writer, true);
 	}
 	
@@ -97,7 +103,7 @@ public class ChannelServlet extends ApplicationServlet{
         writer.println("<body>");
         if (login) {
         	writer.println("Create new channel<br/>");
-            writer.println("<form action=\"channel\" method=\"post\">");
+            writer.println("<form method=\"post\">");
             writer.println("Channel name:<br/>");
             writer.println("<input type=\"text\" name=\"name\" size=\"100\" ><br/>");
             writer.println("XPaths: separate by semicolons<br/>");
@@ -116,7 +122,8 @@ public class ChannelServlet extends ApplicationServlet{
 	private String getHiddenForm(String user, String name) {
 		StringBuilder sb = new StringBuilder();
 		if (this.user.getUserName().equals(user)) {
-			sb.append("<form action=\"channel/delete\" method=\"post\">");
+			sb.append("<form method=\"post\">");
+			sb.append("<input type=\"hidden\" name=\"operation\" value=\"delete\"/>");
 			sb.append("<input type=\"hidden\" name=\"name\" value=\"" + name + "\" ><br/>");
 			sb.append("<input type=\"submit\" value=\"Delete\">");
 			sb.append("</form>");
