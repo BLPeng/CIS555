@@ -9,7 +9,11 @@ Did you complete any extra-credit tasks? If so, which ones?
         no
 Any special instructions for building and running your solution?
   (include detailed instructions, or write 'None')
-        servlet path:    $host/servlet/xpath
+        xpathServlet :    $host/servlet/xpath
+        loginServlet :    $host/servlet/login
+        logoutServlet :   $host/servlet/logout
+        registerServlet : $host/servlet/register
+        channelServlet :  $host/servlet/channel    (this page also contains links for New/Delete/Display)
 Did you personally write _all_ the code you are submitting
 (other than code from the course web page)?
   [X] Yes
