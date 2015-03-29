@@ -26,7 +26,9 @@ public class DBWrapper {
 		}
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		envConfig.setAllowCreate(true);
+		envConfig.setTransactional(true);
 		Environment env = new Environment(file, envConfig);
+		myEnv = env;
 		RobotInfoDA.init(env);
 		ContentDA.init(env);
 		ChannelDA.init(env);
@@ -34,14 +36,14 @@ public class DBWrapper {
 	}
 	
 	public static void closeDBs() {
-		if (DBWrapper.myEnv != null) {
-			DBWrapper.myEnv.close();
-			DBWrapper.myEnv = null;
-		}	
 		RobotInfoDA.close();
 		ContentDA.close();
 		ChannelDA.close();
 		UserDA.close();
+		if (DBWrapper.myEnv != null) {
+			DBWrapper.myEnv.close();
+			DBWrapper.myEnv = null;
+		}	
 	}
 	
 }

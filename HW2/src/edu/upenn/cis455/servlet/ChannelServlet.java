@@ -11,9 +11,12 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.sleepycat.je.Transaction;
 
 import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
@@ -29,7 +32,8 @@ public class ChannelServlet extends ApplicationServlet{
 	@Override
 	public void init() throws ServletException {
 	    super.init();
-	    DBWrapper.setupDirectory("database");
+//	    ServletContext context = getServletContext();
+//	    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
 	}
 	
 	@Override
@@ -107,8 +111,10 @@ public class ChannelServlet extends ApplicationServlet{
     			for (int i = 0; i < xpaths.length; i++) {
     				xpaths[i] = xpaths[i].trim();
     			}
+    	//		Transaction t = DBWrapper.myEnv.beginTransaction(null, null);
     			Channel channel = new Channel(name, user.getUserName(), url, new Date(), xpaths);
     			ChannelDA.putEntry(channel);
+    	//		t.commit();
     		}
     	}	
 		printChannelsPage(writer, true, getBanner(request));

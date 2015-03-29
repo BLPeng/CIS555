@@ -7,6 +7,7 @@ import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,10 +23,12 @@ public class LoginServlet extends ApplicationServlet{
 	@Override
 	  public void init() throws ServletException {
 	    super.init();
-	    DBWrapper.setupDirectory("database");
+//	    ServletContext context = getServletContext();
+//	    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
 	  }
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) {
+	//    String tmp = System.getProperty("user.dir");
 		String username = request.getParameter("user");
         String pwd = request.getParameter("pwd");
 		response.setContentType("text/html");

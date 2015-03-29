@@ -7,9 +7,12 @@ import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.sleepycat.je.Transaction;
 
 import edu.upenn.cis455.storage.DBWrapper;
 import edu.upenn.cis455.storage.PasswordHash;
@@ -21,7 +24,8 @@ public class RegisterServlet extends ApplicationServlet {
 	@Override
 	  public void init() throws ServletException {
 	    super.init();
-	    DBWrapper.setupDirectory("database");
+//	    ServletContext context = getServletContext();
+//	    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
 	  }
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) {
@@ -64,8 +68,10 @@ public class RegisterServlet extends ApplicationServlet {
 				printErrorPage(writer, getBanner(request), "password invalid.");
 				return; 
 			}
+	//		Transaction t = DBWrapper.myEnv.beginTransaction(null, null);
 			User user = new User(username, pwd);
 			UserDA.putEntry(user);
+	//		t.commit();
 			printWelcomePage(writer, getBanner(request));
 		} else {
 			printWelcomePage(writer, getBanner(request));

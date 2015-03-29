@@ -10,6 +10,9 @@
      <param-name>BDBstore</param-name>
      <param-value>database</param-value>
    </context-param>
+   <listener>
+     <listener-class>edu.upenn.cis455.servlet.ContextListener</listener-class>
+   </listener>
    <session-config>
 	 <session-timeout>20</session-timeout>
    </session-config>
