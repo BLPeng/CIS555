@@ -10,19 +10,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.sleepycat.je.Transaction;
 
 import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
 import edu.upenn.cis455.storage.Content;
 import edu.upenn.cis455.storage.ContentDA;
-import edu.upenn.cis455.storage.DBWrapper;
+
 
 
 public class ChannelServlet extends ApplicationServlet{

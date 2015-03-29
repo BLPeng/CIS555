@@ -24,14 +24,14 @@ public class UserDA {
 
 	public static void init(Environment env) {
 		// absolute path from where the application was initialized.
-		String dir = System.getProperty("user.dir");
+	/*	String dir = System.getProperty("user.dir");
 		File file = new File(dir, envDirectory);
 		boolean noExist = file.mkdirs();
 		if (noExist) {
 			//
 		} else {
 	//		System.out.println("already created");
-		}
+		}*/
 		EnvironmentConfig envConfig = new EnvironmentConfig();
 		StoreConfig storeConfig = new StoreConfig();
 		envConfig.setAllowCreate(true);

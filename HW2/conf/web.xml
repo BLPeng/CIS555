@@ -8,7 +8,7 @@
    <display-name>Channel Subscription Servlets</display-name>
    <context-param>
      <param-name>BDBstore</param-name>
-     <param-value>database</param-value>
+     <param-value>/home/cis455/workspace/CIS555/HW2/database</param-value>
    </context-param>
    <listener>
      <listener-class>edu.upenn.cis455.servlet.ContextListener</listener-class>

@@ -203,7 +203,7 @@ public class CrawlerWorker extends Thread{
 			boolean[] ret = xpathEngine.evaluate(document);
 			for (int i = 0; i < ret.length; i++) {
 				if (ret[i]) {
-					System.out.println("match channel" + channel.getName());
+		//			System.out.println(url + " match channel:" + channel.getName());
 					ChannelDA.addXML(channel.getName(), url);
 					break;
 				}
