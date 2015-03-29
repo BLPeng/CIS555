@@ -63,6 +63,9 @@ public class ChannelServlet extends ApplicationServlet{
     	if ("delete".equals(op)) {
     		name = request.getParameter("name"); 		
 			ChannelDA.deleteEntry(name);
+    	} else if ("display".equals(op)) { 
+    		name = request.getParameter("name"); 		
+			
     	} else {
     		try {
     			xpath = URLDecoder.decode(xpath, "utf-8").trim();
@@ -95,6 +98,7 @@ public class ChannelServlet extends ApplicationServlet{
 		printChannelsPage(writer, true);
 	}
 	
+	
 	private void printChannelsPage(PrintWriter writer, boolean login) {
 		writer.println("<html>");
         writer.println("<head>");
@@ -123,9 +127,22 @@ public class ChannelServlet extends ApplicationServlet{
 		StringBuilder sb = new StringBuilder();
 		if (this.user.getUserName().equals(user)) {
 			sb.append("<form method=\"post\">");
-			sb.append("<input type=\"hidden\" name=\"operation\" value=\"delete\"/>");
+			sb.append("<input type=\"hidden\" name=\"operation\" value=\"display\"/>");
 			sb.append("<input type=\"hidden\" name=\"name\" value=\"" + name + "\" ><br/>");
 			sb.append("<input type=\"submit\" value=\"Delete\">");
+			sb.append("</form>");
+		}
+		return sb.toString();
+	}
+	
+	
+	private String getHiddenForm1(String name) {
+		StringBuilder sb = new StringBuilder();
+		if (true) {
+			sb.append("<form method=\"post\">");
+			sb.append("<input type=\"hidden\" name=\"operation\" value=\"display\"/>");
+			sb.append("<input type=\"hidden\" name=\"name\" value=\"" + name + "\" ><br/>");
+			sb.append("<input type=\"submit\" value=\"Display\">");
 			sb.append("</form>");
 		}
 		return sb.toString();
@@ -134,14 +151,15 @@ public class ChannelServlet extends ApplicationServlet{
 		List<Channel> channels = ChannelDA.getEntries();
 		StringBuilder sb = new StringBuilder();
 		sb.append("<table>");
-		sb.append("<tr><th>Name</th><th>XPaths</th><th>URL</th><th>Created_at</th><th>Action</th></tr>");
+		sb.append("<tr><th>Name</th><th>XPaths</th><th>URL</th><th>Created_at</th><th> </th><th> </th></tr>");
 		for (int i = 0; i < channels.size(); i++) {
 			StringBuilder tmp = new StringBuilder();
 			for (String xpath : channels.get(i).getXpaths()) {
 				tmp.append(xpath + System.lineSeparator());
 			}
 			sb.append("<tr><td>" + channels.get(i).getName() + "</td><td>" + tmp.toString() + "</td><td>" + channels.get(i).getUrl() + "</td><td>" + channels.get(i).getCreatedAt() + "</td>"
-					+ "<td>" + getHiddenForm(channels.get(i).getUserName(), channels.get(i).getName()) + "</td></tr>");
+					+ "<td>" + getHiddenForm(channels.get(i).getUserName(), channels.get(i).getName()) + "</td>"
+							+ "<td>" + getHiddenForm1(channels.get(i).getName()) + "</td></tr>");
 		}
 		sb.append("</table><br/><br/>");
 		return sb.toString();

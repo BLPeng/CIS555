@@ -17,7 +17,7 @@ public class DBWrapper {
 	public static void setupDirectory(String dir) {
 		DBWrapper.envDirectory = dir;
 		String basedir = System.getProperty("user.dir");
-		File file = new File(basedir, dir);
+		File file = new File(dir);
 		boolean noExist = file.mkdirs();
 		if (noExist) {
 			//

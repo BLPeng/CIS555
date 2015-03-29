@@ -78,6 +78,24 @@ public class ChannelDA {
 		return ret;
 	}
 
+	public static void addXML(String name, String xml) {
+		Channel channel = primaryIndex.get(name);
+		if (channel == null) {
+			return;
+		}
+		String[] existXMLs = channel.getXmlFiles();
+		List<String> newXMLs = new ArrayList<String>();
+		newXMLs.add(xml);
+		for (String xml1 : existXMLs) {
+			newXMLs.add(xml1);
+		}
+		String[] newXMLs1 = new String[newXMLs.size()];
+		for (int i  = 0; i < newXMLs.size(); i++) {
+			newXMLs1[i] = newXMLs.get(i);
+		}
+		channel.setXmlFiles(newXMLs1);
+		ChannelDA.putEntry(channel);
+	}
 	public static void addXMLs(String name, List<String> xmls) {
 		Channel channel = primaryIndex.get(name);
 		if (channel == null) {

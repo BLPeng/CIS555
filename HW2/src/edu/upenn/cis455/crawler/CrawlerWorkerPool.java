@@ -8,15 +8,14 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import edu.upenn.cis455.storage.DBWrapper;
 
 public class CrawlerWorkerPool {
-	private final int threadPoolSize = 10;	//for multi-processor /core, increase this number
-	private final int queueSize = 409600;
+	private int threadPoolSize = 10;	//for multi-processor /core, increase this number
+	private int queueSize = 409600;
 	private CrawlerWorker[] pools;
 	private String dir;
 	private String url;
-	private int maxSize = -1;
+	private int maxSize = 10;
 	private int maxPage = -1;
 	private int curPage = 0;
 	private int workingThread = threadPoolSize;
@@ -143,4 +142,12 @@ public class CrawlerWorkerPool {
     public void setLastCrawledDate(String url, long l) {
     	lastCrawled.put(url, l);
     }
+
+	public int getThreadPoolSize() {
+		return threadPoolSize;
+	}
+
+	public void setThreadPoolSize(int threadPoolSize) {
+		this.threadPoolSize = threadPoolSize;
+	}
 }

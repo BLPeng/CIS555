@@ -19,7 +19,8 @@ public class RunAllTests extends TestCase
     		  UserDATest.class,
     		  ChannelDATest.class,
     		  ContentDATest.class,
-    		  RobotInfoDATest.class
+    		  RobotInfoDATest.class,
+    		  CrawlerWorkerTest.class
       };   
       
       return new TestSuite(testClasses);

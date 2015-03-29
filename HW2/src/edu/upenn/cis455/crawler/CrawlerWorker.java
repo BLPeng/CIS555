@@ -12,16 +12,19 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.tidy.Tidy;
 
 import edu.upenn.cis455.crawler.info.RobotsTxtInfo;
+import edu.upenn.cis455.storage.Channel;
+import edu.upenn.cis455.storage.ChannelDA;
 import edu.upenn.cis455.storage.Content;
 import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.RobotInfo;
 import edu.upenn.cis455.storage.RobotInfoDA;
+import edu.upenn.cis455.xpathengine.XPathEngineFactory;
+import edu.upenn.cis455.xpathengine.XPathEngineImpl;
 
 
 
@@ -39,6 +42,7 @@ public class CrawlerWorker extends Thread{
 	private Set<String> fetchedURLSet;
 	private boolean ifDownloaded;
 	private CrawlerWorkerPool crawlerWorkerPool;
+	private XPathEngineImpl xpathEngine;
 	
 	// crawlers share the same frontURL queue, the same fetched url set
 	public CrawlerWorker(CrawlerWorkerPool crawlerWorkerPool, BlockingQueue<String> pendingURLs, Set<String> syncSet, int label) {
@@ -52,6 +56,7 @@ public class CrawlerWorker extends Thread{
 		mTidy.setQuiet(true);
 		mTidy.setShowWarnings(false);
 		this.crawlerWorkerPool = crawlerWorkerPool;
+		xpathEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine(); 
 //		mTidy.setErrout(null);
 	}
 
@@ -176,16 +181,34 @@ public class CrawlerWorker extends Thread{
 				return;
 		//		e.printStackTrace();
 			}
-			if (!isXML) {
-				document = mTidy.parseDOM(inputStream, null);
+			document = mTidy.parseDOM(inputStream, null);
+			if (!isXML) {	
 				//	mTidy.pprint(document, System.out);
 				extractURL(document, url); 
+			} else {
+				matchChannel(document, url);
 			}
 		}
 	}
 	
+	private void matchChannel(Document document, String url) {
+		List<Channel> channels = ChannelDA.getEntries();
+		for (Channel channel : channels) {
+			String[] xpaths = channel.getXpaths();
+			xpathEngine.setXPaths(xpaths);
+			boolean[] ret = xpathEngine.evaluate(document);
+			for (int i = 0; i < ret.length; i++) {
+				if (ret[i]) {
+					System.out.println("match channel" + channel.getName());
+					ChannelDA.addXML(channel.getName(), url);
+					break;
+				}
+			}
+		}
+		
+	}
 	// crawl page to fetch content and extract links
-    private void crawlPage(String url) {
+    public void crawlPage(String url) {
     	if (fetchedURLSet.contains(url)) {
 			return;
 		} else {
@@ -237,11 +260,13 @@ public class CrawlerWorker extends Thread{
 			return;
 	//		e.printStackTrace();
 		}
-		if (!isXML) {
-			document = mTidy.parseDOM(inputStream, null);
+		document = mTidy.parseDOM(inputStream, null);
+		if (!isXML) {	
 			//	mTidy.pprint(document, System.out);
 			extractURL(document, url); 
-		}	
+		} else {
+			matchChannel(document, url);
+		}
     }
     
     // to extract links from html page
@@ -447,5 +472,13 @@ public class CrawlerWorker extends Thread{
 		case 1: System.out.println(url + " : Not modified"); break;
 		case 2: System.out.println(url + " : Not download"); break;
 		}
+	}
+
+	public BlockingQueue<String> getPendingURLs() {
+		return pendingURLs;
+	}
+
+	public void setPendingURLs(BlockingQueue<String> pendingURLs) {
+		this.pendingURLs = pendingURLs;
 	}
 }

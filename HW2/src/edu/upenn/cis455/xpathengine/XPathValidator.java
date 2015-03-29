@@ -167,7 +167,7 @@ public class XPathValidator {
 		skipSpaces();
 		StringBuilder sb = new StringBuilder();
 		Attr attribute = new Attr();
-		while (peekNextChar() != null && peekNextChar() != '=' && peekNextChar() != ' ' && isValidChar(peekNextChar(), false)) {	//check start "@attname"
+		while (peekNextChar() != null && peekNextChar() != '=' && peekNextChar() != ' ') {	//check start "@attname"
 			sb.append(getChar());
 		}
 		attribute.attrName = sb.toString();
