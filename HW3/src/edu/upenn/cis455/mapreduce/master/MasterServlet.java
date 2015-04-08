@@ -1,6 +1,8 @@
 package edu.upenn.cis455.mapreduce.master;
 
 import java.io.*;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.Map;
 
 import javax.servlet.http.*;
 
+import edu.upenn.cis455.mapreduce.HTTPClient;
 import edu.upenn.cis455.mapreduce.infoclasses.JobInfo;
 import edu.upenn.cis455.mapreduce.infoclasses.WorkerStatus;
 
@@ -17,6 +20,7 @@ public class MasterServlet extends HttpServlet {
 	static final long Longest_Interval = 30 * 1000; // 30 sec
 	private JobInfo job;
 	private Map<String, WorkerStatus> workersStatus = new Hashtable<String, WorkerStatus>();
+	private HTTPClient httpClient = new HTTPClient();
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response) 
        throws java.io.IOException {
@@ -40,7 +44,8 @@ public class MasterServlet extends HttpServlet {
 		if("/submitJob".equals(pathInfo)) { // Submit job
 			job = getNextJobInfo(request);
 			if (checkJobInfo(job, response)) {
-				
+				postRunMap(job, getActiveWorkers());
+				response.sendRedirect("status");
 			}
 		} else {
 			printResponsePage("not support yet.", response);
@@ -69,21 +74,54 @@ public class MasterServlet extends HttpServlet {
     	int port;
     	long keysRead;
     	long keysWrite;
+    	String ip;
+    	String key;
+    	String status;
+    	String job;
     	try {
-    		port = Integer.parseInt(request.getParameter("port"));
-    		keysRead = Long.parseLong(request.getParameter("keysRead"));
-    		keysWrite = Long.parseLong(request.getParameter("keysWrite"));
+    		port = Integer.parseInt(URLDecoder.decode(request.getParameter("port"), "UTF-8"));
+    		keysRead = Long.parseLong(URLDecoder.decode(request.getParameter("keysRead"), "UTF-8"));
+    		keysWrite = Long.parseLong(URLDecoder.decode(request.getParameter("keysWrite"), "UTF-8"));
+        	status = URLDecoder.decode(request.getParameter("status"), "UTF-8");
+        	job = URLDecoder.decode(request.getParameter("job"), "UTF-8");
     	} catch (Exception e) {
     		return;
     	}
-    	String ip = request.getRemoteAddr();
-    	String key = ip + ":" + port;
-    	String status = request.getParameter("status");
-    	String job = request.getParameter("job");
+    	ip = request.getRemoteAddr();
+    	key = ip + ":" + port;
     	WorkerStatus workerStatus = new WorkerStatus(ip, port, job, status, keysRead, keysWrite);
     	workersStatus.put(key, workerStatus);
     }
 	
+    // post run reduce message
+    private void postRunReduce() {    
+    	
+    }
+    
+    // post run map message
+    private void postRunMap(JobInfo job, List<WorkerStatus> workersStatus) {
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("jobName=" + job.getName());
+    	sb.append("&input:=" + job.getInputDir());
+    	sb.append("&numThreads=" + job.getMapThreads());
+    	sb.append("&numWorkers=" + workersStatus.size());
+    	int count = 1;
+    	for (WorkerStatus workerStatus : workersStatus) {
+    		sb.append("&worker" + count + "=" + workerStatus.getIPPort());
+    		count++;
+    	}
+    	String params = sb.toString();
+    	for (WorkerStatus workerStatus : workersStatus) {
+    		httpClient.init();
+    		httpClient.setMethod("POST");
+    		httpClient.setURL("Http://" + workerStatus.getIPPort() + "/runmap");
+    		httpClient.setSendContent(params);
+    		httpClient.connect();
+    	}
+
+    }
+    
+    
     private boolean isMapPhaseComplete() {
     	boolean ret = false;
     	
@@ -119,15 +157,19 @@ public class MasterServlet extends HttpServlet {
 	private JobInfo getNextJobInfo(HttpServletRequest request) {
 		int mapThreads;
 		int reduceThread; 
+		String name;
+		String inputDir; 
+		String outputDir;
 		try {
-			mapThreads = Integer.parseInt(request.getParameter("mapThread"));
-			reduceThread = Integer.parseInt(request.getParameter("reduceThread"));
+			mapThreads = Integer.parseInt(URLDecoder.decode(request.getParameter("mapThread"), "UTF-8"));
+			reduceThread = Integer.parseInt(URLDecoder.decode(request.getParameter("reduceThread"), "UTF-8"));
+			name = URLDecoder.decode(request.getParameter("jobName"), "UTF-8");
+			inputDir = URLDecoder.decode(request.getParameter("inputDir"), "UTF-8");
+			outputDir = URLDecoder.decode(request.getParameter("outputDir"), "UTF-8");
 		} catch (Exception e) {
 			return null;
 		}
-		String name = request.getParameter("jobname");
-		String inputDir = request.getParameter("inputDir");
-		String outputDir = request.getParameter("outputDir");
+		
 		JobInfo job = new JobInfo(name, inputDir, outputDir, mapThreads, reduceThread);
 		return job;
 	}
@@ -137,7 +179,7 @@ public class MasterServlet extends HttpServlet {
     	StringBuilder sb = new StringBuilder();
     	sb.append("<p>Submit a new job:</p>");
     	sb.append("<form action=\"submitJob\" method=\"post\">");
-    	sb.append("Jobname: <input type=\"text\" name=\"jobname\"/><br/>");
+    	sb.append("Job name: <input type=\"text\" name=\"jobName\"/><br/>");
     	sb.append("Input directory: <input type=\"text\" name=\"inputDir\"/><br/>");
     	sb.append("Output directory: <input type=\"text\" name=\"outputDir\"/><br/>");
     	sb.append("Num of map thread: <input type=\"number\" name=\"mapThread\" min=\"1\"/><br/>");
@@ -147,9 +189,6 @@ public class MasterServlet extends HttpServlet {
     	return sb.toString();
     }
     
-    private void postRunReduce() {    
-    	
-    }
     
     private List<WorkerStatus> getActiveWorkers() {
     	List<WorkerStatus> ret = new ArrayList<WorkerStatus>();

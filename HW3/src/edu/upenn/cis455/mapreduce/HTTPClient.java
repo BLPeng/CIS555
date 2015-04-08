@@ -1,9 +1,11 @@
 package edu.upenn.cis455.mapreduce;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.URL;
@@ -26,6 +28,8 @@ public class HTTPClient {
 	private String url;
 	private String method;
 	private String resCode;
+	private String sendContent;
+	
 	private final String USER_AGENT = "cis455crawler";
 	private Map<String, List<String>> headers;
 	private Map<String, List<String>> reqHeaders;
@@ -38,6 +42,7 @@ public class HTTPClient {
 	
 	public void init() {
 		content = null;
+		sendContent = null;
 		url = null;
 		method = "GET";
 		reqHeaders = new HashMap<String, List<String>>();
@@ -52,15 +57,15 @@ public class HTTPClient {
 		reqHeaders.put("User-Agent", tmp);
 	}
 	
-	public void fetchContent() {
+	public void connect() {
 		if (type == 0) {
-			getHttpContent(); 
+			httpConnect(); 
 		} else {
-			getHttpsContent();
+			httpsConnect();
 		}
 	}
 	
-	public void getHttpsContent() {
+	public void httpsConnect() {
 		URL myURL;
 		try {
 			myURL = new URL(url);
@@ -76,6 +81,15 @@ public class HTTPClient {
 	        		connection.setRequestProperty(header, value);
 	        	}
 	        }
+			
+			OutputStream os = connection.getOutputStream();
+			BufferedWriter writer = new BufferedWriter(
+			        new OutputStreamWriter(os, "UTF-8"));
+			writer.write(this.sendContent);
+			writer.flush();
+			writer.close();
+			os.close();
+			
 			resCode = String.valueOf(connection.getResponseCode());
 			headers = connection.getHeaderFields();
 			try {
@@ -103,7 +117,7 @@ public class HTTPClient {
 		}
 	}
 	
-	public void getHttpContent() {
+	public void httpConnect() {
 		StringBuilder sb = new StringBuilder();
 		boolean isXML = false;
 		try {
@@ -122,7 +136,8 @@ public class HTTPClient {
 	        	}
 	        }
 //	        out.print("Accept: application/xml, text/html, text/html, application/rss+xml\r\n");
-			out.print("\r\n"); 
+			out.print("\r\n");
+			out.print(this.sendContent); 
 			out.flush(); 
 			BufferedReader in = new BufferedReader(
 			      new InputStreamReader(socket.getInputStream()));
@@ -202,6 +217,17 @@ public class HTTPClient {
 		return this.content;
 	}
 	
+	public void setURL(String host, String port) {
+		if (host == null || host.length() == 0) {
+			return;
+		}
+		if (port == null || port.length() == 0) {
+			return;
+		}
+		this.url = "Http://" + host.trim() + ":" + port.trim();
+		this.type = 0;
+	}
+	
 	public void setURL(String url) {
 		if (url == null || url.length() < 8) {
 			return;
@@ -265,5 +291,13 @@ public class HTTPClient {
 				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return dateFormat.format(date);
+	}
+
+	public String getSendContent() {
+		return sendContent;
+	}
+
+	public void setSendContent(String sendContent) {
+		this.sendContent = sendContent;
 	}
 }

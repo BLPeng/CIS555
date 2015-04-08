@@ -11,7 +11,7 @@ public class WorkerStatus {
 	private long keysWrite;
 	private Date lastUpdated;
 	public String getIPPort() {
-		return ip + ":" + port;
+		return getIp() + ":" + getPort();
 	}
 	public String getIp() {
 		return ip;
@@ -20,7 +20,10 @@ public class WorkerStatus {
 		this.ip = ip;
 	}
 	public int getPort() {
-		return port;
+		if (port == 0) {
+			return 80;
+		}
+		return port; 
 	}
 	public void setPort(int port) {
 		this.port = port;
