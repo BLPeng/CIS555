@@ -1,11 +1,10 @@
 package edu.upenn.cis455.mapreduce;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.URL;
@@ -73,22 +72,21 @@ public class HTTPClient {
 			if (connection == null) {
 				return;
 			}
+			connection.setUseCaches(false);
+			connection.setDoInput(true);
+			connection.setDoOutput(true);
 			connection.setInstanceFollowRedirects(false);
-			connection.setRequestMethod(method);
+			connection.setRequestMethod(method);			
 			connection.setConnectTimeout(10000);
 			for (String header : reqHeaders.keySet()) {
 	        	for (String value : reqHeaders.get(header)) {
 	        		connection.setRequestProperty(header, value);
 	        	}
-	        }
-			
-			OutputStream os = connection.getOutputStream();
-			BufferedWriter writer = new BufferedWriter(
-			        new OutputStreamWriter(os, "UTF-8"));
-			writer.write(this.sendContent);
-			writer.flush();
-			writer.close();
-			os.close();
+	        }		
+			DataOutputStream postOut=new DataOutputStream(connection.getOutputStream());
+			postOut.writeBytes(this.sendContent);
+			postOut.flush();
+			postOut.close();
 			
 			resCode = String.valueOf(connection.getResponseCode());
 			headers = connection.getHeaderFields();

@@ -1,5 +1,7 @@
 /home/cis455/workspace/apache-tomcat-8.0.20/bin/shutdown.sh
-ant
+sudo rm -rf master.war
+sudo rm -rf worker.war
+ant all
 sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/master
 sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/master.war
 sudo cp -f master.war /home/cis455/workspace/apache-tomcat-8.0.20/webapps

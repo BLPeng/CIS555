@@ -14,10 +14,11 @@ import edu.upenn.cis455.mapreduce.HTTPClient;
 import edu.upenn.cis455.mapreduce.infoclasses.JobInfo;
 import edu.upenn.cis455.mapreduce.infoclasses.WorkerStatus;
 
+
 public class MasterServlet extends HttpServlet {
 
 	static final long serialVersionUID = 455555001;
-	static final long Longest_Interval = 30 * 1000; // 30 sec
+	static final long Longest_Interval = 300 * 1000; // 30 sec
 	private JobInfo job;
 	private Map<String, WorkerStatus> workersStatus = new Hashtable<String, WorkerStatus>();
 	private HTTPClient httpClient = new HTTPClient();
@@ -47,6 +48,9 @@ public class MasterServlet extends HttpServlet {
 				postRunMap(job, getActiveWorkers());
 				response.sendRedirect("status");
 			}
+		} else if ("/test".equals(pathInfo)){
+			//just for test
+			getRunMapParams(request);
 		} else {
 			printResponsePage("not support yet.", response);
 		}
@@ -102,7 +106,7 @@ public class MasterServlet extends HttpServlet {
     private void postRunMap(JobInfo job, List<WorkerStatus> workersStatus) {
     	StringBuilder sb = new StringBuilder();
     	sb.append("jobName=" + job.getName());
-    	sb.append("&input:=" + job.getInputDir());
+    	sb.append("&input=" + job.getInputDir());
     	sb.append("&numThreads=" + job.getMapThreads());
     	sb.append("&numWorkers=" + workersStatus.size());
     	int count = 1;
@@ -110,11 +114,14 @@ public class MasterServlet extends HttpServlet {
     		sb.append("&worker" + count + "=" + workerStatus.getIPPort());
     		count++;
     	}
+    	
     	String params = sb.toString();
     	for (WorkerStatus workerStatus : workersStatus) {
     		httpClient.init();
     		httpClient.setMethod("POST");
-    		httpClient.setURL("Http://" + workerStatus.getIPPort() + "/runmap");
+    		httpClient.setRequestHeaders("Content-Type", "application/x-www-form-urlencoded");
+    		httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+    //		httpClient.setURL("http://" + workerStatus.getIPPort() + "/runmap");
     		httpClient.setSendContent(params);
     		httpClient.connect();
     	}
@@ -151,7 +158,38 @@ public class MasterServlet extends HttpServlet {
 		sb.append("</table><br/><br/>");
     	return sb.toString();
     }
-    
+    // for test only
+    private void getRunMapParams(HttpServletRequest request) {
+    	String job = request.getParameter("jobName");
+    	String inputDir = request.getParameter("input");
+    	String numThreads = request.getParameter("numThreads");
+    	String numWorkers = request.getParameter("numWorkers");
+    	StringBuffer sbf = new StringBuffer();
+    	String line = null;
+    	try {
+    	    BufferedReader reader = request.getReader();
+    	    while ((line = reader.readLine()) != null) {
+    	    	sbf.append(line);
+    	    }	
+    	} catch (Exception e) { 
+    		/*report an error*/ 
+    		System.out.println("?");
+    	}
+
+    	int numOfWorkers;
+    	try {
+    		numOfWorkers = Integer.parseInt(numWorkers);
+    	} catch (Exception e) {
+    		numOfWorkers = 0;
+    	}
+    	int cnt = 1;
+    	List<String> workers = new ArrayList<String>();
+    	for (int i = 0; i < numOfWorkers; i++) {
+    		String tmp = "worker";
+    		workers.add(request.getParameter(tmp + cnt));
+    		cnt++;
+    	} 
+    }
     
 	// get submitted job information
 	private JobInfo getNextJobInfo(HttpServletRequest request) {
@@ -163,10 +201,11 @@ public class MasterServlet extends HttpServlet {
 		try {
 			mapThreads = Integer.parseInt(URLDecoder.decode(request.getParameter("mapThread"), "UTF-8"));
 			reduceThread = Integer.parseInt(URLDecoder.decode(request.getParameter("reduceThread"), "UTF-8"));
-			name = URLDecoder.decode(request.getParameter("jobName"), "UTF-8");
 			inputDir = URLDecoder.decode(request.getParameter("inputDir"), "UTF-8");
+			name = URLDecoder.decode(request.getParameter("jobName"), "UTF-8");
 			outputDir = URLDecoder.decode(request.getParameter("outputDir"), "UTF-8");
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
 		
@@ -184,7 +223,7 @@ public class MasterServlet extends HttpServlet {
     	sb.append("Output directory: <input type=\"text\" name=\"outputDir\"/><br/>");
     	sb.append("Num of map thread: <input type=\"number\" name=\"mapThread\" min=\"1\"/><br/>");
     	sb.append("Num of reduce thread: <input type=\"number\" name=\"reduceThread\" min=\"1\"/><br/>");
-    	sb.append("<input type=\"submit\" value=\"Submit\">");
+    	sb.append("<input type=\"submit\" value=\"Submit\"/>");
     	sb.append("</form>");
     	return sb.toString();
     }
