@@ -1,0 +1,1 @@
+http://localhost:8080/master/workerstatus?port=8081&job="wordcount"&status="running"&keysRead=123&keysWrite=456

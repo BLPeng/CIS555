@@ -4,22 +4,25 @@ import java.util.Date;
 
 public class WorkerStatus {
 	private String ip;
-	private String port;
+	private int port;
 	private String job;
 	private String status;
-	private String keysRead;
-	private String keysWrite;
+	private long keysRead;
+	private long keysWrite;
 	private Date lastUpdated;
+	public String getIPPort() {
+		return ip + ":" + port;
+	}
 	public String getIp() {
 		return ip;
 	}
 	public void setIp(String ip) {
 		this.ip = ip;
 	}
-	public String getPort() {
+	public int getPort() {
 		return port;
 	}
-	public void setPort(String port) {
+	public void setPort(int port) {
 		this.port = port;
 	}
 	public String getJob() {
@@ -34,16 +37,16 @@ public class WorkerStatus {
 	public void setStatus(String status) {
 		this.status = status;
 	}
-	public String getKeysRead() {
+	public long getKeysRead() {
 		return keysRead;
 	}
-	public void setKeysRead(String keyRead) {
+	public void setKeysRead(long keyRead) {
 		this.keysRead = keyRead;
 	}
-	public String getKeysWrite() {
+	public long getKeysWrite() {
 		return keysWrite;
 	}
-	public void setKeysWrite(String keyWrite) {
+	public void setKeysWrite(long keyWrite) {
 		this.keysWrite = keyWrite;
 	}
 	public WorkerStatus() {
@@ -56,7 +59,7 @@ public class WorkerStatus {
 		this.lastUpdated = lastUpdated;
 		this.lastUpdated = new Date();
 	}
-	public WorkerStatus(String ip, String port, String job, String status, String keysRead, String keysWrite) {
+	public WorkerStatus(String ip, int port, String job, String status, long keysRead, long keysWrite) {
 		this.ip = ip;
 		this.port = port;
 		this.job = job;
@@ -69,7 +72,7 @@ public class WorkerStatus {
 		return "IP/Port: " + this.ip + ":" + this.port +
 				" status: " + this.status +
 				" job: " + this.job +
-				"keyRead: " + this.keysRead + 
-				"keyWrite: " + this.keysWrite;
+				" keyRead: " + this.keysRead + 
+				" keyWrite: " + this.keysWrite;
 	}
 }
