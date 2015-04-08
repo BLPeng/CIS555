@@ -39,11 +39,31 @@ public class MasterServlet extends HttpServlet {
 		String pathInfo = request.getPathInfo();
 		if("/submitJob".equals(pathInfo)) { // Submit job
 			job = getNextJobInfo(request);
+			if (checkJobInfo(job, response)) {
+				
+			}
 		} else {
 			printResponsePage("not support yet.", response);
 		}
 	}
 
+	private boolean checkJobInfo(JobInfo job, HttpServletResponse response) {
+		boolean ret = true;
+		if (job == null) {
+			printResponsePage("mapThreads or reduceThreads number is empty or invalid", response);
+			ret = false;
+		} else if (job.getName() == null || job.getName().length() == 0) {
+			printResponsePage("class name is empty", response);
+			ret = false;
+		} else if (job.getInputDir() == null || job.getInputDir().length() == 0) {
+			printResponsePage("input directory is empty", response);
+			ret = false;
+		} else if (job.getOutputDir() == null || job.getOutputDir().length() == 0) {
+			printResponsePage("output directory is empty", response);
+			ret = false;
+		} 
+		return ret;
+	}
 	
     private void getWorkerStatusReport(HttpServletRequest request) {
     	int port;

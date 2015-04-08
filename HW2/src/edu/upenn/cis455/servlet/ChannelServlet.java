@@ -191,6 +191,7 @@ public class ChannelServlet extends ApplicationServlet{
 		}
 		return sb.toString();
 	}
+	
 	private String getChannels() {
 		List<Channel> channels = ChannelDA.getEntries();
 		StringBuilder sb = new StringBuilder();
