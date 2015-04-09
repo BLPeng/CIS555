@@ -12,9 +12,10 @@ import javax.servlet.http.*;
 
 import edu.upenn.cis455.mapreduce.Job;
 import edu.upenn.cis455.mapreduce.myUtil.HTTPClient;
+import edu.upenn.cis455.mapreduce.myUtil.MaperHandler;
 import edu.upenn.cis455.mapreduce.myUtil.WorkerStatus;
 
-public class WorkerServlet extends HttpServlet {
+public class WorkerServlet extends HttpServlet implements MaperHandler{
 
 	static final long serialVersionUID = 455555002;
 	private static final int DURATION = 10 * 1000;
@@ -167,6 +168,7 @@ public class WorkerServlet extends HttpServlet {
     	}
     	workerStatus.setKeysRead(0);
     	workerStatus.setKeysWrite(0);
+    	workerStatus.setStatus("running");
     	initStorageFolder(spoolOutDir);
 		initStorageFolder(spoolInDir);
 		
@@ -236,6 +238,18 @@ public class WorkerServlet extends HttpServlet {
 	public static void initStorageFolder(File dir) {
 		clearFiles(dir);
 		dir.mkdirs();
+	}
+
+	@Override
+	public void onMapFinished() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onKVPairRead() {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

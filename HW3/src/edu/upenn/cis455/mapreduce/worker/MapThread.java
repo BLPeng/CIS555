@@ -32,12 +32,13 @@ public class MapThread extends Thread{
 		while (run) {
 			try {
 				KVPair kv = lines.poll(1000, TimeUnit.MILLISECONDS);
-				if (kv == null) {
+				if (kv == null && mapThreadPool.isReadComplete() && lines.size() == 0) {
+					mapThreadPool.decreaseCnt();
 					continue;
 				}
 				String line = kv.value;
-				if (line == null && mapThreadPool.isReadComplete() && lines.size() == 0) {
-					mapThreadPool.decreaseCnt();
+				if (line == null ) {
+					continue;
 				} else {
 					if (line != null) {
 						currentJob.map(kv.key, kv.value, context);

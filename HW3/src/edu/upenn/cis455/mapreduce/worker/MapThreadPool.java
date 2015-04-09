@@ -30,7 +30,7 @@ public class MapThreadPool {
 	private boolean readCompleted = false;
 	private boolean init = false;
 	private int workingThread = threadPoolSize;
-	private Context context;
+	private MapContext context;
 	private final Object lock = new Object();
 	private BlockingQueue<KVPair> lines = new ArrayBlockingQueue<KVPair>(queueSize);
 	
@@ -104,6 +104,10 @@ public class MapThreadPool {
     	}
     }
 	
+	private void onMapFinish() {
+		context.closeFiles();
+	}
+ 	
 	public int getCnt() throws InterruptedException {
         synchronized (lock) {
             return this.workingThread;
@@ -121,6 +125,7 @@ public class MapThreadPool {
         	this.workingThread--;
         	if (this.workingThread <= 0) {
         		shutdown();
+        		onMapFinish(); 
         	}
         }
     }
@@ -200,7 +205,6 @@ public class MapThreadPool {
 			}
 		}
 		
-		@SuppressWarnings("unused")
 		@Override
 		public void write(String key, String value) {
 			String hash;
