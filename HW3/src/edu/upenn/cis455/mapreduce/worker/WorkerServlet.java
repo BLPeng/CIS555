@@ -3,7 +3,6 @@ package edu.upenn.cis455.mapreduce.worker;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -32,12 +31,14 @@ public class WorkerServlet extends HttpServlet {
 	private File spoolInDir;
 	private Timer heartBeatTimer;
 	private File spoolOutDir;
+	private MapThreadPool mapThreads;
 	
 	@Override
 	public void init() throws ServletException {
 	    super.init();
 	    httpClient = new HTTPClient();
 	    storageDir = getInitParameter("storagedir");
+	    mapThreads = new MapThreadPool();
 	    String[] master = getInitParameter("master").split(":");
 	    String port = getInitParameter("port");
 	    if (storageDir == null || master.length < 1 || master[0] == null || port == null) {
@@ -157,13 +158,20 @@ public class WorkerServlet extends HttpServlet {
     	} 
     	
     	currentJob = loadJob(job);
-    	if (currentJob == null || inputDir == null || numOfThreads == 0 || numOfWorkers == 0) {
+/*    	if (currentJob == null) {
+    		return;
+    	}*/
+    	//TODO
+    	if (inputDir == null || numOfThreads == 0 || numOfWorkers == 0) {
     		return;
     	}
     	workerStatus.setKeysRead(0);
     	workerStatus.setKeysWrite(0);
     	initStorageFolder(spoolOutDir);
 		initStorageFolder(spoolInDir);
+		
+		mapThreads.init(numOfThreads, storageDir, inputDir);
+		mapThreads.start();
     }
 	// print a response page
 	private void printResponsePage(String content, HttpServletResponse response) {

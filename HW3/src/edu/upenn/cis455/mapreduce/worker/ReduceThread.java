@@ -1,4 +1,4 @@
-package edu.upenn.cis455.mapreduce.myUtil;
+package edu.upenn.cis455.mapreduce.worker;
 
 public class ReduceThread extends Thread{
 
