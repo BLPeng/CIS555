@@ -1,4 +1,4 @@
-package edu.upenn.cis455.mapreduce;
+package edu.upenn.cis455.mapreduce.myUtil;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -123,7 +123,7 @@ public class HTTPClient {
 		boolean isXML = false;
 		try {
 			// http client
-			edu.upenn.cis455.mapreduce.URLInfo myURL = new edu.upenn.cis455.mapreduce.URLInfo(url);
+			URLInfo myURL = new URLInfo(url);
 			Socket socket = new Socket(myURL.getHostName(), myURL.getPortNo());
 			socket.setSoTimeout(10000);
 			BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
@@ -131,16 +131,16 @@ public class HTTPClient {
 //			OutputStream theOutput = socket.getOutputStream();
 			String req = method + " " + url + " HTTP/1.0\r\n";
 			wr.write(req);
-			wr.write("Content-Length: " + data.length() + "\r\n");
-		    wr.write("Content-Type: application/x-www-form-urlencoded\r\n");
-/*		    for (String header : reqHeaders.keySet()) {
+			wr.write("Content-Length: " + this.sendContent.length() + "\r\n");
+//		    wr.write("Content-Type: application/x-www-form-urlencoded\r\n");
+		    for (String header : reqHeaders.keySet()) {
 	        	for (String value : reqHeaders.get(header)) {
 	        		wr.write(header + ": " + value + "\r\n");
 	        	}
-	        }*/
+	        }
 		    wr.write("\r\n");
 		    
-		    wr.write(data);
+		    wr.write(this.sendContent);
 		    wr.flush();
 
 	/*		

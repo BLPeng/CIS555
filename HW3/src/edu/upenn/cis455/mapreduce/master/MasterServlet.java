@@ -10,9 +10,10 @@ import java.util.Map;
 
 import javax.servlet.http.*;
 
-import edu.upenn.cis455.mapreduce.HTTPClient;
-import edu.upenn.cis455.mapreduce.JobInfo;
-import edu.upenn.cis455.mapreduce.WorkerStatus;
+import edu.upenn.cis455.mapreduce.myUtil.HTTPClient;
+import edu.upenn.cis455.mapreduce.myUtil.JobInfo;
+import edu.upenn.cis455.mapreduce.myUtil.WorkerStatus;
+
 
 
 public class MasterServlet extends HttpServlet {

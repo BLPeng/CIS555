@@ -6,7 +6,7 @@
   </target>
   
   <target name="compile-jobs" depends="init">
-    <javac srcdir="src" destdir="classes" includes="**/job/*.java,**/Job.java,**/Context.java, **.java" deprecation="on"
+    <javac srcdir="src" destdir="classes" includes="**/job/*.java,**/Job.java,**/Context.java, **/myUtil/*.java" deprecation="on"
      debug="true" includeantruntime="false" classpath="classes">
        <compilerarg value="-Xlint"/>
     </javac>

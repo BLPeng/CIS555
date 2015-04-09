@@ -1,4 +1,4 @@
-package edu.upenn.cis455.mapreduce;
+package edu.upenn.cis455.mapreduce.myUtil;
 
 import java.util.Date;
 
