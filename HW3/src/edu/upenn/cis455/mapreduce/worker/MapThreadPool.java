@@ -4,9 +4,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+
+import edu.upenn.cis455.mapreduce.Context;
+import edu.upenn.cis455.mapreduce.Job;
+import edu.upenn.cis455.mapreduce.myUtil.MyUtils;
 
 
 
@@ -17,28 +25,47 @@ public class MapThreadPool {
 	private String inputDir;
 	private String storage;
 	private MapThread[] pools;
+	private Job currentJob;
+	private int workerSize;
 	private boolean readCompleted = false;
+	private boolean init = false;
 	private int workingThread = threadPoolSize;
+	private Context context;
 	private final Object lock = new Object();
-	private BlockingQueue<String> lines = new ArrayBlockingQueue<String>(queueSize);
+	private BlockingQueue<KVPair> lines = new ArrayBlockingQueue<KVPair>(queueSize);
+	
+	public class KVPair {
+		String key;
+		String value;
+		public KVPair(String key, String value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
 	
 	public MapThreadPool() {
 		
 	}
 	
-	public void init (int poolSize, String storege, String inputDir) {
+	public void init (int poolSize, String storege, String inputDir, int workerSize, Job currentJob) throws IOException {
 		this.inputDir = inputDir;
 		this.storage = storege;
+		this.workerSize = workerSize;
 		this.threadPoolSize = poolSize >= 0 ? poolSize : 0;
 		this.workingThread = threadPoolSize;
+		this.currentJob = currentJob;
 		pools = new MapThread[threadPoolSize];
 		readCompleted = false;
 		lines.clear();
 		inputFile = null;
+		context = new MapContext(storage, workerSize);
+		init = true;
 	}
 	
 	public void start() {
-		
+		if (init == false) {
+			return;
+		}
 		if (threadPoolSize <= 0 || inputDir == null || storage == null) {
 			return;
 		}
@@ -48,7 +75,7 @@ public class MapThreadPool {
 		}
 		
 		for (int i = 0; i < threadPoolSize; i++){
-			pools[i] = new MapThread(this, lines, i + 1);
+			pools[i] = new MapThread(this, lines, i + 1, currentJob, context);
 		}
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].start();
@@ -98,7 +125,7 @@ public class MapThreadPool {
         }
     }
     
-    
+ // read KV pair from input files
     private void readFiles(File fileDir) {
     	
 		if(!fileDir.exists() || !fileDir.isDirectory()) {
@@ -115,6 +142,7 @@ public class MapThreadPool {
 		readCompleted = true;
     }
     
+    // read KV pair from input file
 	private void readFile(File file) {
 		BufferedReader reader = null;
 		try {
@@ -122,11 +150,11 @@ public class MapThreadPool {
 			String line = null;
 			try {
 				while((line = reader.readLine()) != null) {
-					String[] parts = line.split("\\s");
+					String[] parts = line.split("\\t");
 					if (parts.length < 2) {
 						continue;
 					}
-					lines.put(parts[1].trim());
+					lines.put(new KVPair(parts[0].trim(), parts[1].trim()));
 				}
 			} catch (IOException | InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -152,5 +180,56 @@ public class MapThreadPool {
 
 	public void setThreadPoolSize(int threadPoolSize) {
 		this.threadPoolSize = threadPoolSize;
+	}
+	
+	class MapContext implements Context {
+
+		private PrintWriter[] writers = null;
+		private int workerSize;
+		
+		//setup spool-out files;
+		public MapContext(String storage, int workerSize) throws IOException {
+			this.workerSize = workerSize;
+			writers = new PrintWriter[workerSize];
+			File spoolOutDir = new File(storage, WorkerServlet.SPOOL_OUT_DIR);
+			for(int i = 0; i < workerSize; i++) {
+				String fileName = "worker" + i + 1;
+				File file = new File(spoolOutDir, fileName);
+				file.createNewFile();
+				writers[i] = new PrintWriter(new FileWriter(file, true), true);
+			}
+		}
+		
+		@Override
+		public void write(String key, String value) {
+			String hash;
+			try {
+				hash = MyUtils.sha1(key);
+				int index = MyUtils.getWorkerIndex(hash, workerSize);
+				PrintWriter writer = writers[index];
+				if(writer != null) {
+					synchronized (writer) {
+						writer.print(key);
+						writer.print('\t');
+						writer.print(value);
+						writer.println();
+					}
+				}
+			} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+					
+		}
+		
+		public void closeFiles() {
+			if(writers != null) {
+				for(PrintWriter w : writers) {
+					if (w != null) {
+						w.close();
+					}
+				}
+			}
+		}
+	
 	}
 }

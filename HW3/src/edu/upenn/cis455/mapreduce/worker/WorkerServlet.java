@@ -18,8 +18,8 @@ public class WorkerServlet extends HttpServlet {
 
 	static final long serialVersionUID = 455555002;
 	private static final int DURATION = 10 * 1000;
-	private static final String SPOOL_IN_DIR = "spool-in";
-	private static final String SPOOL_OUT_DIR = "spool-out";
+	public static final String SPOOL_IN_DIR = "spool-in";
+	public static final String SPOOL_OUT_DIR = "spool-out";
 	private WorkerStatus workerStatus;
 	private Job currentJob;
 	private List<String> workers;
@@ -133,7 +133,7 @@ public class WorkerServlet extends HttpServlet {
     	}*/
     }
 	
-	private void getRunMapParams(HttpServletRequest request) {
+	private void getRunMapParams(HttpServletRequest request) throws IOException {
 //		String key1 = request.getParameter("key1");
     	String job = request.getParameter("job");
     	String inputDir = request.getParameter("input");
@@ -170,7 +170,7 @@ public class WorkerServlet extends HttpServlet {
     	initStorageFolder(spoolOutDir);
 		initStorageFolder(spoolInDir);
 		
-		mapThreads.init(numOfThreads, storageDir, inputDir);
+		mapThreads.init(numOfThreads, storageDir, inputDir, workers.size(), currentJob);
 		mapThreads.start();
     }
 	// print a response page
