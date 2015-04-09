@@ -22,9 +22,10 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 	public static final String SPOOL_IN_DIR = "spool-in";
 	public static final String SPOOL_OUT_DIR = "spool-out";
 	private WorkerStatus workerStatus;
+	private int fileCount;
+	private Object lock = new Object();;
 	private Job currentJob;
 	private List<String> workers;
-	private int numOfThreads;
 	private HTTPClient httpClient;
 	private String masterIP;
 	private int masterPort;
@@ -37,6 +38,7 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 	@Override
 	public void init() throws ServletException {
 	    super.init();
+	    fileCount = 0;
 	    httpClient = new HTTPClient();
 	    storageDir = getInitParameter("storagedir");
 	    mapThreads = new MapThreadPool();
@@ -75,17 +77,120 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 		if("/runmap".equals(path)) { 
 			getRunMapParams(request);
 		} else if("/pushdata".equals(path)) { 
-			
+			getPushedData(request);
 		} else if("/runreduce".equals(path)) { 
 			getRunReduceParams(request);
 		} 
 	}
 	
+	
+	public void increaseFileCount() {
+		synchronized(lock) {
+			this.fileCount++;
+		}
+	}
+	public int getFileCount() { 
+		synchronized(lock) {
+			this.fileCount++;
+			return this.fileCount;
+		}
+	}
+	
+	private void pushData() {
+		if (spoolOutDir.exists() && spoolOutDir.isDirectory()) {
+			File[] files = spoolOutDir.listFiles();
+			for (File file : files) {
+				String fileName = file.getName();
+				try {
+					int idx = Integer.parseInt(fileName.substring("worker".length()));
+					if (idx > 0 && idx <= workers.size()) {
+						String IPPort = workers.get(idx - 1);
+						String tmp = workerStatus.getIPPort();
+						if (IPPort.equalsIgnoreCase(tmp)) {
+							File dest = new File(spoolInDir, "worker" + getFileCount());
+							InputStream input = null;
+							OutputStream output = null;
+							try {
+								input = new FileInputStream(file);
+								output = new FileOutputStream(dest);
+								byte[] buf = new byte[1024];
+								int bytesRead;
+								while ((bytesRead = input.read(buf)) > 0) {
+									output.write(buf, 0, bytesRead);
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
+							} finally {
+								input.close();
+								output.close();
+							}
+						} else {
+							//assume file size not to large
+							String content;
+							BufferedReader br = new BufferedReader(new FileReader(file));
+						    try {
+						        StringBuilder sb = new StringBuilder();
+						        String line = br.readLine();
+
+						        while (line != null) {
+						            sb.append(line);
+						            sb.append(System.lineSeparator());
+						            line = br.readLine();
+						        }
+						        content = sb.toString();
+						    } finally {
+						        br.close();
+						    }
+							httpClient.init();
+							httpClient.setMethod("POST");
+							httpClient.setSendContent(content);
+							httpClient.setRequestHeaders("Content-Type", "text/html");
+							httpClient.setRequestHeaders("Content-Length", String.valueOf(content.length()));
+							httpClient.setURL("http://" + IPPort + "/worker/pushdata");
+							httpClient.connect();
+						}		
+					}
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+			}
+		}
+		
+	}
+		
+	private void getPushedData(HttpServletRequest request) {
+		StringBuffer sb = new StringBuffer();
+		String line = null;
+		try {
+		    BufferedReader reader = request.getReader();
+		    while ((line = reader.readLine()) != null) {
+		    	sb.append(line);
+		    }	
+		} catch (Exception e) { /*report an error*/ }
+		File file = new File(spoolInDir, "worker" + getFileCount());
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+				FileWriter fw = new FileWriter(file.getAbsoluteFile());
+				BufferedWriter bw = new BufferedWriter(fw);
+				bw.write(sb.toString());
+				bw.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+
+	}
+
 	// init dirs
 	private void initStorageDirs(String storageDir) {
 		storageDir = getInitParameter("storagedir");
-		spoolOutDir = new File(storageDir, SPOOL_IN_DIR);
-		spoolInDir = new File(storageDir, SPOOL_OUT_DIR);
+		spoolOutDir = new File(storageDir, SPOOL_OUT_DIR);
+		spoolInDir = new File(storageDir, SPOOL_IN_DIR);
 		initStorageFolder(spoolOutDir);
 		initStorageFolder(spoolInDir);
 	}
@@ -121,17 +226,7 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
     	String job = request.getParameter("job");
     	String outputDir = request.getParameter("output");
     	String numThreads = request.getParameter("numThreads");
-/*    	StringBuffer sbf = new StringBuffer();
-    	String line = null;
-    	try {
-    	    BufferedReader reader = request.getReader();
-    	    while ((line = reader.readLine()) != null) {
-    	    	sbf.append(line);
-    	    }	
-    	} catch (Exception e) { 
-    		report an error 
-    		System.out.println("?");
-    	}*/
+
     }
 	
 	private void getRunMapParams(HttpServletRequest request) throws IOException {
@@ -140,7 +235,6 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
     	String inputDir = request.getParameter("input");
     	String numThreads = request.getParameter("numThreads");
     	String numWorkers = request.getParameter("numWorkers");
-
     	int numOfThreads;
     	int numOfWorkers;
     	try {
@@ -169,10 +263,11 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
     	workerStatus.setKeysRead(0);
     	workerStatus.setKeysWrite(0);
     	workerStatus.setStatus("running");
+    	workerStatus.setIp(request.getServerName());
     	initStorageFolder(spoolOutDir);
 		initStorageFolder(spoolInDir);
-		
-		mapThreads.init(numOfThreads, storageDir, inputDir, workers.size(), currentJob);
+		this.fileCount = 0;
+		mapThreads.init(numOfThreads, storageDir, inputDir, workers, currentJob, this);
 		mapThreads.start();
     }
 	// print a response page
@@ -242,14 +337,19 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 
 	@Override
 	public void onMapFinished() {
-		// TODO Auto-generated method stub
-		
+		workerStatus.setStatus("waiting");
+		pushData();
+		sendHeartBeatSignal();
 	}
 
 	@Override
 	public void onKVPairRead() {
-		// TODO Auto-generated method stub
-		
+		workerStatus.increaseKeysRead();
+	}
+
+	@Override
+	public void onKVPairWritten() {
+		workerStatus.increaseKeysWritten();
 	}
 	
 }

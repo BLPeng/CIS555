@@ -4,5 +4,6 @@ public interface MaperHandler {
 
 	public void onMapFinished();
 	public void onKVPairRead();
+	public void onKVPairWritten();
 
 }

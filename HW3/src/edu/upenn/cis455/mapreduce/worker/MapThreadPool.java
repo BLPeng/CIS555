@@ -9,11 +9,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import edu.upenn.cis455.mapreduce.Context;
 import edu.upenn.cis455.mapreduce.Job;
+import edu.upenn.cis455.mapreduce.myUtil.MaperHandler;
 import edu.upenn.cis455.mapreduce.myUtil.MyUtils;
 
 
@@ -21,6 +23,8 @@ import edu.upenn.cis455.mapreduce.myUtil.MyUtils;
 public class MapThreadPool {
 	private int threadPoolSize = 10;
 	private int queueSize = 40960;
+	private MaperHandler handler;
+	private List<String> workers;
 	private File inputFile;
 	private String inputDir;
 	private String storage;
@@ -47,10 +51,12 @@ public class MapThreadPool {
 		
 	}
 	
-	public void init (int poolSize, String storege, String inputDir, int workerSize, Job currentJob) throws IOException {
+	public void init (int poolSize, String storege, String inputDir, List<String> workers, Job currentJob, MaperHandler hander) throws IOException {
 		this.inputDir = inputDir;
 		this.storage = storege;
-		this.workerSize = workerSize;
+		this.handler = hander;
+		this.workers = workers;
+		this.workerSize = workers.size();
 		this.threadPoolSize = poolSize >= 0 ? poolSize : 0;
 		this.workingThread = threadPoolSize;
 		this.currentJob = currentJob;
@@ -119,6 +125,12 @@ public class MapThreadPool {
             this.workingThread++;
         }
     }
+	
+	private void pushData() {
+		
+	}
+	
+	
 
     public void decreaseCnt() throws InterruptedException {
         synchronized (lock) {
@@ -126,6 +138,9 @@ public class MapThreadPool {
         	if (this.workingThread <= 0) {
         		shutdown();
         		onMapFinish(); 
+        		if (handler != null) {
+        			handler.onMapFinished();
+        		}
         	}
         }
     }
@@ -159,6 +174,7 @@ public class MapThreadPool {
 					if (parts.length < 2) {
 						continue;
 					}
+					handler.onKVPairRead();
 					lines.put(new KVPair(parts[0].trim(), parts[1].trim()));
 				}
 			} catch (IOException | InterruptedException e) {
@@ -223,6 +239,7 @@ public class MapThreadPool {
 						writer.print(value);
 						writer.println();
 					}
+					handler.onKVPairWritten();
 				}
 			} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 				e.printStackTrace();

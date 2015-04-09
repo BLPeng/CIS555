@@ -10,6 +10,7 @@ public class WorkerStatus {
 	private long keysRead;
 	private long keysWrite;
 	private Date lastUpdated;
+	private Object lock = new Object();
 	public String getIPPort() {
 		return getIp() + ":" + getPort();
 	}
@@ -36,6 +37,14 @@ public class WorkerStatus {
 	}
 	public String getStatus() {
 		return status;
+	}
+	public void increaseKeysRead() {
+		this.keysRead++;
+	}
+	public void increaseKeysWritten() {
+		synchronized (lock) {
+            this.keysWrite++;
+        }
 	}
 	public void setStatus(String status) {
 		this.status = status;
