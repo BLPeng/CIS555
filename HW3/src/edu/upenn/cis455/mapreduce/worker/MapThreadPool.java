@@ -193,17 +193,22 @@ public class MapThreadPool {
 			writers = new PrintWriter[workerSize];
 			File spoolOutDir = new File(storage, WorkerServlet.SPOOL_OUT_DIR);
 			for(int i = 0; i < workerSize; i++) {
-				String fileName = "worker" + i + 1;
+				String fileName = "worker" + (i + 1);
 				File file = new File(spoolOutDir, fileName);
 				file.createNewFile();
 				writers[i] = new PrintWriter(new FileWriter(file, true), true);
 			}
 		}
 		
+		@SuppressWarnings("unused")
 		@Override
 		public void write(String key, String value) {
 			String hash;
-			try {
+			try {				
+/*				int index1 = MyUtils.getWorkerIndex("3ffff", 4);
+				index1 = MyUtils.getWorkerIndex("7ffff", 4);
+				index1 = MyUtils.getWorkerIndex("bffff", 4);
+				index1 = MyUtils.getWorkerIndex("fffff", 4);*/
 				hash = MyUtils.sha1(key);
 				int index = MyUtils.getWorkerIndex(hash, workerSize);
 				PrintWriter writer = writers[index];
