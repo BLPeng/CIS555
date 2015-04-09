@@ -18,10 +18,12 @@
            <param-name>port</param-name>
            <param-value>8081</param-value>
          </init-param>
+         <load-on-startup>2</load-on-startup>
      </servlet>
 
      <servlet-mapping>
          <servlet-name>WorkerServlet</servlet-name>
          <url-pattern>/*</url-pattern>
+         
      </servlet-mapping>
 </web-app>

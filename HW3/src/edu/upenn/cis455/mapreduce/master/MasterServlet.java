@@ -86,7 +86,7 @@ public class MasterServlet extends HttpServlet {
     	try {
     		port = Integer.parseInt(URLDecoder.decode(request.getParameter("port"), "UTF-8"));
     		keysRead = Long.parseLong(URLDecoder.decode(request.getParameter("keysRead"), "UTF-8"));
-    		keysWrite = Long.parseLong(URLDecoder.decode(request.getParameter("keysWrite"), "UTF-8"));
+    		keysWrite = Long.parseLong(URLDecoder.decode(request.getParameter("keysWritten"), "UTF-8"));
         	status = URLDecoder.decode(request.getParameter("status"), "UTF-8");
         	job = URLDecoder.decode(request.getParameter("job"), "UTF-8");
     	} catch (Exception e) {

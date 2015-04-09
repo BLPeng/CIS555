@@ -9,5 +9,9 @@ sudo cp -f master.war /home/cis455/workspace/tomcat1/webapps
 sudo rm -rf /home/cis455/workspace/tomcat2/webapps/worker
 sudo rm -rf /home/cis455/workspace/tomcat2/webapps/worker.war
 sudo cp -f worker.war /home/cis455/workspace/tomcat2/webapps
+sudo rm -rf /home/cis455/workspace/tomcat3/webapps/worker
+sudo rm -rf /home/cis455/workspace/tomcat3/webapps/worker.war
+sudo cp -f worker.war /home/cis455/workspace/tomcat3/webapps
 /home/cis455/workspace/tomcat1/bin/startup.sh
 /home/cis455/workspace/tomcat2/bin/startup.sh
+/home/cis455/workspace/tomcat3/bin/startup.sh
