@@ -24,15 +24,31 @@ public class WorkerServlet extends HttpServlet {
 		if("/runmap".equals(path)) { 
 			getRunMapParams(request);
 		} else if("/pushdata".equals(path)) { 
-//			handlePushData(request, response);
+			
 		} else if("/runreduce".equals(path)) { 
-//			handleRunReduce(request, response);
+			getRunReduceParams(request);
 		} 
 	}
 	
+	private void getRunReduceParams(HttpServletRequest request) {
+    	String job = request.getParameter("job");
+    	String outputDir = request.getParameter("output");
+    	String numThreads = request.getParameter("numThreads");
+/*    	StringBuffer sbf = new StringBuffer();
+    	String line = null;
+    	try {
+    	    BufferedReader reader = request.getReader();
+    	    while ((line = reader.readLine()) != null) {
+    	    	sbf.append(line);
+    	    }	
+    	} catch (Exception e) { 
+    		report an error 
+    		System.out.println("?");
+    	}*/
+    }
 	
 	private void getRunMapParams(HttpServletRequest request) {
-		String key1 = request.getParameter("key1");
+//		String key1 = request.getParameter("key1");
     	String job = request.getParameter("job");
     	String inputDir = request.getParameter("input");
     	String numThreads = request.getParameter("numThreads");

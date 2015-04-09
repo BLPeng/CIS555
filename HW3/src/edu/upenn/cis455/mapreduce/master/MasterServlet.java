@@ -96,11 +96,19 @@ public class MasterServlet extends HttpServlet {
     	key = ip + ":" + port;
     	WorkerStatus workerStatus = new WorkerStatus(ip, port, job, status, keysRead, keysWrite);
     	workersStatus.put(key, workerStatus);
+    	
+    	if (isMapPhaseComplete()) {
+    		postRunReduce();
+    	}
     }
 	
     // post run reduce message
-    private void postRunReduce(JobInfo job, List<WorkerStatus> workersStatus) {    
+    private void postRunReduce() {    
+    	List<WorkerStatus> workersStatus = getActiveWorkers();
     	StringBuilder sb = new StringBuilder();
+    	if (job == null) {
+    		return;
+    	}
     	sb.append("job=" + job.getName());
     	sb.append("&output=" + job.getOutputDir());
     	sb.append("&numThreads=" + job.getMapThreads());
@@ -112,7 +120,7 @@ public class MasterServlet extends HttpServlet {
     		httpClient.setRequestHeaders("Content-Type", "application/x-www-form-urlencoded");
     		httpClient.setRequestHeaders("Content-Length", String.valueOf(params.length()));
     //		httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
-    		httpClient.setURL("http://" + workerStatus.getIPPort() + "/worker/runmap");
+    		httpClient.setURL("http://" + workerStatus.getIPPort() + "/worker/runreduce");
     		httpClient.setSendContent(params);
     		httpClient.connect();
     	}
@@ -147,9 +155,17 @@ public class MasterServlet extends HttpServlet {
     
     
     private boolean isMapPhaseComplete() {
-    	boolean ret = false;
-    	
-    	
+    	boolean ret = true;
+    	List<WorkerStatus> workersStatus = getActiveWorkers();
+    	if (workersStatus.size() == 0) {
+    		return false;
+    	}
+    	for (WorkerStatus workerStatus : workersStatus) {
+    		if (!"waiting".equalsIgnoreCase(workerStatus.getStatus())) {
+    			ret = false;
+    			break;
+    		}
+    	}
     	return ret;
     }
     
