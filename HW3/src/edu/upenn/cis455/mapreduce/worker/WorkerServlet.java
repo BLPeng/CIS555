@@ -227,7 +227,7 @@ public class WorkerServlet extends HttpServlet {
 	
 	public static void initStorageFolder(File dir) {
 		clearFiles(dir);
-		dir.mkdir();
+		dir.mkdirs();
 	}
 	
 }

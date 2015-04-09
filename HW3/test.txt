@@ -1,3 +1,5 @@
 http://localhost:8080/master/workerstatus?port=8081&job=wordcount1&status=running&keysRead=123&keysWritten=456
 http://localhost:8080/master/workerstatus?port=8082&job=wordcount2&status=running&keysRead=123&keysWritten=456
 http://localhost:8080/master/workerstatus?port=8083&job=wordcount3&status=running&keysRead=123&keysWritten=456
+
+edu.upenn.cis455.mapreduce.job.WordCount
