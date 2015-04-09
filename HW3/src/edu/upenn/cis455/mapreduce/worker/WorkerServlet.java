@@ -3,6 +3,7 @@ package edu.upenn.cis455.mapreduce.worker;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -10,6 +11,7 @@ import java.util.TimerTask;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
+import edu.upenn.cis455.mapreduce.Job;
 import edu.upenn.cis455.mapreduce.myUtil.HTTPClient;
 import edu.upenn.cis455.mapreduce.myUtil.WorkerStatus;
 
@@ -20,6 +22,9 @@ public class WorkerServlet extends HttpServlet {
 	private static final String SPOOL_IN_DIR = "spool-in";
 	private static final String SPOOL_OUT_DIR = "spool-out";
 	private WorkerStatus workerStatus;
+	private Job currentJob;
+	private List<String> workers;
+	private int numOfThreads;
 	private HTTPClient httpClient;
 	private String masterIP;
 	private int masterPort;
@@ -27,7 +32,6 @@ public class WorkerServlet extends HttpServlet {
 	private File spoolInDir;
 	private Timer heartBeatTimer;
 	private File spoolOutDir;
-	private HeartBeatSignal hbs;
 	
 	@Override
 	public void init() throws ServletException {
@@ -51,8 +55,9 @@ public class WorkerServlet extends HttpServlet {
 	    } catch (Exception e) {
 	    	throw new ServletException("wrong parameter");
 	    }
-	    workerStatus = new WorkerStatus("", workerPort, "None", "running", 0, 0);
+	    workerStatus = new WorkerStatus("", workerPort, "None", "idle", 0, 0);
 	    createHeartBeat(); 
+	    
 	}
 	
 	@Override
@@ -79,12 +84,35 @@ public class WorkerServlet extends HttpServlet {
 		storageDir = getInitParameter("storagedir");
 		spoolOutDir = new File(storageDir, SPOOL_IN_DIR);
 		spoolInDir = new File(storageDir, SPOOL_OUT_DIR);
+		initStorageFolder(spoolOutDir);
+		initStorageFolder(spoolInDir);
 	}
 	
 	private void createHeartBeat() {
 		sendHeartBeatSignal();
 		heartBeatTimer = new Timer();  
 		heartBeatTimer.scheduleAtFixedRate(new HeartBeatSignal(),new Date(), DURATION);
+	}
+	
+	
+	private Job loadJob(String jobName)  {
+		
+		Class<?> jobClass;
+		try {
+			jobClass = Class.forName(jobName);
+			
+		} catch (ClassNotFoundException e) {
+			return null;
+		//	e.printStackTrace();
+		}
+		Job job = null;
+		try {
+			job = (Job) jobClass.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return job;
 	}
 	
 	private void getRunReduceParams(HttpServletRequest request) {
@@ -110,31 +138,32 @@ public class WorkerServlet extends HttpServlet {
     	String inputDir = request.getParameter("input");
     	String numThreads = request.getParameter("numThreads");
     	String numWorkers = request.getParameter("numWorkers");
-    	StringBuffer sbf = new StringBuffer();
-    	String line = null;
-    	try {
-    	    BufferedReader reader = request.getReader();
-    	    while ((line = reader.readLine()) != null) {
-    	    	sbf.append(line);
-    	    }	
-    	} catch (Exception e) { 
-    		/*report an error*/ 
-    		System.out.println("?");
-    	}
 
+    	int numOfThreads;
     	int numOfWorkers;
     	try {
+    		numOfThreads = Integer.parseInt(numThreads);
     		numOfWorkers = Integer.parseInt(numWorkers);
     	} catch (Exception e) {
     		numOfWorkers = 0;
+    		numOfThreads = 0;
     	}
     	int cnt = 1;
-    	List<String> workers = new ArrayList<String>();
+    	workers = new ArrayList<String>();
     	for (int i = 0; i < numOfWorkers; i++) {
     		String tmp = "worker";
     		workers.add(request.getParameter(tmp + cnt));
     		cnt++;
     	} 
+    	
+    	currentJob = loadJob(job);
+    	if (currentJob == null || inputDir == null || numOfThreads == 0 || numOfWorkers == 0) {
+    		return;
+    	}
+    	workerStatus.setKeysRead(0);
+    	workerStatus.setKeysWrite(0);
+    	initStorageFolder(spoolOutDir);
+		initStorageFolder(spoolInDir);
     }
 	// print a response page
 	private void printResponsePage(String content, HttpServletResponse response) {
@@ -181,5 +210,25 @@ public class WorkerServlet extends HttpServlet {
 	    	sendHeartBeatSignal();
 	    }
 	}
+	
+	// recursively delete files
+	private static void clearFiles(File file) {
+		if(file == null || !file.exists()) {
+			return;
+		}
+		if(file.isDirectory()) { 
+			File[] files = file.listFiles();
+			for(File f : files) {
+				clearFiles(f);
+			}
+		}
+		file.delete();
+	}
+	
+	public static void initStorageFolder(File dir) {
+		clearFiles(dir);
+		dir.mkdir();
+	}
+	
 }
   
