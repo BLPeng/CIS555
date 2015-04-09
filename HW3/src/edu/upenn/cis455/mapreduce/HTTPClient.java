@@ -1,13 +1,16 @@
 package edu.upenn.cis455.mapreduce;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -120,10 +123,27 @@ public class HTTPClient {
 		boolean isXML = false;
 		try {
 			// http client
-			edu.upenn.cis455.mapreduce.infoclasses.URLInfo myURL = new edu.upenn.cis455.mapreduce.infoclasses.URLInfo(url);
+			edu.upenn.cis455.mapreduce.URLInfo myURL = new edu.upenn.cis455.mapreduce.URLInfo(url);
 			Socket socket = new Socket(myURL.getHostName(), myURL.getPortNo());
 			socket.setSoTimeout(10000);
-			OutputStream theOutput = socket.getOutputStream();
+			BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+			String data = URLEncoder.encode("key1", "UTF-8") + "=" + URLEncoder.encode("value1", "UTF-8");
+//			OutputStream theOutput = socket.getOutputStream();
+			String req = method + " " + url + " HTTP/1.0\r\n";
+			wr.write(req);
+			wr.write("Content-Length: " + data.length() + "\r\n");
+		    wr.write("Content-Type: application/x-www-form-urlencoded\r\n");
+/*		    for (String header : reqHeaders.keySet()) {
+	        	for (String value : reqHeaders.get(header)) {
+	        		wr.write(header + ": " + value + "\r\n");
+	        	}
+	        }*/
+		    wr.write("\r\n");
+		    
+		    wr.write(data);
+		    wr.flush();
+
+	/*		
 	        PrintWriter out = new PrintWriter(theOutput, false);
 	        String req = method + " " + url + " HTTP/1.0\r\n";
 	        out.print(req); 
@@ -137,6 +157,7 @@ public class HTTPClient {
 			out.print("\r\n");
 			out.print(this.sendContent); 
 			out.flush(); 
+	*/		
 			BufferedReader in = new BufferedReader(
 			      new InputStreamReader(socket.getInputStream()));
 			String line;
@@ -157,7 +178,8 @@ public class HTTPClient {
 					sb.append(System.lineSeparator());
 				}
 			}
-			socket.close();
+			wr.close();
+		    in.close();
 		}catch(Exception e) {
 			return;
 		}

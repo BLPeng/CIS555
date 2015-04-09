@@ -1,4 +1,4 @@
-package edu.upenn.cis455.mapreduce.infoclasses;
+package edu.upenn.cis455.mapreduce;
 
 public class URLInfo {
 	private String hostName;

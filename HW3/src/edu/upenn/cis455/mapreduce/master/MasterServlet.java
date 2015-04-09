@@ -11,8 +11,8 @@ import java.util.Map;
 import javax.servlet.http.*;
 
 import edu.upenn.cis455.mapreduce.HTTPClient;
-import edu.upenn.cis455.mapreduce.infoclasses.JobInfo;
-import edu.upenn.cis455.mapreduce.infoclasses.WorkerStatus;
+import edu.upenn.cis455.mapreduce.JobInfo;
+import edu.upenn.cis455.mapreduce.WorkerStatus;
 
 
 public class MasterServlet extends HttpServlet {
@@ -120,8 +120,8 @@ public class MasterServlet extends HttpServlet {
     		httpClient.init();
     		httpClient.setMethod("POST");
     		httpClient.setRequestHeaders("Content-Type", "application/x-www-form-urlencoded");
-    		httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
-    //		httpClient.setURL("http://" + workerStatus.getIPPort() + "/runmap");
+    //		httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+    		httpClient.setURL("http://" + workerStatus.getIPPort() + "/worker/runmap");
     		httpClient.setSendContent(params);
     		httpClient.connect();
     	}

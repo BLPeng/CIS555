@@ -1,9 +1,14 @@
-/home/cis455/workspace/apache-tomcat-8.0.20/bin/shutdown.sh
+/home/cis455/workspace/tomcat1/bin/shutdown.sh
+/home/cis455/workspace/tomcat2/bin/shutdown.sh
+sudo rm -rf master.war
+sudo rm -rf worker.war
+sudo rm classes
 ant all
-sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/master
-sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/master.war
-sudo cp -f master.war /home/cis455/workspace/apache-tomcat-8.0.20/webapps
-sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/worker
-sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/worker.war
-sudo cp -f worker.war /home/cis455/workspace/apache-tomcat-8.0.20/webapps
-/home/cis455/workspace/apache-tomcat-8.0.20/bin/startup.sh
+sudo rm -rf /home/cis455/workspace/tomcat1/webapps/master
+sudo rm -rf /home/cis455/workspace/tomcat1/webapps/master.war
+sudo cp -f master.war /home/cis455/workspace/tomcat1/webapps
+sudo rm -rf /home/cis455/workspace/tomcat2/webapps/worker
+sudo rm -rf /home/cis455/workspace/tomcat2/webapps/worker.war
+sudo cp -f worker.war /home/cis455/workspace/tomcat2/webapps
+/home/cis455/workspace/tomcat1/bin/startup.sh
+/home/cis455/workspace/tomcat2/bin/startup.sh
