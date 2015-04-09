@@ -33,7 +33,7 @@ public class WorkerServlet extends HttpServlet {
 	
 	private void getRunMapParams(HttpServletRequest request) {
 		String key1 = request.getParameter("key1");
-    	String job = request.getParameter("jobName");
+    	String job = request.getParameter("job");
     	String inputDir = request.getParameter("input");
     	String numThreads = request.getParameter("numThreads");
     	String numWorkers = request.getParameter("numWorkers");

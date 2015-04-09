@@ -131,7 +131,7 @@ public class HTTPClient {
 //			OutputStream theOutput = socket.getOutputStream();
 			String req = method + " " + url + " HTTP/1.0\r\n";
 			wr.write(req);
-			wr.write("Content-Length: " + this.sendContent.length() + "\r\n");
+//			wr.write("Content-Length: " + this.sendContent.length() + "\r\n");
 //		    wr.write("Content-Type: application/x-www-form-urlencoded\r\n");
 		    for (String header : reqHeaders.keySet()) {
 	        	for (String value : reqHeaders.get(header)) {

@@ -99,14 +99,29 @@ public class MasterServlet extends HttpServlet {
     }
 	
     // post run reduce message
-    private void postRunReduce() {    
+    private void postRunReduce(JobInfo job, List<WorkerStatus> workersStatus) {    
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("job=" + job.getName());
+    	sb.append("&output=" + job.getOutputDir());
+    	sb.append("&numThreads=" + job.getMapThreads());
     	
+    	String params = sb.toString();
+    	for (WorkerStatus workerStatus : workersStatus) {
+    		httpClient.init();
+    		httpClient.setMethod("POST");
+    		httpClient.setRequestHeaders("Content-Type", "application/x-www-form-urlencoded");
+    		httpClient.setRequestHeaders("Content-Length", String.valueOf(params.length()));
+    //		httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+    		httpClient.setURL("http://" + workerStatus.getIPPort() + "/worker/runmap");
+    		httpClient.setSendContent(params);
+    		httpClient.connect();
+    	}
     }
     
     // post run map message
     private void postRunMap(JobInfo job, List<WorkerStatus> workersStatus) {
     	StringBuilder sb = new StringBuilder();
-    	sb.append("jobName=" + job.getName());
+    	sb.append("job=" + job.getName());
     	sb.append("&input=" + job.getInputDir());
     	sb.append("&numThreads=" + job.getMapThreads());
     	sb.append("&numWorkers=" + workersStatus.size());
@@ -121,6 +136,7 @@ public class MasterServlet extends HttpServlet {
     		httpClient.init();
     		httpClient.setMethod("POST");
     		httpClient.setRequestHeaders("Content-Type", "application/x-www-form-urlencoded");
+    		httpClient.setRequestHeaders("Content-Length", String.valueOf(params.length()));
     //		httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
     		httpClient.setURL("http://" + workerStatus.getIPPort() + "/worker/runmap");
     		httpClient.setSendContent(params);

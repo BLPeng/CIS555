@@ -1,7 +1,6 @@
 /home/cis455/workspace/tomcat1/bin/shutdown.sh
 /home/cis455/workspace/tomcat2/bin/shutdown.sh
-sudo rm -rf master.war
-sudo rm -rf worker.war
+/home/cis455/workspace/tomcat3/bin/shutdown.sh
 ant clean
 ant all
 sudo rm -rf /home/cis455/workspace/tomcat1/webapps/master
