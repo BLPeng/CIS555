@@ -21,6 +21,7 @@ public class MasterServlet extends HttpServlet {
 	static final long serialVersionUID = 455555001;
 	static final long Longest_Interval = 300 * 1000; // 30 sec
 	private JobInfo job;
+	private boolean startReduce;
 	private Map<String, WorkerStatus> workersStatus = new Hashtable<String, WorkerStatus>();
 	private HTTPClient httpClient = new HTTPClient();
 	
@@ -97,9 +98,11 @@ public class MasterServlet extends HttpServlet {
     	WorkerStatus workerStatus = new WorkerStatus(ip, port, job, status, keysRead, keysWrite);
     	workersStatus.put(key, workerStatus);
     	
-    	if (isMapPhaseComplete()) {
+    	if (isMapPhaseComplete() && startReduce == false) {
     		postRunReduce();
+    		startReduce = true;
     	}
+
     }
 	
     // post run reduce message
@@ -128,6 +131,7 @@ public class MasterServlet extends HttpServlet {
     
     // post run map message
     private void postRunMap(JobInfo job, List<WorkerStatus> workersStatus) {
+    	startReduce = false;
     	StringBuilder sb = new StringBuilder();
     	sb.append("job=" + job.getName());
     	sb.append("&input=" + job.getInputDir());
@@ -150,7 +154,7 @@ public class MasterServlet extends HttpServlet {
     		httpClient.setSendContent(params);
     		httpClient.connect();
     	}
-
+    	
     }
     
     
@@ -170,8 +174,17 @@ public class MasterServlet extends HttpServlet {
     }
     
     private boolean isJobDone() {
-    	boolean ret = false;
-    	
+    	boolean ret = true;
+    	List<WorkerStatus> workersStatus = getActiveWorkers();
+    	if (workersStatus.size() == 0) {
+    		return false;
+    	}
+    	for (WorkerStatus workerStatus : workersStatus) {
+    		if (!"idle".equalsIgnoreCase(workerStatus.getStatus())) {
+    			ret = false;
+    			break;
+    		}
+    	}
     	return ret;
     }
     
@@ -290,7 +303,7 @@ public class MasterServlet extends HttpServlet {
         writer.println("</head>");
         writer.println("<body>");
         writer.println("<br/>" + getWorkersStatusTable() + "<br/>");
-        if (!isJobDone()) {
+        if (isJobDone()) {
         	writer.println("<br/>" + getJobSubmitForm() + "<br/>");
         }
         writer.println("</body>");

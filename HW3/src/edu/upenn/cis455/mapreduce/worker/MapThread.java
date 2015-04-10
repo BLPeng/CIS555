@@ -1,14 +1,10 @@
 package edu.upenn.cis455.mapreduce.worker;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import edu.upenn.cis455.mapreduce.Context;
 import edu.upenn.cis455.mapreduce.Job;
-import edu.upenn.cis455.mapreduce.myUtil.MyUtils;
 import edu.upenn.cis455.mapreduce.worker.MapThreadPool.KVPair;
 
 public class MapThread extends Thread{
@@ -34,6 +30,9 @@ public class MapThread extends Thread{
 				KVPair kv = lines.poll(1000, TimeUnit.MILLISECONDS);
 				if (kv == null && mapThreadPool.isReadComplete() && lines.size() == 0) {
 					mapThreadPool.decreaseCnt();
+					continue;
+				}
+				if (kv == null) {
 					continue;
 				}
 				String line = kv.value;

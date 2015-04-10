@@ -15,7 +15,7 @@ import java.util.concurrent.BlockingQueue;
 
 import edu.upenn.cis455.mapreduce.Context;
 import edu.upenn.cis455.mapreduce.Job;
-import edu.upenn.cis455.mapreduce.myUtil.MaperHandler;
+import edu.upenn.cis455.mapreduce.myUtil.MapReduceHandler;
 import edu.upenn.cis455.mapreduce.myUtil.MyUtils;
 
 
@@ -23,7 +23,7 @@ import edu.upenn.cis455.mapreduce.myUtil.MyUtils;
 public class MapThreadPool {
 	private int threadPoolSize = 10;
 	private int queueSize = 40960;
-	private MaperHandler handler;
+	private MapReduceHandler handler;
 	private List<String> workers;
 	private File inputFile;
 	private String inputDir;
@@ -51,7 +51,7 @@ public class MapThreadPool {
 		
 	}
 	
-	public void init (int poolSize, String storege, String inputDir, List<String> workers, Job currentJob, MaperHandler hander) throws IOException {
+	public void init (int poolSize, String storege, String inputDir, List<String> workers, Job currentJob, MapReduceHandler hander) throws IOException {
 		this.inputDir = inputDir;
 		this.storage = storege;
 		this.handler = hander;

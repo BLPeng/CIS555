@@ -21,7 +21,7 @@ public class WordCount implements Job {
   	{
 		// Your reduce function for WordCount goes here
 		
-
+		context.write(key, String.valueOf(values.length));
   	}
   
 }

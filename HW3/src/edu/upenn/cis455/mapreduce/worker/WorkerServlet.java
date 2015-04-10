@@ -12,10 +12,10 @@ import javax.servlet.http.*;
 
 import edu.upenn.cis455.mapreduce.Job;
 import edu.upenn.cis455.mapreduce.myUtil.HTTPClient;
-import edu.upenn.cis455.mapreduce.myUtil.MaperHandler;
+import edu.upenn.cis455.mapreduce.myUtil.MapReduceHandler;
 import edu.upenn.cis455.mapreduce.myUtil.WorkerStatus;
 
-public class WorkerServlet extends HttpServlet implements MaperHandler{
+public class WorkerServlet extends HttpServlet implements MapReduceHandler{
 
 	static final long serialVersionUID = 455555002;
 	private static final int DURATION = 10 * 1000;
@@ -34,6 +34,7 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 	private Timer heartBeatTimer;
 	private File spoolOutDir;
 	private MapThreadPool mapThreads;
+	private ReduceThreadPool reduceTreads;
 	
 	@Override
 	public void init() throws ServletException {
@@ -42,6 +43,7 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 	    httpClient = new HTTPClient();
 	    storageDir = getInitParameter("storagedir");
 	    mapThreads = new MapThreadPool();
+	    reduceTreads = new ReduceThreadPool();
 	    String[] master = getInitParameter("master").split(":");
 	    String port = getInitParameter("port");
 	    if (storageDir == null || master.length < 1 || master[0] == null || port == null) {
@@ -167,6 +169,7 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 		    BufferedReader reader = request.getReader();
 		    while ((line = reader.readLine()) != null) {
 		    	sb.append(line);
+		    	sb.append(System.lineSeparator());
 		    }	
 		} catch (Exception e) { /*report an error*/ }
 		File file = new File(spoolInDir, "worker" + getFileCount());
@@ -222,11 +225,31 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 		return job;
 	}
 	
-	private void getRunReduceParams(HttpServletRequest request) {
+	private void getRunReduceParams(HttpServletRequest request) throws IOException {
     	String job = request.getParameter("job");
     	String outputDir = request.getParameter("output");
     	String numThreads = request.getParameter("numThreads");
-
+    	int numOfThreads;
+    	try {
+    		numOfThreads = Integer.parseInt(numThreads);
+    	} catch (Exception e) {
+    		numOfThreads = 0;
+    	}
+    	currentJob = loadJob(job);
+    	if (currentJob == null) {
+    		return;
+    	}
+    	if (outputDir == null || numOfThreads == 0) {
+    		return;
+    	}
+    	workerStatus.setKeysRead(0);
+    	workerStatus.setKeysWrite(0);
+    	workerStatus.setStatus("reducing");
+    	workerStatus.setIp(request.getServerName());
+    	initStorageFolder(new File(storageDir, outputDir));
+		this.fileCount = 0;
+		reduceTreads.init(numOfThreads, storageDir, outputDir, currentJob, this);
+		reduceTreads.start();
     }
 	
 	private void getRunMapParams(HttpServletRequest request) throws IOException {
@@ -253,16 +276,16 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
     	} 
     	
     	currentJob = loadJob(job);
-/*    	if (currentJob == null) {
+    	if (currentJob == null) {
     		return;
-    	}*/
+    	}
     	//TODO
     	if (inputDir == null || numOfThreads == 0 || numOfWorkers == 0) {
     		return;
     	}
     	workerStatus.setKeysRead(0);
     	workerStatus.setKeysWrite(0);
-    	workerStatus.setStatus("running");
+    	workerStatus.setStatus("mapping");
     	workerStatus.setIp(request.getServerName());
     	initStorageFolder(spoolOutDir);
 		initStorageFolder(spoolInDir);
@@ -334,7 +357,8 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 		clearFiles(dir);
 		dir.mkdirs();
 	}
-
+    
+	
 	@Override
 	public void onMapFinished() {
 		workerStatus.setStatus("waiting");
@@ -350,6 +374,12 @@ public class WorkerServlet extends HttpServlet implements MaperHandler{
 	@Override
 	public void onKVPairWritten() {
 		workerStatus.increaseKeysWritten();
+	}
+
+	@Override
+	public void onReduceFinished() {
+		workerStatus.setStatus("idle");
+		sendHeartBeatSignal();
 	}
 	
 }
