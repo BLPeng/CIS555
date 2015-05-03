@@ -110,6 +110,7 @@ public class CrawlerWorker extends Thread{
 	}
 	@Override
 	public void run() {
+		this.run = true;
 		while (run) {
 			try {
 				crawlerWorkerPool.decreaseCnt();

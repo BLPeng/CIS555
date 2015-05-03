@@ -11,14 +11,19 @@ import edu.upenn.cis455.storage.User;
 
 public class ApplicationServlet extends HttpServlet{
 	public User user;
+	public String username;
 	protected boolean checkLogin(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		user = (User) session.getAttribute("user");
+//		user = (User) session.getAttribute("user");
+		username = (String) session.getAttribute("user");
 		Date createTime = new Date(session.getCreationTime());
 	    Date lastAccessTime = new Date(session.getLastAccessedTime());
-	    if (session.isNew() || user == null || user.getUserName() == null || user.getUserName().length() == 0){   
+/*	    if (session.isNew() || user == null || user.getUserName() == null || user.getUserName().length() == 0){   
 	    	return false;
-	    } /*else if (lastAccessTime.getTime() + session.getMaxInactiveInterval() > System.currentTimeMillis()) {
+	    } */
+	    if (session.isNew() || username == null || username.length() == 0){   
+	    	return false;
+	    }/*else if (lastAccessTime.getTime() + session.getMaxInactiveInterval() > System.currentTimeMillis()) {
 	    	session.invalidate();
 	    	return false;
 	    }*/else {

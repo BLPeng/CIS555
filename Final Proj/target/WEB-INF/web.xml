@@ -64,11 +64,11 @@
      <servlet-name>channel</servlet-name>
      <url-pattern>/channel/*</url-pattern>
    </servlet-mapping>
-   <servlet-mapping>
+	
+	<servlet-mapping>
      <servlet-name>crawler</servlet-name>
      <url-pattern>/crawler/*</url-pattern>
    </servlet-mapping>
-
    <!-- add any additional servlets and servlet mappings here -->
 	
 </web-app>

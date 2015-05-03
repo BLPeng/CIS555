@@ -59,10 +59,10 @@ public class LoginServlet extends ApplicationServlet{
 			try {
 				hash = PasswordHash.hashPassword(pwd);
 	//			if (user != null && user.getPassword().endsWith(hash)) {
-				if ("cis555".equals(user) && "finalProj".equals(pwd)) {
+				if ("cis455".equals(username) && "finalProj".equals(pwd)) {
 					printWelcomePage(writer, getBanner(request));
 					HttpSession session = request.getSession(true);
-					session.setAttribute("user", user);
+					session.setAttribute("user", username);
 				} else {
 					printLoginPage(writer, getBanner(request), "user no exist / password incorrect");
 				}

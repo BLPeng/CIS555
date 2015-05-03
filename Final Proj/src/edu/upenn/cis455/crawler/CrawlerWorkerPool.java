@@ -33,22 +33,25 @@ public class CrawlerWorkerPool {
 	
 	public CrawlerWorkerPool() { 		
 		pools = new CrawlerWorker[threadPoolSize];
+		init();
 	}
 	
-	public void start() {
+	public void init() {
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i] = new CrawlerWorker(this, pendingURLs, syncSet, i + 1);
+		}
+	}
+	public void start() {	
+		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].setDir(dir);
 			pools[i].setMaxPage(maxPage);
 			pools[i].setMaxSize(maxSize);
-		}
-		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].start();
 		}		
 	}
 	
 	public List<ThreadStats> getThreadStatus() {
-		if (threadPoolSize != pools.length)	return null;
+		if (threadPoolSize != pools.length)	return new ArrayList<ThreadStats>();
 		List<ThreadStats> status = new ArrayList<ThreadStats>();
 		for (int i = 0; i < threadPoolSize; i++){
 			URLQ url = pools[i].getCrawlURL();

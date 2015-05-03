@@ -3,4 +3,4 @@ ant build
 sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/servlet
 sudo rm -rf /home/cis455/workspace/apache-tomcat-8.0.20/webapps/servlet.war
 sudo cp -f servlet.war /home/cis455/workspace/apache-tomcat-8.0.20/webapps
-/home/cis455/workspace/apache-tomcat-8.0.20/bin/start.sh
+/home/cis455/workspace/apache-tomcat-8.0.20/bin/startup.sh

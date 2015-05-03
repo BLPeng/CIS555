@@ -39,6 +39,10 @@
      <servlet-name>logout</servlet-name>
      <servlet-class>edu.upenn.cis455.servlet.LogoutServlet</servlet-class> 
    </servlet>
+   <servlet>
+     <servlet-name>crawler</servlet-name>
+     <servlet-class>edu.upenn.cis455.servlet.CrawlerServlet</servlet-class> 
+   </servlet>
    
    <servlet-mapping>
      <servlet-name>xpath</servlet-name>
@@ -60,7 +64,11 @@
      <servlet-name>channel</servlet-name>
      <url-pattern>/channel/*</url-pattern>
    </servlet-mapping>
-
+	
+	<servlet-mapping>
+     <servlet-name>crawler</servlet-name>
+     <url-pattern>/crawler/*</url-pattern>
+   </servlet-mapping>
    <!-- add any additional servlets and servlet mappings here -->
 	
 </web-app>

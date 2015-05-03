@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletResponse;
 import edu.upenn.cis455.crawler.CrawlerWorkerPool;
 import edu.upenn.cis455.crawler.CrawlerWorkerPool.ThreadStats;
 import edu.upenn.cis455.storage.DBWrapper;
+import edu.upenn.cis455.storage.URLCrawleredDA;
+import edu.upenn.cis455.storage.URLQueueDA;
 
 
 
@@ -22,6 +24,7 @@ public class CrawlerServlet extends ApplicationServlet{
 	@Override
 	  public void init() throws ServletException {
 	    super.init();
+	    crawlerPool = new CrawlerWorkerPool();
 //	    ServletContext context = getServletContext();
 //	    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
 	  }
@@ -29,9 +32,10 @@ public class CrawlerServlet extends ApplicationServlet{
 	public void doPost(HttpServletRequest request, HttpServletResponse response) {
 	//    String tmp = System.getProperty("user.dir");
 		String url = request.getParameter("url");
-		String dir = System.getProperty("user.dir") + "/" + request.getParameter("url");
+		String dirTmp = request.getParameter("dir");
 		String maxSizeS = request.getParameter("maxSize");
 		String numOfFilesS = request.getParameter("numOfFiles");
+		String dir = System.getProperty("user.dir") + "/database";
 		int maxSize = 1;
 		int numOfFiles = -1;
 		response.setContentType("text/html");
@@ -44,8 +48,8 @@ public class CrawlerServlet extends ApplicationServlet{
 			return;
 		}
 		try {
-			url = URLDecoder.decode(url, "utf-8").trim();
-			dir = URLDecoder.decode(dir, "utf-8").trim();
+	//		url = URLDecoder.decode(url, "utf-8").trim();
+			dirTmp = URLDecoder.decode(dirTmp, "utf-8").trim();
 			maxSizeS = URLDecoder.decode(maxSizeS, "utf-8").trim();
 			numOfFilesS = URLDecoder.decode(numOfFilesS, "utf-8").trim();
 		} catch (UnsupportedEncodingException e) {
@@ -54,11 +58,18 @@ public class CrawlerServlet extends ApplicationServlet{
 		}
 		if (url == null || url.length() == 0 ) {
 			printErrorPage(writer, getBanner(request), "empty seed url");
-		} else if (checkLogin(request)) {
-			printWelcomePage(writer, getBanner(request));	
+		} else if (!checkLogin(request)) {
+			try {
+				response.sendRedirect("login");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} else {
-			if (dir == null) {
-				dir = System.getProperty("user.dir") + "/database";
+			if (dirTmp != null) {
+				dir = System.getProperty("user.dir") + "/" + dirTmp;
+			} else {
+				
 			}
 			try {
 				maxSize = Integer.parseInt(maxSizeS);
@@ -74,14 +85,21 @@ public class CrawlerServlet extends ApplicationServlet{
 				crawlerPool.shutdown();
 			}
 			DBWrapper.setupDirectory(dir);
-			crawlerPool = new CrawlerWorkerPool();
 //			URLQueueDA.clear();
 //			URLCrawleredDA.clear();
+			crawlerPool = new CrawlerWorkerPool();
+			crawlerPool.init();
 			crawlerPool.setUrl(url);
 			crawlerPool.setDir(dir);
 			crawlerPool.setMaxSize(maxSize);
 			crawlerPool.setMaxPage(numOfFiles);
 			crawlerPool.start();
+			try {
+				response.sendRedirect("status");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -101,13 +119,63 @@ public class CrawlerServlet extends ApplicationServlet{
 			  // two requests
 			if ("/status".equals(pathInfo)) {
 				printThreadStatus(writer, getBanner(request));	
+			} else if ("/new".equals(pathInfo)){
+				printLoginPage(writer, getBanner(request), null);
+				try {
+					response.sendRedirect("status");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} else if ("/stop".equals(pathInfo)){
-				
+				if (crawlerPool != null) {
+					crawlerPool.shutdown();
+				}
+				try {
+					response.sendRedirect("status");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} else if ("/start".equals(pathInfo)){
-				
+				if (crawlerPool != null) {
+					crawlerPool.shutdown();
+				}
+				DBWrapper.setupDirectory(crawlerPool.getDir());
+//				URLQueueDA.clear();
+//				URLCrawleredDA.clear();
+				crawlerPool.init();
+				crawlerPool.start();
+				try {
+					response.sendRedirect("status");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}	
+			else if ("/clear".equals(pathInfo)){
+				if (crawlerPool != null) {
+					crawlerPool.shutdown();
+				}
+				DBWrapper.setupDirectory(crawlerPool.getDir());
+				URLQueueDA.clear();
+				URLCrawleredDA.clear();
+				crawlerPool.init();
+				crawlerPool.start();
+				try {
+					response.sendRedirect("status");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}	
 		} else {
-			printLoginPage(writer, getBanner(request), null);
+			try {
+				response.sendRedirect("login");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -130,7 +198,7 @@ public class CrawlerServlet extends ApplicationServlet{
         writer.println("Dir: <input type=\"password\" name=\"dir\"><br>");
         writer.println("MaxSize: <input type=\"text\" name=\"maxSize\"><br>");
         writer.println("MaxDocNum: <input type=\"password\" name=\"numOfFiles\"><br>");
-        writer.println("<input type=\"submit\" value=\"Login\">");
+        writer.println("<input type=\"submit\" value=\"crawler\">");
         writer.println("</form>");
         writer.println("</body>");
         writer.println("</html>");
@@ -139,6 +207,14 @@ public class CrawlerServlet extends ApplicationServlet{
 	
 	private String getControlPage() {
 		StringBuilder sb = new StringBuilder();
+		sb.append("<html>");
+		sb.append("<head>");
+		sb.append("<title>Crawler Page</title>");
+		sb.append("</head>");
+		sb.append("<body>");
+		if (crawlerPool == null) {
+			return "<h1>Server status: no crawling</h1>";
+		}
 		List<ThreadStats> status = crawlerPool.getThreadStatus();
 		if (crawlerPool == null)	return "";
 		sb.append("<h1>Server status</h1>");
@@ -172,10 +248,16 @@ public class CrawlerServlet extends ApplicationServlet{
 		}	
 		sb.append("</table>");
 		sb.append(System.getProperty("line.separator"));
-		sb.append("<a href=\"/shutdown\">");
-		sb.append("<button>Shutdown</button></a>");
-		sb.append("<a href=\"/servererrorlog\">");
-		sb.append("<button>ServerErrorLog</button></a>");
+		sb.append("<a href=\"new\">");
+		sb.append("<button>New</button></a>");
+		sb.append("<a href=\"stop\">");
+		sb.append("<button>Stop</button></a>");
+		sb.append("<a href=\"start\">");
+		sb.append("<button>Start</button></a>");
+		sb.append("<a href=\"clear\">");
+		sb.append("<button>Clear Queue</button></a>");
+		sb.append("</body>");
+		sb.append("</html>");
 		return sb.toString();
 	}
 }
