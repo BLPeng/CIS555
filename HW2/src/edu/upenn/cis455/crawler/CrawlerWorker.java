@@ -256,6 +256,7 @@ public class CrawlerWorker extends Thread{
 			type = "html";
 		}
 		Content content = new Content(url, httpClient.getContent(), new Date(), type);
+//		System.out.println(httpClient.getContent());
 		ContentDA.putEntry(content);
 		ByteArrayInputStream inputStream;
 		try {
@@ -420,8 +421,8 @@ public class CrawlerWorker extends Thread{
 	    if ("304".equals(httpClient.getResCode())) {
 			ifDownloaded = true;
 			return false;
-		} else if (httpClient.getResCode().startsWith("4")
-				|| httpClient.getResCode().startsWith("5")) {
+		} else if (httpClient.getResCode() != null && (httpClient.getResCode().startsWith("4")
+				|| httpClient.getResCode().startsWith("5"))) {
 			return false;
 		}
 		Map<String, List<String>> headers = httpClient.getHeaders();

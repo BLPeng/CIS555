@@ -302,6 +302,8 @@ public class MasterServlet extends HttpServlet {
         writer.println("<title>Workers' status Page</title>");
         writer.println("</head>");
         writer.println("<body>");
+        writer.println("<h2> Xiaobin Chen </h2>");
+        writer.println("<h2> SEAS: xiaobinc </h2>");
         writer.println("<br/>" + getWorkersStatusTable() + "<br/>");
         if (isJobDone()) {
         	writer.println("<br/>" + getJobSubmitForm() + "<br/>");
