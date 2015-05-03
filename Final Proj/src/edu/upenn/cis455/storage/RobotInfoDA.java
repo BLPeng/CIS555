@@ -62,7 +62,12 @@ public class RobotInfoDA {
 
 	public static void close() {
 		if (RobotInfoDA.store != null) {
-			RobotInfoDA.store.close();
+			try {
+				RobotInfoDA.store.close();
+			} catch (Exception e) {
+				
+			}
+			
 		}
 	}
 

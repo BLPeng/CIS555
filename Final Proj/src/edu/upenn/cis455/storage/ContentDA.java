@@ -63,7 +63,12 @@ public class ContentDA {
 
 	public static void close() {
 		if (ContentDA.store != null) {
-			ContentDA.store.close();
+			try {
+				
+				ContentDA.store.close();
+			} catch (Exception e) {
+				
+			}
 		}
 	}
 }

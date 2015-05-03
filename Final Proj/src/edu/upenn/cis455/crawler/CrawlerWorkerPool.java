@@ -1,5 +1,6 @@
 package edu.upenn.cis455.crawler;
 
+import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -8,6 +9,8 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import edu.upenn.cis455.storage.DBWrapper;
+import edu.upenn.cis455.storage.URLQ;
 import edu.upenn.cis455.storage.URLQueueDA;
 import edu.upenn.cis455.storage.URLVisited;
 import edu.upenn.cis455.storage.URLVisitedDA;
@@ -48,7 +51,14 @@ public class CrawlerWorkerPool {
 		if (threadPoolSize != pools.length)	return null;
 		List<ThreadStats> status = new ArrayList<ThreadStats>();
 		for (int i = 0; i < threadPoolSize; i++){
-			ThreadStats ts = new ThreadStats(pools[i].getName(), pools[i].getState(), pools[i].getUrl());
+			URLQ url = pools[i].getCrawlURL();
+			String tmpURL = null;
+			long id = 0;
+			if (url != null) {
+				tmpURL = url.getUrl();
+				id = url.getId();
+			}
+			ThreadStats ts = new ThreadStats(pools[i].getName(), pools[i].getState(), tmpURL, id);
 			status.add(ts);
 		}
 		return status;
@@ -58,7 +68,7 @@ public class CrawlerWorkerPool {
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].shutdown();
 		}
-	//	DBWrapper.closeDBs();
+		DBWrapper.closeDBs();
 	}
 	
     public String getUrl() {
@@ -101,13 +111,15 @@ public class CrawlerWorkerPool {
 	}
 
 	public class ThreadStats {
-    	String threadName;
-    	Thread.State threadStatus;
-    	String reqUrl;
-    	public ThreadStats(String name, Thread.State status, String url) {
+    	public String threadName;
+    	public Thread.State threadStatus;
+    	public String reqUrl;
+    	public long id;
+    	public ThreadStats(String name, State status, String url, Long id) {
     		this.threadName = name;
     		this.threadStatus = status;
     		this.reqUrl = url;
+    		this.id = id;
     	}
     }
 	
@@ -165,4 +177,6 @@ public class CrawlerWorkerPool {
 	public void setThreadPoolSize(int threadPoolSize) {
 		this.threadPoolSize = threadPoolSize;
 	}
+	
+	
 }

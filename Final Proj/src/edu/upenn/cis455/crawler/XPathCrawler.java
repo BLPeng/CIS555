@@ -1,8 +1,7 @@
 package edu.upenn.cis455.crawler;
 
 import edu.upenn.cis455.storage.DBWrapper;
-import edu.upenn.cis455.storage.URLCrawleredDA;
-import edu.upenn.cis455.storage.URLQueueDA;
+
 
 
 public class XPathCrawler {
@@ -13,16 +12,21 @@ public class XPathCrawler {
 		String dir;
 		int maxSize;
 		int numOfFiles = -1;			// default unlimited pages
-		if (size < 3) {
+		if (size < 1) {
 			System.out.println("Usage:");
 			System.out.println("1.The URL of the Web page at which to start");
 			System.out.println("2.The directory containing the BerkeleyDB");
 			System.out.println("3.The maximum size, in megabytes");
 			System.out.println("4.[optional]the number of files");
 			return;
+		} else if (size < 3) {
+			url = args[0];
+			dir = System.getProperty("user.dir") + "/database";
+			maxSize = 1;
+			numOfFiles = -1;
 		}
 		// read input
-		if (size >= 3) {
+		else {
 			url = args[0];
 			dir = args[1];
 			try {
@@ -39,15 +43,15 @@ public class XPathCrawler {
 					return;
 				}				
 			}
-			DBWrapper.setupDirectory(dir);
-			CrawlerWorkerPool crawlerPool = new CrawlerWorkerPool();
-//			URLQueueDA.clear();
-//			URLCrawleredDA.clear();
-			crawlerPool.setUrl(url);
-			crawlerPool.setDir(dir);
-			crawlerPool.setMaxSize(maxSize);
-			crawlerPool.setMaxPage(numOfFiles);
-			crawlerPool.start();
 		}
+		DBWrapper.setupDirectory(dir);
+		CrawlerWorkerPool crawlerPool = new CrawlerWorkerPool();
+//		URLQueueDA.clear();
+//		URLCrawleredDA.clear();
+		crawlerPool.setUrl(url);
+		crawlerPool.setDir(dir);
+		crawlerPool.setMaxSize(maxSize);
+		crawlerPool.setMaxPage(numOfFiles);
+		crawlerPool.start();
 	}
 }

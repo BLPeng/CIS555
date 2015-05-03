@@ -61,7 +61,16 @@ public class UserDA {
 	}
 	public static void close() {
 		if (UserDA.store != null) {
-			UserDA.store.close();
+			
+				try {
+					
+					UserDA.store.close();
+				} catch (Exception e) {
+					
+				}
+				
+
+			
 		}
 	}
 }

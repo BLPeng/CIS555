@@ -58,7 +58,14 @@ public class URLVisitedDA {
 	
 	public static void close() {
 		if (URLVisitedDA.store != null) {
-			URLVisitedDA.store.close();
+				try {
+					
+					URLVisitedDA.store.close();
+				} catch (Exception e) {
+					
+				}
+				
+			
 		}
 	}
 }

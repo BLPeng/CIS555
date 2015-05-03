@@ -73,7 +73,13 @@ public class URLCrawleredDA {
 	
 	public static void close() {
 		if (URLCrawleredDA.store != null) {
-			URLCrawleredDA.store.close();
+			try {
+				
+				URLCrawleredDA.store.close();
+			} catch (Exception e) {
+				
+			}
+			
 		}
 	}
 }

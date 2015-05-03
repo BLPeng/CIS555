@@ -110,7 +110,13 @@ public class URLQueueDA {
 	
 	public static void close() {
 		if (URLQueueDA.store != null) {
-			URLQueueDA.store.close();
+			try {
+				
+				URLQueueDA.store.close();
+			} catch (Exception e) {
+				
+			}
+			
 		}
 	}
 }

@@ -35,9 +35,11 @@ import edu.upenn.cis455.xpathengine.XPathEngineImpl;
 
 public class CrawlerWorker extends Thread{
 	private final String USER_AGENT = "cis455crawler";
+
 	private boolean run = true;
 	private String dir;
 	private String url;
+	private URLQ crawlURL;
 	private int maxSize = -1;
 	private int maxPage = -1;
 	private Tidy mTidy = new Tidy();
@@ -67,6 +69,14 @@ public class CrawlerWorker extends Thread{
 //		mTidy.setErrout(null);
 	}
 
+	public URLQ getCrawlURL() {
+		return crawlURL;
+	}
+
+	public void setCrawlURL(URLQ crawlURL) {
+		this.crawlURL = crawlURL;
+	}
+	
 	public String getUrl() {
 		return url;
 	}
@@ -104,20 +114,20 @@ public class CrawlerWorker extends Thread{
 			try {
 				crawlerWorkerPool.decreaseCnt();
 	//			this.url = pendingURLs.take();
-				URLQ tmp = URLQueueDA.pollURL();
+				crawlURL = URLQueueDA.pollURL();
 				crawlerWorkerPool.increaseCnt();
-				if (tmp == null) {
+				if (crawlURL == null) {
 					continue;
 				}
-				this.url = tmp.getUrl();	
+				this.url = crawlURL.getUrl();	
 				if (ifCrawlPage(url) && applyRobotRule(url)) {
-					printProcess(tmp, 0);
+					printProcess(crawlURL, 0);
 					crawlPage(url);
 				} else if (ifDownloaded) {
-					printProcess(tmp, 1);
+					printProcess(crawlURL, 1);
 					crawlLocalContent(url);
 				} else {
-					printProcess(tmp, 2);
+					printProcess(crawlURL, 2);
 				}
 			} catch (InterruptedException e) {
 		//		e.printStackTrace();

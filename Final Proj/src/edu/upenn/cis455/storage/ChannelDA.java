@@ -117,7 +117,12 @@ public class ChannelDA {
 	
 	public static void close() {
 		if (ChannelDA.store != null) {
-			ChannelDA.store.close();
+			try {
+				
+				ChannelDA.store.close();
+			} catch (Exception e) {
+				
+			}
 		}
 	}
 }
