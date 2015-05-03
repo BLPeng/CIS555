@@ -66,7 +66,7 @@ public class CrawlerServlet extends ApplicationServlet{
 				e.printStackTrace();
 			}
 		} else {
-			if (dirTmp != null) {
+			if (dirTmp != null && dirTmp.length() != 0) {
 				dir = System.getProperty("user.dir") + "/" + dirTmp;
 			} else {
 				
@@ -160,8 +160,7 @@ public class CrawlerServlet extends ApplicationServlet{
 				DBWrapper.setupDirectory(crawlerPool.getDir());
 				URLQueueDA.clear();
 				URLCrawleredDA.clear();
-				crawlerPool.init();
-				crawlerPool.start();
+				DBWrapper.closeDBs();
 				try {
 					response.sendRedirect("status");
 				} catch (IOException e) {
