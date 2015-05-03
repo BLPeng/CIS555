@@ -9,6 +9,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import edu.upenn.cis455.storage.URLQueueDA;
+import edu.upenn.cis455.storage.URLVisited;
+import edu.upenn.cis455.storage.URLVisitedDA;
 
 
 public class CrawlerWorkerPool {
@@ -24,7 +26,7 @@ public class CrawlerWorkerPool {
 	private final Object lock = new Object();
 	private Set<String> syncSet = Collections.newSetFromMap(new Hashtable<String, Boolean>());
 	private BlockingQueue<String> pendingURLs = new ArrayBlockingQueue<String>(queueSize);
-	private Hashtable<String, Long> lastCrawled = new Hashtable<String, Long>();
+//	private Hashtable<String, Long> lastCrawled = new Hashtable<String, Long>();
 	
 	public CrawlerWorkerPool() { 		
 		pools = new CrawlerWorker[threadPoolSize];
@@ -138,7 +140,12 @@ public class CrawlerWorkerPool {
     }
     
     public long getLastCrawledDate(String url) {
-    	Long time = lastCrawled.get(url);
+//    	Long time = lastCrawled.get(url);
+    	URLVisited tmp = URLVisitedDA.getEntry(url);
+    	if (tmp == null) {
+    		return 0;
+    	}
+    	Long time = tmp.getTime();
     	if (time == null) {
     		return 0;
     	} else {
@@ -147,7 +154,8 @@ public class CrawlerWorkerPool {
     }
     
     public void setLastCrawledDate(String url, long l) {
-    	lastCrawled.put(url, l);
+    	URLVisitedDA.putEntry(new URLVisited(l, url));
+  //  	lastCrawled.put(url, l);
     }
 
 	public int getThreadPoolSize() {

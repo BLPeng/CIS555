@@ -23,8 +23,11 @@ import edu.upenn.cis455.storage.Content;
 import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.RobotInfo;
 import edu.upenn.cis455.storage.RobotInfoDA;
+import edu.upenn.cis455.storage.URLCrawleredDA;
 import edu.upenn.cis455.storage.URLQ;
 import edu.upenn.cis455.storage.URLQueueDA;
+import edu.upenn.cis455.storage.URLVisited;
+import edu.upenn.cis455.storage.URLVisitedDA;
 import edu.upenn.cis455.xpathengine.XPathEngineFactory;
 import edu.upenn.cis455.xpathengine.XPathEngineImpl;
 
@@ -56,6 +59,7 @@ public class CrawlerWorker extends Thread{
 		mTidy.setPrintBodyOnly(true);
 		mTidy.setXHTML(true);
 		mTidy.setQuiet(true);
+		mTidy.setShowErrors(0);
 		mTidy.setShowWarnings(false);
 //		mTidy.setErrout(null);     // error why???
 		this.crawlerWorkerPool = crawlerWorkerPool;
@@ -101,11 +105,11 @@ public class CrawlerWorker extends Thread{
 				crawlerWorkerPool.decreaseCnt();
 	//			this.url = pendingURLs.take();
 				URLQ tmp = URLQueueDA.pollURL();
+				crawlerWorkerPool.increaseCnt();
 				if (tmp == null) {
 					continue;
 				}
-				this.url = tmp.getUrl();
-				crawlerWorkerPool.increaseCnt();
+				this.url = tmp.getUrl();	
 				if (ifCrawlPage(url) && applyRobotRule(url)) {
 					printProcess(tmp, 0);
 					crawlPage(url);
@@ -222,11 +226,16 @@ public class CrawlerWorker extends Thread{
 	}
 	// crawl page to fetch content and extract links
     public void crawlPage(String url) {
-    	if (fetchedURLSet.contains(url)) {
+/*    	if (fetchedURLSet.contains(url)) {
 			return;
 		} else {
 			fetchedURLSet.add(url);
-		}
+		}*/
+    	if (URLCrawleredDA.containsEntry(url)) {
+    		return;
+    	} else {
+    		URLCrawleredDA.putEntry(new URLVisited((long) 0, url));
+    	}
     	boolean isXML;
     	String type = "html";
 		httpClient.init();
@@ -312,7 +321,7 @@ public class CrawlerWorker extends Thread{
     		
     	}
     	for (String url : urls) {
-    		if (fetchedURLSet.contains(url) == false) {
+    		if (URLVisitedDA.containsEntry(url) == false) {
     			URLQueueDA.pushURL(url);
 //			pendingURLs.put(url);
     		}
@@ -414,7 +423,7 @@ public class CrawlerWorker extends Thread{
 		if (url == null) {
 			return false;
 		}
-		if (fetchedURLSet.contains(url)) {
+		if (URLVisitedDA.containsEntry(url)) {
 			return false;
 		}
 		httpClient.init();
@@ -435,7 +444,8 @@ public class CrawlerWorker extends Thread{
 		}
 		Map<String, List<String>> headers = httpClient.getHeaders();
 		if ("301".equals(httpClient.getResCode()) || "302".equals(httpClient.getResCode())) {
-			fetchedURLSet.add(url);
+//			fetchedURLSet.add(url);
+			URLCrawleredDA.putEntry(new URLVisited((long) 0, url));
 			String newUrl = null;
 			if (headers.get("Location") != null) {
 				newUrl = headers.get("Location").get(0);

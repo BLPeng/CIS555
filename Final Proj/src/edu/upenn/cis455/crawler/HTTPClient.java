@@ -56,8 +56,10 @@ public class HTTPClient {
 	public void fetchContent() {
 		if (type == 0) {
 			getHttpContent(); 
-		} else {
+		} else if (type == 1){
 			getHttpsContent();
+		} else {
+			return;
 		}
 	}
 	
@@ -97,7 +99,7 @@ public class HTTPClient {
 			//	   e.printStackTrace();
 				   return;
 				}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 		//	e.printStackTrace();
 			return;

@@ -55,6 +55,13 @@ public class URLQueueDA {
 		}	
 	}
 	
+	public static void clear() {
+		cursor = primaryIndex.entities();
+		while (cursor.next() != null) {
+			cursor.delete();
+		}
+	}
+	
 	public static int size() {
 		if (primaryIndex == null) {
 			return 0;

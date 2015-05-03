@@ -34,6 +34,8 @@ public class DBWrapper {
 		ContentDA.init(env);
 		ChannelDA.init(env);
 		UserDA.init(env);
+		URLVisitedDA.init(env);
+		URLCrawleredDA.init(env);
 	}
 	
 	public static void closeDBs() {
@@ -42,6 +44,8 @@ public class DBWrapper {
 		ChannelDA.close();
 		UserDA.close();
 		URLQueueDA.close();
+		URLVisitedDA.close();
+		URLCrawleredDA.close();
 		if (DBWrapper.myEnv != null) {
 			DBWrapper.myEnv.close();
 			DBWrapper.myEnv = null;
