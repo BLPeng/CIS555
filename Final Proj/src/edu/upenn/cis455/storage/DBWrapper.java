@@ -36,6 +36,7 @@ public class DBWrapper {
 		UserDA.init(env);
 		URLVisitedDA.init(env);
 		URLCrawleredDA.init(env);
+		URLRelationDA.init(env);
 	}
 	
 	public static void closeDBs() {
@@ -46,6 +47,7 @@ public class DBWrapper {
 		URLQueueDA.close();
 		URLVisitedDA.close();
 		URLCrawleredDA.close();
+		URLRelationDA.close();
 		if (DBWrapper.myEnv != null) {
 			DBWrapper.myEnv.close();
 			DBWrapper.myEnv = null;

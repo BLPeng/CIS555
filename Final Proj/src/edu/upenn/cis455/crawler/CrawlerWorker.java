@@ -26,6 +26,8 @@ import edu.upenn.cis455.storage.RobotInfoDA;
 import edu.upenn.cis455.storage.URLCrawleredDA;
 import edu.upenn.cis455.storage.URLQ;
 import edu.upenn.cis455.storage.URLQueueDA;
+import edu.upenn.cis455.storage.URLRelation;
+import edu.upenn.cis455.storage.URLRelationDA;
 import edu.upenn.cis455.storage.URLVisited;
 import edu.upenn.cis455.storage.URLVisitedDA;
 import edu.upenn.cis455.xpathengine.XPathEngineFactory;
@@ -331,6 +333,9 @@ public class CrawlerWorker extends Thread{
 			}
     		
     	}
+    	String[] urls1 = new String[urls.size()];
+    	urls1 = urls.toArray(urls1);
+    	URLRelationDA.putEntry(new URLRelation(baseURI, urls1));
     	for (String url : urls) {
     		if (URLVisitedDA.containsEntry(url) == false) {
     			URLQueueDA.pushURL(url);

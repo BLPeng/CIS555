@@ -15,11 +15,13 @@ import edu.upenn.cis455.crawler.CrawlerWorkerPool.ThreadStats;
 import edu.upenn.cis455.storage.DBWrapper;
 import edu.upenn.cis455.storage.URLCrawleredDA;
 import edu.upenn.cis455.storage.URLQueueDA;
+import edu.upenn.cis455.storage.URLRelation;
+import edu.upenn.cis455.storage.URLRelationDA;
 
 
 
 public class CrawlerServlet extends ApplicationServlet{
-	
+	String defaultDir = System.getProperty("user.dir") + "/database";
 	CrawlerWorkerPool crawlerPool; 
 	@Override
 	  public void init() throws ServletException {
@@ -152,8 +154,7 @@ public class CrawlerServlet extends ApplicationServlet{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}	
-			else if ("/clear".equals(pathInfo)){
+			} else if ("/clear".equals(pathInfo)){
 				if (crawlerPool != null) {
 					crawlerPool.shutdown();
 				}
@@ -167,10 +168,19 @@ public class CrawlerServlet extends ApplicationServlet{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+			} else if ("/geturl".equals(pathInfo)){
+				if (crawlerPool.getDir() == null) {
+					DBWrapper.setupDirectory(defaultDir);
+				} else {
+					DBWrapper.setupDirectory(crawlerPool.getDir());
+				}
+				
+				List<URLRelation> lists = URLRelationDA.getEntries();
+				DBWrapper.closeDBs();
 			}	
 		} else {
 			try {
-				response.sendRedirect("login");
+				response.sendRedirect("/servlet/login");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
