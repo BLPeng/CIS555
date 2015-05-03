@@ -1,6 +1,7 @@
 package edu.upenn.cis455.crawler;
 
 import edu.upenn.cis455.storage.DBWrapper;
+import edu.upenn.cis455.storage.URLCrawleredDA;
 import edu.upenn.cis455.storage.URLQueueDA;
 
 
@@ -41,6 +42,7 @@ public class XPathCrawler {
 			DBWrapper.setupDirectory(dir);
 			CrawlerWorkerPool crawlerPool = new CrawlerWorkerPool();
 //			URLQueueDA.clear();
+//			URLCrawleredDA.clear();
 			crawlerPool.setUrl(url);
 			crawlerPool.setDir(dir);
 			crawlerPool.setMaxSize(maxSize);

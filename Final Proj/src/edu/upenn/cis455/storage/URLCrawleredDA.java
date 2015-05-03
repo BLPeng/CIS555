@@ -2,6 +2,7 @@ package edu.upenn.cis455.storage;
 
 
 import com.sleepycat.je.Environment;
+import com.sleepycat.persist.EntityCursor;
 import com.sleepycat.persist.EntityStore;
 import com.sleepycat.persist.PrimaryIndex;
 import com.sleepycat.persist.StoreConfig;
@@ -11,7 +12,8 @@ public class URLCrawleredDA {
 	public static EntityStore store;
 	private static PrimaryIndex<String, URLVisited> primaryIndex;
 	public static String envDirectory = "data/channelDB";
-    
+	private static EntityCursor<URLVisited> cursor;
+	
 	public static PrimaryIndex<String, URLVisited> getPrimaryIndex() {
 		return primaryIndex;
 	}
@@ -56,6 +58,18 @@ public class URLCrawleredDA {
 		return primaryIndex.get(url);
 	}
 
+	public static void clear() {
+		cursor = primaryIndex.entities();
+		try {
+		     for (URLVisited entity = cursor.first();
+		                   entity != null;
+		                   entity = cursor.next()) {
+		         cursor.delete();
+		     }
+		 } finally {
+		     cursor.close();
+		 }
+	}
 	
 	public static void close() {
 		if (URLCrawleredDA.store != null) {

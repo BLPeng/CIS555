@@ -1,11 +1,10 @@
 package edu.upenn.cis455.storage;
 
 
+import java.util.Iterator;
+
 import com.sleepycat.je.Environment;
-import com.sleepycat.persist.EntityCursor;
-import com.sleepycat.persist.EntityStore;
-import com.sleepycat.persist.PrimaryIndex;
-import com.sleepycat.persist.StoreConfig;
+import com.sleepycat.persist.*;
 
 // class to access User database
 public class URLQueueDA {
@@ -39,6 +38,7 @@ public class URLQueueDA {
 	//	DBWrapper.myEnv = env;
 		URLQueueDA.store = new EntityStore(env, "QueueStore", storeConfig);
 		primaryIndex = store.getPrimaryIndex(Long.class, URLQ.class);
+//		env.removeDatabase(null, "QueueStore");
 		DatabaseShutdownHook dbShutdownHook = new DatabaseShutdownHook(env, store);
 		Runtime.getRuntime().addShutdownHook(dbShutdownHook);
 	}
@@ -57,9 +57,15 @@ public class URLQueueDA {
 	
 	public static void clear() {
 		cursor = primaryIndex.entities();
-		while (cursor.next() != null) {
-			cursor.delete();
-		}
+		try {
+		     for (URLQ entity = cursor.first();
+		                   entity != null;
+		                   entity = cursor.next()) {
+		         cursor.delete();
+		     }
+		 } finally {
+		     cursor.close();
+		 }
 	}
 	
 	public static int size() {
