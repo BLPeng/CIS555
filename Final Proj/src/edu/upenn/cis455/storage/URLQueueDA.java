@@ -28,7 +28,6 @@ public class URLQueueDA {
 	public static void init(Environment env)  {
 
 		lock = new Object();
-		waitObj = new Object();
 		urlID = 0;
 	//	EnvironmentConfig envConfig = new EnvironmentConfig();
 		StoreConfig storeConfig = new StoreConfig();
@@ -47,8 +46,12 @@ public class URLQueueDA {
 	public static void pushURL(String url) {
 		synchronized (lock) {
 			urlID++;
+//			System.out.println("size" + primaryIndex.count());
 			primaryIndex.put(new URLQ(urlID, url));
-			lock.notifyAll();
+//			System.out.println("size" + primaryIndex.count());
+			if (primaryIndex.count() == 1) {
+				lock.notifyAll();
+			}
 		}	
 	}
 	
@@ -59,7 +62,7 @@ public class URLQueueDA {
 		return (int) primaryIndex.count();
 	}
 	
-	public static String pollURL() {
+	public static URLQ pollURL() {
 		URLQ url = null;
 		synchronized (lock) {		
 			try {
@@ -88,7 +91,8 @@ public class URLQueueDA {
 		if (url == null) {
 			return null;
 		}
-		return url.getUrl();
+//		System.out.print(url.getId());
+		return url;
 	}
 	
 	public static void close() {

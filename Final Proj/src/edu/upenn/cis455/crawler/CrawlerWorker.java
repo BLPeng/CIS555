@@ -23,6 +23,7 @@ import edu.upenn.cis455.storage.Content;
 import edu.upenn.cis455.storage.ContentDA;
 import edu.upenn.cis455.storage.RobotInfo;
 import edu.upenn.cis455.storage.RobotInfoDA;
+import edu.upenn.cis455.storage.URLQ;
 import edu.upenn.cis455.storage.URLQueueDA;
 import edu.upenn.cis455.xpathengine.XPathEngineFactory;
 import edu.upenn.cis455.xpathengine.XPathEngineImpl;
@@ -56,6 +57,7 @@ public class CrawlerWorker extends Thread{
 		mTidy.setXHTML(true);
 		mTidy.setQuiet(true);
 		mTidy.setShowWarnings(false);
+//		mTidy.setErrout(null);     // error why???
 		this.crawlerWorkerPool = crawlerWorkerPool;
 		xpathEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine(); 
 //		mTidy.setErrout(null);
@@ -98,22 +100,27 @@ public class CrawlerWorker extends Thread{
 			try {
 				crawlerWorkerPool.decreaseCnt();
 	//			this.url = pendingURLs.take();
-				this.url = URLQueueDA.pollURL();
+				URLQ tmp = URLQueueDA.pollURL();
+				if (tmp == null) {
+					continue;
+				}
+				this.url = tmp.getUrl();
 				crawlerWorkerPool.increaseCnt();
 				if (ifCrawlPage(url) && applyRobotRule(url)) {
-					printProcess(url, 0);
+					printProcess(tmp, 0);
 					crawlPage(url);
 				} else if (ifDownloaded) {
-					printProcess(url, 1);
+					printProcess(tmp, 1);
 					crawlLocalContent(url);
 				} else {
-					printProcess(url, 2);
+					printProcess(tmp, 2);
 				}
 			} catch (InterruptedException e) {
 		//		e.printStackTrace();
-				System.out.println(this.getName() + " Shutdown");
+				
 			}
 		}
+		System.out.println(this.getName() + " Shutdown");
 	}
 	
 	// apply robot rule to this url crawling
@@ -189,7 +196,7 @@ public class CrawlerWorker extends Thread{
 					//	mTidy.pprint(document, System.out);
 					extractURL(document, url); 
 				} else {
-					matchChannel(document, url);
+	//				matchChannel(document, url);
 				}
 			} catch (Exception e) {
 				return;
@@ -440,7 +447,8 @@ public class CrawlerWorker extends Thread{
 			if (newUrl == null) {
 				return false;
 			} else {
-				pendingURLs.add(newUrl);
+				URLQueueDA.pushURL(newUrl);
+//				pendingURLs.add(newUrl);
 				return false;
 			}
 		}
@@ -476,11 +484,11 @@ public class CrawlerWorker extends Thread{
 		this.interrupt();
 	}
 	
-	private void printProcess(String url, int type) {
+	private void printProcess(URLQ url, int type) {
 		switch(type) {
-		case 0: System.out.println(url + " : Downloading"); break;
-		case 1: System.out.println(url + " : Not modified"); break;
-		case 2: System.out.println(url + " : Not download"); break;
+		case 0: System.out.println(url.getId() + " " + url.getUrl() + " : Downloading"); break;
+		case 1: System.out.println(url.getId() + " " + url.getUrl() + " : Not modified"); break;
+		case 2: System.out.println(url.getId() + " " + url.getUrl() + " : Not download"); break;
 		}
 	}
 

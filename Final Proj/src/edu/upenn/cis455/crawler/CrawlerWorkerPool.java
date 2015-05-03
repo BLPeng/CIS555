@@ -12,7 +12,7 @@ import edu.upenn.cis455.storage.URLQueueDA;
 
 
 public class CrawlerWorkerPool {
-	private int threadPoolSize = 10;	//for multi-processor /core, increase this number
+	private int threadPoolSize = 5;	//for multi-processor /core, increase this number
 	private int queueSize = 409600;
 	private CrawlerWorker[] pools;
 	private String dir;
@@ -122,6 +122,9 @@ public class CrawlerWorkerPool {
         	if (this.curPage > this.maxPage && this.maxPage > 0) {
         		if (this.workingThread > 0) {
         			lock.wait();
+        		} else {
+        			shutdown();
+        			return;
         		}
         		
         	}
