@@ -168,7 +168,7 @@ public class CrawlerServlet extends ApplicationServlet{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			} else if ("/geturl".equals(pathInfo)){
+			} else if ("/pageRankData".equals(pathInfo)){
 				if (crawlerPool.getDir() == null) {
 					DBWrapper.setupDirectory(defaultDir);
 				} else {
@@ -176,6 +176,7 @@ public class CrawlerServlet extends ApplicationServlet{
 				}
 				
 				List<URLRelation> lists = URLRelationDA.getEntries();
+				printURLRelation1(writer, lists, response);
 				DBWrapper.closeDBs();
 			}	
 		} else {
@@ -186,6 +187,50 @@ public class CrawlerServlet extends ApplicationServlet{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	private void printURLRelation1(PrintWriter writer, List<URLRelation> lists, HttpServletResponse response) {
+        if (lists != null) {
+        	response.setHeader("Content-Type", "text/plain");
+            response.setHeader("success", "yes");
+            response.setHeader("number-of-lines", String.valueOf(lists.size()));
+            for (URLRelation url : lists) {
+            	writer.print(url.getUrl());
+            	writer.print("\t");
+            	for (String outURL : url.getUrls()) {
+            		writer.print(outURL);
+                	writer.print(" ");
+            	}
+            	writer.print(System.lineSeparator());
+            }
+        }
+		writer.close();		
+	}
+	
+	private void printURLRelation(PrintWriter writer, List<URLRelation> lists) {
+		writer.println("<html>");
+        writer.println("<head>");
+        writer.println("<title>URL relations</title>");
+        writer.println("</head>");
+        writer.println("<body>");
+        if (lists != null) {
+        	writer.print(lists.size());
+        	writer.print(System.lineSeparator());
+        	writer.print("</br>");
+            for (URLRelation url : lists) {
+            	writer.print(url.getUrl());
+            	writer.print(" ");
+            	for (String outURL : url.getUrls()) {
+            		writer.print(outURL);
+                	writer.print(" ");
+            	}
+            	writer.print(System.lineSeparator());
+            	writer.print("</br>");
+            }
+        }
+        writer.println("</body>");
+        writer.println("</html>");
+		writer.close();		
 	}
 	
 	private void printThreadStatus(PrintWriter writer, String banner) {
