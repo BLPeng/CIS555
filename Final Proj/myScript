@@ -1,6 +1,19 @@
 /home/cis455/workspace/tomcat1/bin/shutdown.sh
+/home/cis455/workspace/tomcat2/bin/shutdown.sh
+/home/cis455/workspace/tomcat3/bin/shutdown.sh
+/home/cis455/workspace/tomcat4/bin/shutdown.sh
+ant clean
 ant build
 sudo rm -rf /home/cis455/workspace/tomcat1/webapps/servlet
 sudo rm -rf /home/cis455/workspace/tomcat1/webapps/servlet.war
 sudo cp -f servlet.war /home/cis455/workspace/tomcat1/webapps
-/home/cis455/workspace/tomcat1/bin/startup.sh
+sudo rm -rf /home/cis455/workspace/tomcat2/webapps/servlet
+sudo rm -rf /home/cis455/workspace/tomcat2/webapps/servlet.war
+sudo cp -f servlet.war /home/cis455/workspace/tomcat2/webapps
+sudo rm -rf /home/cis455/workspace/tomcat3/webapps/servlet
+sudo rm -rf /home/cis455/workspace/tomcat3/webapps/servlet.war
+sudo cp -f servlet.war /home/cis455/workspace/tomcat3/webapps
+sudo rm -rf /home/cis455/workspace/tomcat4/webapps/servlet
+sudo rm -rf /home/cis455/workspace/tomcat4/webapps/servlet.war
+sudo cp -f servlet.war /home/cis455/workspace/tomcat4/webapps
+

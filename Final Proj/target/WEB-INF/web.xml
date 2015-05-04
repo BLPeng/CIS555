@@ -8,13 +8,13 @@
    <display-name>Channel Subscription Servlets</display-name>
    <context-param>
      <param-name>BDBstore</param-name>
-     <param-value>/home/cis455/workspace/database</param-value>
+     <param-value>/home/cis455/workspace/database/0</param-value>
    </context-param>
    <listener>
      <listener-class>edu.upenn.cis455.servlet.ContextListener</listener-class>
    </listener>
    <session-config>
-	 <session-timeout>20</session-timeout>
+	 <session-timeout>20000</session-timeout>
    </session-config>
    <servlet>
      <servlet-name>xpath</servlet-name>
@@ -41,7 +41,11 @@
    </servlet>
    <servlet>
      <servlet-name>crawler</servlet-name>
-     <servlet-class>edu.upenn.cis455.servlet.WorkerServlet</servlet-class> 
+     <servlet-class>edu.upenn.cis455.servlet.CrawlerServlet</servlet-class> 
+     <init-param>
+           <param-name>port</param-name>
+           <param-value>8080</param-value>
+     </init-param>
    </servlet>
    
    <servlet-mapping>

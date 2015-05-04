@@ -24,20 +24,20 @@ public class URLQueueDA {
 		URLQueueDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(Environment env)  {
+	public static void init(Environment env, long id)  {
 
 		lock = new Object();
-		urlID = 0;
 	//	EnvironmentConfig envConfig = new EnvironmentConfig();
 		StoreConfig storeConfig = new StoreConfig();
 	//	envConfig.setAllowCreate(true);
 		storeConfig.setAllowCreate(true);
-		storeConfig.setTransactional(false);
-		storeConfig.setDeferredWrite(true);
+	//	storeConfig.setTransactional(false);
+	//	storeConfig.setDeferredWrite(true);
 	//	Environment env = new Environment(file, envConfig);
 	//	DBWrapper.myEnv = env;
 		URLQueueDA.store = new EntityStore(env, "QueueStore", storeConfig);
 		primaryIndex = store.getPrimaryIndex(Long.class, URLQ.class);
+		urlID = id;
 //		env.removeDatabase(null, "QueueStore");
 		DatabaseShutdownHook dbShutdownHook = new DatabaseShutdownHook(env, store);
 		Runtime.getRuntime().addShutdownHook(dbShutdownHook);

@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,8 +17,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import edu.upenn.cis455.crawler.CrawlerWorkerPool;
-import edu.upenn.cis455.crawler.HTTPClient;
 import edu.upenn.cis455.crawler.CrawlerWorkerPool.ThreadStats;
+import edu.upenn.cis455.crawler.HTTPClient;
+import edu.upenn.cis455.crawler.info.WorkerStatus;
 import edu.upenn.cis455.storage.DBWrapper;
 import edu.upenn.cis455.storage.URLCrawleredDA;
 import edu.upenn.cis455.storage.URLQueueDA;
@@ -24,11 +28,14 @@ import edu.upenn.cis455.storage.URLRelationDA;
 
 
 
-public class WorkerServlet extends ApplicationServlet{
-	private List<String> workers;
+
+
+public class CrawlerServlet extends ApplicationServlet{
+	private HashMap<String, WorkerStatus> workersStatus;
 	private HTTPClient httpClient;
 	private String masterIP;
 	private int masterPort;
+	private int port = 80;
 	private Timer heartBeatTimer;
 	private static final int DURATION = 10 * 1000;
 	private String masterURL;
@@ -38,6 +45,14 @@ public class WorkerServlet extends ApplicationServlet{
 	  public void init() throws ServletException {
 	    super.init();
 	    crawlerPool = new CrawlerWorkerPool();
+	    workersStatus = new HashMap<>();
+	    try {
+	    	port = Integer.valueOf(getInitParameter("port"));
+	    } catch (Exception e) {
+	    	port = 80;
+	    }
+	    defaultDir = System.getProperty("user.dir") + "/database/" + port;
+	    httpClient = new HTTPClient();
 //	    ServletContext context = getServletContext();
 //	    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
 	  }
@@ -45,13 +60,16 @@ public class WorkerServlet extends ApplicationServlet{
 	public void doPost(HttpServletRequest request, HttpServletResponse response) {
 	//    String tmp = System.getProperty("user.dir");
 		String pathInfo = request.getPathInfo();
-		if ("/master".equals(pathInfo)) {
+		if ("/worker/masterURL".equals(pathInfo)) {
 			masterURL = request.getParameter("url");
 			createHeartBeat();
+		} else if ("/master/submitURLS".equals(pathInfo)) {
+			startAllWorkers(request, response);
 		} else {
 			handleCrawlerConfig(request, response);
 		}
 	}
+
 
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -64,15 +82,20 @@ public class WorkerServlet extends ApplicationServlet{
 			e.printStackTrace();
 			return;
 		}     
-		if (checkLogin(request)) {
+//		if (checkLogin(request)) {
+		if (true) {
 			String pathInfo = request.getPathInfo();
 			  // two requests
 			if ("/worker/status".equals(pathInfo)) {
 				printThreadStatus(writer, getBanner(request));	
 			} else if ("/master/status".equals(pathInfo)) {
-				
+				getWorkersStatus(writer);
+			} else if ("/master/workerHB".equals(pathInfo)){
+				updateWorkersStatus(request);
 			} else if ("/worker/masterURL".equals(pathInfo)){
 				printMasterURLSubmit(writer, "submit master url address");
+			} else if ("/worker/urlFeed".equals(pathInfo)){
+				
 			} else if ("/worker/new".equals(pathInfo)){
 				printLoginPage(writer, getBanner(request), null);
 				try {
@@ -139,6 +162,69 @@ public class WorkerServlet extends ApplicationServlet{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	
+	private void startAllWorkers(HttpServletRequest request,
+			HttpServletResponse response) {
+		String seeds = request.getParameter("seeds");
+		String[] urls = seeds.split(";");
+		response.setContentType("text/html");
+		PrintWriter writer;
+		try {
+			writer = response.getWriter();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		if (urls == null || urls.length == 0 ) {
+			printErrorPage(writer, getBanner(request), "empty seed url");
+		}
+		int i = 0;
+		int size = workersStatus.size();
+		if (size == 0) {
+			return;
+		}
+		List<String> addrs = new ArrayList<String>(workersStatus.keySet());
+		for (String url : urls) {
+			String addr = addrs.get(i % size);
+			String params = null;
+			try {
+				params = "?URL="+URLEncoder.encode(url, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			}
+			httpClient.init();
+			httpClient.setMethod("GET");
+			httpClient.setSendContent("");
+			httpClient.setRequestHeaders("Content-Type", "text/html");
+			httpClient.setRequestHeaders("Content-Length", "10");
+//			httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+//			httpClient.setURL("http://" + masterIP + ":" + String.valueOf(masterPort)+ "/master/workerstatus" + params);
+			httpClient.setURL("http://" + addr + "/servlet/crawler/worker/urlFeed" + params);
+			httpClient.connect();
+			i++;
+		}
+	}
+	
+	private void updateWorkersStatus(HttpServletRequest request) {
+		int port;
+    	String status = "";
+    	String ip;
+    	String key;
+    	try {
+    		port = Integer.parseInt(URLDecoder.decode(request.getParameter("port"), "UTF-8"));
+      //  	status = URLDecoder.decode(request.getParameter("status"), "UTF-8");
+    	} catch (Exception e) {
+    		return;
+    	}
+    	ip = request.getRemoteAddr();
+    	key = ip + ":" + port;
+    	WorkerStatus workerStatus = new WorkerStatus(ip, port, status);
+    	workersStatus.put(key, workerStatus);
+		
 	}
 	
 	private void handleCrawlerConfig(HttpServletRequest request, HttpServletResponse response) {
@@ -301,40 +387,66 @@ public class WorkerServlet extends ApplicationServlet{
 		writer.close();	
 	}
 	
+	private void getWorkersStatus(PrintWriter writer) {
+//		StringBuilder sb = new StringBuilder();
+		writer.println("<html>");
+		writer.println("<head>");
+		writer.println("<title>Crawler Page</title>");
+		writer.println("</head>");
+		writer.println("<body>");
+		writer.println("<h2>Workers status</h2>");
+		if (workersStatus == null) {
+			return;
+		}
+		for (String key : workersStatus.keySet()) {
+			writer.println("<h4>" + key + "</h4>");
+			writer.println("<h5>" + workersStatus.get(key).getStatus() + "</h5>");
+		}
+		  // generate the form for submitting jobs
+		writer.println("<p>Submit url seeds:</p>");
+		writer.println("<form action=\"submitURLS\" method=\"post\">");
+		writer.println("Seeds: <input type=\"text\" name=\"seeds\" size=\"100\"/><br/>");
+		writer.println("<input type=\"submit\" value=\"Submit\" />");
+		writer.println("</form>");
+	    
+		writer.println("</body>");
+        writer.println("</html>");
+	}
+	
 	private String getThreadStatus() {
 		List<ThreadStats> status = crawlerPool.getThreadStatus();
 		if (status == null) {
 			return "no threads working";
 		}
 		StringBuilder sb = new StringBuilder();
-		sb.append("<h1>Server status</h1>");
-		sb.append(System.getProperty("line.separator"));;
+		sb.append("<h1>Crawler status</h1>");
+	//	sb.append(System.getProperty("line.separator"));;
 		sb.append("<h3>Thread pool size: " + status.size() + "</h3>");
-		sb.append(System.getProperty("line.separator"));
+	//	sb.append(System.getProperty("line.separator"));
 		sb.append("<table>");
-		sb.append(System.getProperty("line.separator"));
+	//	sb.append(System.getProperty("line.separator"));
 		sb.append("<tr>");
-		sb.append(System.getProperty("line.separator"));
+	//	sb.append(System.getProperty("line.separator"));
 		sb.append("<th>Thread    </th>");
-		sb.append(System.getProperty("line.separator"));
+	//	sb.append(System.getProperty("line.separator"));
 		sb.append("<th>Status     </th>");
-		sb.append(System.getProperty("line.separator"));
+	//	sb.append(System.getProperty("line.separator"));
 		sb.append("<th> URL    </th>");
-		sb.append(System.getProperty("line.separator"));
+	//	sb.append(System.getProperty("line.separator"));
 		sb.append("</tr>");
-		sb.append(System.getProperty("line.separator"));
+	//	sb.append(System.getProperty("line.separator"));
 		
 		for (ThreadStats tmp : status){
 			sb.append("<tr>");
-			sb.append(System.getProperty("line.separator"));
+	//		sb.append(System.getProperty("line.separator"));
 			sb.append("<td>" + tmp.threadName + "</td>");
-			sb.append(System.getProperty("line.separator"));
+	//		sb.append(System.getProperty("line.separator"));
 			sb.append("<td>" + tmp.threadStatus.toString() + "</td>");
-			sb.append(System.getProperty("line.separator"));
+	//		sb.append(System.getProperty("line.separator"));
 			sb.append("<td>" + tmp.id + " " + tmp.reqUrl + "</td>");
-			sb.append(System.getProperty("line.separator"));
+	//		sb.append(System.getProperty("line.separator"));
 			sb.append("</tr>");
-			sb.append(System.getProperty("line.separator"));
+	//		sb.append(System.getProperty("line.separator"));
 		}	
 		sb.append("</table>");
 		return sb.toString();
@@ -375,8 +487,7 @@ public class WorkerServlet extends ApplicationServlet{
 	
 	private void sendHeartBeatSignal() {
 		StringBuilder sb = new StringBuilder();
-    	sb.append("&status=" + getThreadStatus());
-	
+		sb.append("?port=" + this.port);
     	String params = sb.toString();
     	httpClient.init();
 		httpClient.setMethod("GET");
@@ -385,7 +496,7 @@ public class WorkerServlet extends ApplicationServlet{
 		httpClient.setRequestHeaders("Content-Length", "10");
 //		httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
 //		httpClient.setURL("http://" + masterIP + ":" + String.valueOf(masterPort)+ "/master/workerstatus" + params);
-		httpClient.setURL(masterURL + "servlet/crawler/master/status" + params);
+		httpClient.setURL(masterURL + "/servlet/crawler/master/workerHB" + params);
 		httpClient.connect();
 	}
 	class HeartBeatSignal extends TimerTask {

@@ -23,7 +23,7 @@ public class ContentDA {
 		ContentDA.primaryIndex = primaryIndex;
 	}
 
-	public static void init(Environment env)  {
+	public static long init(Environment env)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");
 		File file = new File(dir, DBWrapper.envDirectory);
@@ -43,6 +43,7 @@ public class ContentDA {
 		
 		DatabaseShutdownHook dbShutdownHook = new DatabaseShutdownHook(env, store);
 		Runtime.getRuntime().addShutdownHook(dbShutdownHook);
+		return primaryIndex.count();
 	}
 		
 	public static void putEntry(Content content) {

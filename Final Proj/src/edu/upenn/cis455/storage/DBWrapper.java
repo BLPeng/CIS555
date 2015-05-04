@@ -29,9 +29,9 @@ public class DBWrapper {
 		envConfig.setTransactional(true);
 		Environment env = new Environment(file, envConfig);
 		myEnv = env;
-		URLQueueDA.init(env);
 		RobotInfoDA.init(env);
-		ContentDA.init(env);
+		long id = ContentDA.init(env);
+		URLQueueDA.init(env, id);
 		ChannelDA.init(env);
 		UserDA.init(env);
 		URLVisitedDA.init(env);
@@ -50,7 +50,6 @@ public class DBWrapper {
 		URLRelationDA.close();
 		if (DBWrapper.myEnv != null) {
 			DBWrapper.myEnv.close();
-			DBWrapper.myEnv = null;
 		}	
 	}
 	
