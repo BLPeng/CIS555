@@ -45,6 +45,7 @@ public class WorkerStatus {
 		this.status = status;
 		this.lastUpdated = new Date();
 	}
+	
 	public String toString() {
 		return "IP/Port: " + this.ip + ":" + this.port +
 				" status: " + this.status ;

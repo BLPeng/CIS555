@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.tidy.Tidy;
 
+import edu.upenn.cis455.crawler.info.MyUtils;
 import edu.upenn.cis455.crawler.info.RobotsTxtInfo;
 import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
@@ -338,7 +340,16 @@ public class CrawlerWorker extends Thread{
     	URLRelationDA.putEntry(new URLRelation(baseURI, urls1));
     	for (String url : urls) {
     		if (URLVisitedDA.containsEntry(url) == false) {
-    			URLQueueDA.pushURL(url);
+    			try {
+					String hash = MyUtils.sha1(url);
+//					int index = MyUtils.getWorkerIndex(hash, workerSize);
+					URLQueueDA.pushURL(url);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+				//	e.printStackTrace();
+					URLQueueDA.pushURL(url);
+				} 
+	//						
 //			pendingURLs.put(url);
     		}
     	}

@@ -8,6 +8,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -31,8 +32,10 @@ import edu.upenn.cis455.storage.URLRelationDA;
 
 
 public class CrawlerServlet extends ApplicationServlet{
-	private HashMap<String, WorkerStatus> workersStatus;
+	private Hashtable<String, WorkerStatus> workersStatus;
+	private Hashtable<String, WorkerStatus> workersStatus1;
 	private HTTPClient httpClient;
+	private final long Longest_Interval = 1000 * 1000; // 30 sec
 	private String masterIP;
 	private int masterPort;
 	private int port = 80;
@@ -45,8 +48,8 @@ public class CrawlerServlet extends ApplicationServlet{
 	  public void init() throws ServletException {
 	    super.init();
 	    crawlerPool = new CrawlerWorkerPool();
-	    
-	    workersStatus = new HashMap<>();
+	    workersStatus1 = new Hashtable<>();
+	    workersStatus = new Hashtable<>();
 	    try {
 	    	port = Integer.valueOf(getInitParameter("port"));
 	    } catch (Exception e) {
@@ -72,7 +75,6 @@ public class CrawlerServlet extends ApplicationServlet{
 			handleCrawlerConfig(request, response);
 		}
 	}
-
 
 	private void stopAllWorkers(HttpServletRequest request,
 			HttpServletResponse response) {
@@ -117,14 +119,19 @@ public class CrawlerServlet extends ApplicationServlet{
 				printThreadStatus(writer, getBanner(request));	
 			} else if ("/master/status".equals(pathInfo)) {
 				getWorkersStatus(writer);
+			} else if ("/master/updateWorkerLists".equals(pathInfo)) {
+				updateWorkerLists(writer);
 			} else if ("/master/workerHB".equals(pathInfo)){
 				updateWorkersStatus(request);
+				updateWorkerLists(writer);
 			} else if ("/master/stop".equals(pathInfo)) {
 				stopAllWorkers(request, response);
 			} else if ("/worker/masterURL".equals(pathInfo)){
 				printMasterURLSubmit(writer, "submit master url address");
 			} else if ("/worker/urlFeed".equals(pathInfo)){
 				getUrlFeed(request);
+			} else if ("/worker/updateWorkerLists".equals(pathInfo)) {
+				updateWorkerLists1(request);
 			} else if ("/worker/new".equals(pathInfo)){
 				printLoginPage(writer, getBanner(request), null);
 				try {
@@ -193,6 +200,52 @@ public class CrawlerServlet extends ApplicationServlet{
 		}
 	}
 	
+	
+	private void updateWorkerLists1(HttpServletRequest request) {
+		String numWorkers = request.getParameter("numWorkers");
+    	int numOfWorkers;
+    	try {
+    		numOfWorkers = Integer.parseInt(numWorkers);
+    	} catch (Exception e) {
+    		numOfWorkers = 0;
+    	}
+    	int cnt = 1;
+    	for (int i = 0; i < numOfWorkers; i++) {
+    		String tmp = "worker";
+    		String key = request.getParameter(tmp + cnt);
+    		String[] params = key.split(":");
+    		try {
+    			int port = Integer.valueOf(params[1]);
+    			workersStatus1.put(key, new WorkerStatus(params[0], port, ""));
+    		} catch (Exception e) {
+    			continue;
+    		}
+    		cnt++;
+    	} 
+	}
+	
+	private void updateWorkerLists(PrintWriter writer) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("?numWorkers=" + workersStatus.size());
+		int count = 1;
+		for (String addr : workersStatus.keySet()) {
+			sb.append("&worker" + count + "=" + addr);
+			count++;
+		}
+		String params = sb.toString();
+		List<String> addrs = new ArrayList<String>(workersStatus.keySet());
+		for (String url : addrs) {
+			httpClient.init();
+			httpClient.setMethod("GET");
+			httpClient.setSendContent("");
+			httpClient.setRequestHeaders("Content-Type", "text/html");
+			httpClient.setRequestHeaders("Content-Length", "10");
+//			httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+//			httpClient.setURL("http://" + masterIP + ":" + String.valueOf(masterPort)+ "/master/workerstatus" + params);
+			httpClient.setURL("http://" + url + "/servlet/crawler/worker/updateWorkerLists" + params);
+			httpClient.connect();
+		}
+	}
 	
 	private void getUrlFeed(HttpServletRequest request) {
 		String url = request.getParameter("URL");
@@ -277,8 +330,14 @@ public class CrawlerServlet extends ApplicationServlet{
     	ip = request.getRemoteAddr();
     	key = ip + ":" + port;
     	WorkerStatus workerStatus = new WorkerStatus(ip, port, status);
+    	Hashtable<String, WorkerStatus> newWorkersStatus = new Hashtable<>();
     	workersStatus.put(key, workerStatus);
-		
+		for (String tmp : workersStatus.keySet()) {
+			if (workersStatus.get(tmp).getLastUpdated().getTime() + Longest_Interval > System.currentTimeMillis()) {
+				newWorkersStatus.put(tmp, workersStatus.get(tmp));
+			}
+		}
+		workersStatus = newWorkersStatus;
 	}
 	
 	private void handleCrawlerConfig(HttpServletRequest request, HttpServletResponse response) {
