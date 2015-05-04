@@ -1,12 +1,16 @@
 package edu.upenn.cis455.crawler;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,11 +26,14 @@ import javax.net.ssl.HttpsURLConnection;
 
 import edu.upenn.cis455.crawler.info.URLInfo;
 
+
 public class HTTPClient {
 	private String content;
 	private String url;
 	private String method;
 	private String resCode;
+	private String sendContent;
+	
 	private final String USER_AGENT = "cis455crawler";
 	private Map<String, List<String>> headers;
 	private Map<String, List<String>> reqHeaders;
@@ -39,6 +46,7 @@ public class HTTPClient {
 	
 	public void init() {
 		content = null;
+		sendContent = null;
 		url = null;
 		method = "GET";
 		reqHeaders = new HashMap<String, List<String>>();
@@ -53,17 +61,15 @@ public class HTTPClient {
 		reqHeaders.put("User-Agent", tmp);
 	}
 	
-	public void fetchContent() {
+	public void connect() {
 		if (type == 0) {
-			getHttpContent(); 
-		} else if (type == 1){
-			getHttpsContent();
+			httpConnect(); 
 		} else {
-			return;
+			httpsConnect();
 		}
 	}
 	
-	public void getHttpsContent() {
+	public void httpsConnect() {
 		URL myURL;
 		try {
 			myURL = new URL(url);
@@ -71,14 +77,24 @@ public class HTTPClient {
 			if (connection == null) {
 				return;
 			}
-			connection.setInstanceFollowRedirects(false);
-			connection.setRequestMethod(method);
+//			connection.setDoInput(true);
+//			connection.setDoOutput(true);
+//			connection.setInstanceFollowRedirects(false);
+			connection.setRequestMethod(method);			
 			connection.setConnectTimeout(10000);
 			for (String header : reqHeaders.keySet()) {
 	        	for (String value : reqHeaders.get(header)) {
 	        		connection.setRequestProperty(header, value);
 	        	}
-	        }
+	        }		
+			if ("POST".equals(method)) {
+				DataOutputStream postOut=new DataOutputStream(connection.getOutputStream());
+				if (this.sendContent != null)
+					postOut.writeBytes(this.sendContent);
+				postOut.flush();
+				postOut.close();
+			}
+
 			resCode = String.valueOf(connection.getResponseCode());
 			headers = connection.getHeaderFields();
 			try {
@@ -99,14 +115,14 @@ public class HTTPClient {
 			//	   e.printStackTrace();
 				   return;
 				}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 		//	e.printStackTrace();
 			return;
 		}
 	}
 	
-	public void getHttpContent() {
+	public void httpConnect() {
 		StringBuilder sb = new StringBuilder();
 		boolean isXML = false;
 		try {
@@ -114,7 +130,24 @@ public class HTTPClient {
 			URLInfo myURL = new URLInfo(url);
 			Socket socket = new Socket(myURL.getHostName(), myURL.getPortNo());
 			socket.setSoTimeout(10000);
-			OutputStream theOutput = socket.getOutputStream();
+			BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+			String data = URLEncoder.encode("key1", "UTF-8") + "=" + URLEncoder.encode("value1", "UTF-8");
+//			OutputStream theOutput = socket.getOutputStream();
+			String req = method + " " + url + " HTTP/1.0\r\n";
+			wr.write(req);
+//			wr.write("Content-Length: " + this.sendContent.length() + "\r\n");
+//		    wr.write("Content-Type: application/x-www-form-urlencoded\r\n");
+		    for (String header : reqHeaders.keySet()) {
+	        	for (String value : reqHeaders.get(header)) {
+	        		wr.write(header + ": " + value + "\r\n");
+	        	}
+	        }
+		    wr.write("\r\n");
+		    
+		    wr.write(this.sendContent);
+		    wr.flush();
+
+	/*		
 	        PrintWriter out = new PrintWriter(theOutput, false);
 	        String req = method + " " + url + " HTTP/1.0\r\n";
 	        out.print(req); 
@@ -125,8 +158,10 @@ public class HTTPClient {
 	        	}
 	        }
 //	        out.print("Accept: application/xml, text/html, text/html, application/rss+xml\r\n");
-			out.print("\r\n"); 
+			out.print("\r\n");
+			out.print(this.sendContent); 
 			out.flush(); 
+	*/		
 			BufferedReader in = new BufferedReader(
 			      new InputStreamReader(socket.getInputStream()));
 			String line;
@@ -147,7 +182,8 @@ public class HTTPClient {
 					sb.append(System.lineSeparator());
 				}
 			}
-			socket.close();
+			wr.close();
+		    in.close();
 		}catch(Exception e) {
 			return;
 		}
@@ -203,6 +239,17 @@ public class HTTPClient {
 
 	public String getContent() {
 		return this.content;
+	}
+	
+	public void setURL(String host, String port) {
+		if (host == null || host.length() == 0) {
+			return;
+		}
+		if (port == null || port.length() == 0) {
+			return;
+		}
+		this.url = "Http://" + host.trim() + ":" + port.trim();
+		this.type = 0;
 	}
 	
 	public void setURL(String url) {
@@ -268,5 +315,13 @@ public class HTTPClient {
 				new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return dateFormat.format(date);
+	}
+
+	public String getSendContent() {
+		return sendContent;
+	}
+
+	public void setSendContent(String sendContent) {
+		this.sendContent = sendContent;
 	}
 }

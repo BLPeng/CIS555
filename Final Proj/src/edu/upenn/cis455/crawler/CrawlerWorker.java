@@ -254,7 +254,7 @@ public class CrawlerWorker extends Thread{
 		httpClient.init();
 		httpClient.setURL(url);
 		httpClient.setMethod("GET");
-		httpClient.fetchContent();
+		httpClient.connect();
 		if ( httpClient.getResCode() == null || httpClient.getResCode().startsWith("4") || httpClient.getResCode().startsWith("5")) {
 			return;
 		}
@@ -367,7 +367,7 @@ public class CrawlerWorker extends Thread{
 			String date = HTTPClient.dateToString(robotInfo.getDate());
 			httpClient.setRequestHeaders("If-Modified-Since", date);			
 		} 
-		httpClient.fetchContent();
+		httpClient.connect();
 		if ("304".equals(httpClient.getResCode())) {
 			robotTxtInfo = parseRobotsContent(robotInfo.getRobotInfo());
 		} else {
@@ -450,11 +450,11 @@ public class CrawlerWorker extends Thread{
 			String date = HTTPClient.dateToString(content.getLastAccessedAt());
 			httpClient.setRequestHeaders("If-Modified-Since", date);
 		}
-		httpClient.fetchContent();
+		httpClient.connect();
 	    if ("304".equals(httpClient.getResCode())) {
 			ifDownloaded = true;
 			return false;
-		} else if (httpClient.getResCode() != null && (httpClient.getResCode().startsWith("4")
+		} else if (httpClient.getResCode() == null || (httpClient.getResCode().startsWith("4")
 				|| httpClient.getResCode().startsWith("5"))) {
 			return false;
 		}

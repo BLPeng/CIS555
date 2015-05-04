@@ -41,7 +41,7 @@
    </servlet>
    <servlet>
      <servlet-name>crawler</servlet-name>
-     <servlet-class>edu.upenn.cis455.servlet.CrawlerServlet</servlet-class> 
+     <servlet-class>edu.upenn.cis455.servlet.WorkerServlet</servlet-class> 
    </servlet>
    
    <servlet-mapping>
