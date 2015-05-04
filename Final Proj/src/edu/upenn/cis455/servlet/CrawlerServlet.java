@@ -45,6 +45,7 @@ public class CrawlerServlet extends ApplicationServlet{
 	  public void init() throws ServletException {
 	    super.init();
 	    crawlerPool = new CrawlerWorkerPool();
+	    
 	    workersStatus = new HashMap<>();
 	    try {
 	    	port = Integer.valueOf(getInitParameter("port"));
@@ -52,6 +53,8 @@ public class CrawlerServlet extends ApplicationServlet{
 	    	port = 80;
 	    }
 	    defaultDir = System.getProperty("user.dir") + "/database/" + port;
+	    crawlerPool.setDir(defaultDir);
+	    DBWrapper.setupDirectory(crawlerPool.getDir());
 	    httpClient = new HTTPClient();
 //	    ServletContext context = getServletContext();
 //	    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
@@ -71,6 +74,30 @@ public class CrawlerServlet extends ApplicationServlet{
 	}
 
 
+	private void stopAllWorkers(HttpServletRequest request,
+			HttpServletResponse response) {
+		PrintWriter writer;
+		try {
+			writer = response.getWriter();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		List<String> addrs = new ArrayList<String>(workersStatus.keySet());
+		for (String addr : addrs) {
+			httpClient.init();
+			httpClient.setMethod("GET");
+			httpClient.setSendContent("");
+			httpClient.setRequestHeaders("Content-Type", "text/html");
+			httpClient.setRequestHeaders("Content-Length", "10");
+//			httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+//			httpClient.setURL("http://" + masterIP + ":" + String.valueOf(masterPort)+ "/master/workerstatus" + params);
+			httpClient.setURL("http://" + addr + "/servlet/crawler/worker/stop");
+			httpClient.connect();
+		}
+		
+	}
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) {
 		response.setContentType("text/html");
@@ -92,10 +119,12 @@ public class CrawlerServlet extends ApplicationServlet{
 				getWorkersStatus(writer);
 			} else if ("/master/workerHB".equals(pathInfo)){
 				updateWorkersStatus(request);
+			} else if ("/master/stop".equals(pathInfo)) {
+				stopAllWorkers(request, response);
 			} else if ("/worker/masterURL".equals(pathInfo)){
 				printMasterURLSubmit(writer, "submit master url address");
 			} else if ("/worker/urlFeed".equals(pathInfo)){
-				
+				getUrlFeed(request);
 			} else if ("/worker/new".equals(pathInfo)){
 				printLoginPage(writer, getBanner(request), null);
 				try {
@@ -165,6 +194,20 @@ public class CrawlerServlet extends ApplicationServlet{
 	}
 	
 	
+	private void getUrlFeed(HttpServletRequest request) {
+		String url = request.getParameter("URL");
+		if (url == null) {
+			return;
+		}
+		try {
+			url = URLDecoder.decode(url, "UTF-8");
+			URLQueueDA.pushURL(url);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			return;
+		}
+	}
+	
 	private void startAllWorkers(HttpServletRequest request,
 			HttpServletResponse response) {
 		String seeds = request.getParameter("seeds");
@@ -206,6 +249,17 @@ public class CrawlerServlet extends ApplicationServlet{
 			httpClient.setURL("http://" + addr + "/servlet/crawler/worker/urlFeed" + params);
 			httpClient.connect();
 			i++;
+		}
+		for (String addr : addrs) {
+			httpClient.init();
+			httpClient.setMethod("GET");
+			httpClient.setSendContent("");
+			httpClient.setRequestHeaders("Content-Type", "text/html");
+			httpClient.setRequestHeaders("Content-Length", "10");
+//			httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+//			httpClient.setURL("http://" + masterIP + ":" + String.valueOf(masterPort)+ "/master/workerstatus" + params);
+			httpClient.setURL("http://" + addr + "/servlet/crawler/worker/start");
+			httpClient.connect();
 		}
 	}
 	
@@ -399,7 +453,8 @@ public class CrawlerServlet extends ApplicationServlet{
 			return;
 		}
 		for (String key : workersStatus.keySet()) {
-			writer.println("<h4>" + key + "</h4>");
+			String url = "<a href=\"Http://" + key+"/servlet/crawler/worker/status\">" + key + "</a>";
+			writer.println("<h4>" + url + "</h4>");
 			writer.println("<h5>" + workersStatus.get(key).getStatus() + "</h5>");
 		}
 		  // generate the form for submitting jobs
@@ -408,7 +463,8 @@ public class CrawlerServlet extends ApplicationServlet{
 		writer.println("Seeds: <input type=\"text\" name=\"seeds\" size=\"100\"/><br/>");
 		writer.println("<input type=\"submit\" value=\"Submit\" />");
 		writer.println("</form>");
-	    
+		writer.println("<a href=\"stop\">");
+		writer.println("<button>Stop</button></a>");
 		writer.println("</body>");
         writer.println("</html>");
 	}
