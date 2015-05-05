@@ -81,7 +81,7 @@ public class HTTPClient {
 //			connection.setDoOutput(true);
 //			connection.setInstanceFollowRedirects(false);
 			connection.setRequestMethod(method);			
-			connection.setConnectTimeout(10000);
+			connection.setConnectTimeout(5000);
 			for (String header : reqHeaders.keySet()) {
 	        	for (String value : reqHeaders.get(header)) {
 	        		connection.setRequestProperty(header, value);
@@ -115,6 +115,7 @@ public class HTTPClient {
 			//	   e.printStackTrace();
 				   return;
 				}
+			connection.disconnect();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 		//	e.printStackTrace();
@@ -125,11 +126,12 @@ public class HTTPClient {
 	public void httpConnect() {
 		StringBuilder sb = new StringBuilder();
 		boolean isXML = false;
+		Socket socket;
 		try {
 			// http client
 			URLInfo myURL = new URLInfo(url);
-			Socket socket = new Socket(myURL.getHostName(), myURL.getPortNo());
-			socket.setSoTimeout(10000);
+			socket = new Socket(myURL.getHostName(), myURL.getPortNo());
+			socket.setSoTimeout(5000);
 			BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
 			String data = URLEncoder.encode("key1", "UTF-8") + "=" + URLEncoder.encode("value1", "UTF-8");
 //			OutputStream theOutput = socket.getOutputStream();
@@ -184,9 +186,10 @@ public class HTTPClient {
 			}
 			wr.close();
 		    in.close();
+		    socket.close();
 		}catch(Exception e) {
 			return;
-		}
+		} 
 		content = sb.toString();
 	}
 	

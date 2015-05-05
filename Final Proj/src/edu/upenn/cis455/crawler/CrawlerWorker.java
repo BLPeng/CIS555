@@ -3,8 +3,9 @@ package edu.upenn.cis455.crawler;
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.security.NoSuchAlgorithmException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.w3c.tidy.Tidy;
 
 import edu.upenn.cis455.crawler.info.MyUtils;
 import edu.upenn.cis455.crawler.info.RobotsTxtInfo;
+import edu.upenn.cis455.crawler.info.WorkerStatus;
 import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
 import edu.upenn.cis455.storage.Content;
@@ -341,9 +343,44 @@ public class CrawlerWorker extends Thread{
     	for (String url : urls) {
     		if (URLVisitedDA.containsEntry(url) == false) {
     			try {
-					String hash = MyUtils.sha1(url);
-//					int index = MyUtils.getWorkerIndex(hash, workerSize);
-					URLQueueDA.pushURL(url);
+    				URI uri = new URI(url);
+    			    String domain = uri.getHost();
+    			    String key = domain.startsWith("www.") ? domain.substring(4) : domain;
+					String hash = MyUtils.sha1(key);
+					List<String> workers = crawlerWorkerPool.getWorkers();
+					int index = MyUtils.getWorkerIndex(hash, workers.size());
+					if (index >= 0 && index < workers.size()) {
+						String[] params = workers.get(index).split(":");
+						String IP = workers.get(index);
+						int port = 80;
+						try {
+							port = Integer.valueOf(params[1]);
+							if (port == crawlerWorkerPool.getPort()) {
+								URLQueueDA.pushURL(url);
+							} else {
+								try {
+									
+									String param = "?URL="+URLEncoder.encode(url, "UTF-8");
+									httpClient.init();
+									httpClient.setMethod("GET");
+									httpClient.setSendContent("");
+									httpClient.setRequestHeaders("Content-Type", "text/html");
+									httpClient.setRequestHeaders("Content-Length", "10");
+//									httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
+//									httpClient.setURL("http://" + masterIP + ":" + String.valueOf(masterPort)+ "/master/workerstatus" + params);
+									httpClient.setURL("http://" + IP + "/servlet/crawler/worker/urlFeed" + param);
+									httpClient.connect();
+								} catch (UnsupportedEncodingException e) {
+									continue;
+								}
+								
+							}
+						} catch (Exception e) {
+							continue;
+						}
+							
+					}
+					
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 				//	e.printStackTrace();

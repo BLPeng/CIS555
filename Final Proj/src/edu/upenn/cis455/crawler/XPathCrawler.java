@@ -47,7 +47,7 @@ public class XPathCrawler {
 			}
 		}
 		DBWrapper.setupDirectory(dir);
-		CrawlerWorkerPool crawlerPool = new CrawlerWorkerPool();
+		CrawlerWorkerPool crawlerPool = new CrawlerWorkerPool(null);
 		URLQueueDA.clear();
 		URLCrawleredDA.clear();
 		crawlerPool.setUrl(url);

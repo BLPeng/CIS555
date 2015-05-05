@@ -27,7 +27,7 @@ public class CrawlerWorkerTest extends TestCase{
 	@BeforeClass
 	public void setUp() {
 		DBWrapper.setupDirectory("testDatabase");
-		pool = new CrawlerWorkerPool();
+		pool = new CrawlerWorkerPool(null);
 		pendingURLs = new ArrayBlockingQueue<String>(100);
 	}
 	@Test

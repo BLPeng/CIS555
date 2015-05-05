@@ -49,9 +49,7 @@ public class URLQueueDA {
 //			System.out.println("size" + primaryIndex.count());
 			primaryIndex.put(new URLQ(urlID, url));
 //			System.out.println("size" + primaryIndex.count());
-			if (primaryIndex.count() == 1) {
-				
-			}
+
 			lock.notifyAll();
 		}	
 	}

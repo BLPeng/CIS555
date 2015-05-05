@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import edu.upenn.cis455.crawler.info.WorkerInfos;
 import edu.upenn.cis455.storage.DBWrapper;
 import edu.upenn.cis455.storage.URLQ;
 import edu.upenn.cis455.storage.URLQueueDA;
@@ -17,8 +18,9 @@ import edu.upenn.cis455.storage.URLVisitedDA;
 
 
 public class CrawlerWorkerPool {
-	private int threadPoolSize = 8;	//for multi-processor /core, increase this number
+	private int threadPoolSize = 5;	//for multi-processor /core, increase this number
 	private int queueSize = 409600;
+	private WorkerInfos workerInfo;
 	private CrawlerWorker[] pools;
 	private String dir;
 	private String url;
@@ -31,9 +33,18 @@ public class CrawlerWorkerPool {
 	private BlockingQueue<String> pendingURLs = new ArrayBlockingQueue<String>(queueSize);
 //	private Hashtable<String, Long> lastCrawled = new Hashtable<String, Long>();
 	
-	public CrawlerWorkerPool() { 		
+	public CrawlerWorkerPool(WorkerInfos workerInfo) { 		
+		this.workerInfo = workerInfo;
 		pools = new CrawlerWorker[threadPoolSize];
 		init();
+	}
+	
+	public  List<String> getWorkers() {
+		return new ArrayList<String>(workerInfo.workersStatus1.keySet());
+	}
+	
+	public int getPort() {
+		return workerInfo.port;
 	}
 	
 	public void init() {
@@ -140,13 +151,13 @@ public class CrawlerWorkerPool {
         		if (this.workingThread > 0) {
         			lock.wait();
         		} else {
-        			shutdown();
+        		//	shutdown();
         			return;
         		}
         		
         	}
         	if (this.workingThread == 0 && URLQueueDA.size() == 0) {
-        		shutdown();
+   //     		shutdown();
         	}
 /*        	if (this.workingThread == 0 && this.pendingURLs.size() == 0) {
         		shutdown();

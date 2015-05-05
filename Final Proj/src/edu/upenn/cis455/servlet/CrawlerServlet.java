@@ -7,7 +7,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Timer;
@@ -20,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import edu.upenn.cis455.crawler.CrawlerWorkerPool;
 import edu.upenn.cis455.crawler.CrawlerWorkerPool.ThreadStats;
 import edu.upenn.cis455.crawler.HTTPClient;
+import edu.upenn.cis455.crawler.info.WorkerInfos;
 import edu.upenn.cis455.crawler.info.WorkerStatus;
 import edu.upenn.cis455.storage.DBWrapper;
 import edu.upenn.cis455.storage.URLCrawleredDA;
@@ -32,13 +32,10 @@ import edu.upenn.cis455.storage.URLRelationDA;
 
 
 public class CrawlerServlet extends ApplicationServlet{
-	private Hashtable<String, WorkerStatus> workersStatus;
-	private Hashtable<String, WorkerStatus> workersStatus1;
+	
 	private HTTPClient httpClient;
 	private final long Longest_Interval = 10 * 1000; // 30 sec
-	private String masterIP;
-	private int masterPort;
-	private int port = 80;
+	private WorkerInfos workerInfos;
 	private Timer heartBeatTimer;
 	private static final int DURATION = 10 * 1000;
 	private String masterURL;
@@ -47,16 +44,12 @@ public class CrawlerServlet extends ApplicationServlet{
 	@Override
 	  public void init() throws ServletException {
 	    super.init();
-	    crawlerPool = new CrawlerWorkerPool();
-	    workersStatus1 = new Hashtable<>();
-	    workersStatus = new Hashtable<>();
-	    try {
-	    	port = Integer.valueOf(getInitParameter("port"));
-	    } catch (Exception e) {
-	    	port = 80;
-	    }
-	    defaultDir = System.getProperty("user.dir") + "/database/" + port;
+	    workerInfos = new WorkerInfos();
+	    workerInfos.setPort(getInitParameter("port"));
+	    defaultDir = System.getProperty("user.dir") + "/database/" + workerInfos.getPort();
+	    crawlerPool = new CrawlerWorkerPool(workerInfos);
 	    crawlerPool.setDir(defaultDir);
+	    
 	    DBWrapper.setupDirectory(crawlerPool.getDir());
 	    httpClient = new HTTPClient();
 //	    ServletContext context = getServletContext();
@@ -86,7 +79,7 @@ public class CrawlerServlet extends ApplicationServlet{
 			e.printStackTrace();
 			return;
 		}
-		List<String> addrs = new ArrayList<String>(workersStatus.keySet());
+		List<String> addrs = new ArrayList<String>(workerInfos.workersStatus.keySet());
 		for (String addr : addrs) {
 			httpClient.init();
 			httpClient.setMethod("GET");
@@ -223,19 +216,19 @@ public class CrawlerServlet extends ApplicationServlet{
     		}
     		cnt++;
     	} 
-    	workersStatus1 = newWorkersStatus1;
+    	workerInfos.workersStatus1 = newWorkersStatus1;
 	}
 	
 	private void updateWorkerLists(PrintWriter writer) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("?numWorkers=" + workersStatus.size());
+		sb.append("?numWorkers=" + workerInfos.workersStatus.size());
 		int count = 1;
-		for (String addr : workersStatus.keySet()) {
+		for (String addr : workerInfos.workersStatus.keySet()) {
 			sb.append("&worker" + count + "=" + addr);
 			count++;
 		}
 		String params = sb.toString();
-		List<String> addrs = new ArrayList<String>(workersStatus.keySet());
+		List<String> addrs = new ArrayList<String>(workerInfos.workersStatus.keySet());
 		for (String url : addrs) {
 			httpClient.init();
 			httpClient.setMethod("GET");
@@ -280,11 +273,11 @@ public class CrawlerServlet extends ApplicationServlet{
 			printErrorPage(writer, getBanner(request), "empty seed url");
 		}
 		int i = 0;
-		int size = workersStatus.size();
+		int size = workerInfos.workersStatus.size();
 		if (size == 0) {
 			return;
 		}
-		List<String> addrs = new ArrayList<String>(workersStatus.keySet());
+		List<String> addrs = new ArrayList<String>(workerInfos.workersStatus.keySet());
 		for (String url : urls) {
 			String addr = addrs.get(i % size);
 			String params = null;
@@ -333,13 +326,13 @@ public class CrawlerServlet extends ApplicationServlet{
     	key = ip + ":" + port;
     	WorkerStatus workerStatus = new WorkerStatus(ip, port, status);
     	Hashtable<String, WorkerStatus> newWorkersStatus = new Hashtable<>();
-    	workersStatus.put(key, workerStatus);
-		for (String tmp : workersStatus.keySet()) {
-			if (workersStatus.get(tmp).getLastUpdated().getTime() + Longest_Interval > System.currentTimeMillis()) {
-				newWorkersStatus.put(tmp, workersStatus.get(tmp));
+    	workerInfos.workersStatus.put(key, workerStatus);
+		for (String tmp : workerInfos.workersStatus.keySet()) {
+			if (workerInfos.workersStatus.get(tmp).getLastUpdated().getTime() + Longest_Interval > System.currentTimeMillis()) {
+				newWorkersStatus.put(tmp, workerInfos.workersStatus.get(tmp));
 			}
 		}
-		workersStatus = newWorkersStatus;
+		workerInfos.workersStatus = newWorkersStatus;
 	}
 	
 	private void handleCrawlerConfig(HttpServletRequest request, HttpServletResponse response) {
@@ -347,7 +340,7 @@ public class CrawlerServlet extends ApplicationServlet{
 		String dirTmp = request.getParameter("dir");
 		String maxSizeS = request.getParameter("maxSize");
 		String numOfFilesS = request.getParameter("numOfFiles");
-		String dir = System.getProperty("user.dir") + "/database";
+		String dir = defaultDir;
 		int maxSize = 1;
 		int numOfFiles = -1;
 		response.setContentType("text/html");
@@ -399,7 +392,7 @@ public class CrawlerServlet extends ApplicationServlet{
 			DBWrapper.setupDirectory(dir);
 //			URLQueueDA.clear();
 //			URLCrawleredDA.clear();
-			crawlerPool = new CrawlerWorkerPool();
+			crawlerPool = new CrawlerWorkerPool(workerInfos);
 			crawlerPool.init();
 			crawlerPool.setUrl(url);
 			crawlerPool.setDir(dir);
@@ -473,13 +466,13 @@ public class CrawlerServlet extends ApplicationServlet{
         writer.println(msg+"<br/>");
         writer.println("Master Page!<br/>");
 		writer.println("<h2>Workers status</h2>");
-		if (workersStatus1 == null) {
+		if (workerInfos.workersStatus1 == null) {
 			return;
 		}
-		for (String key : workersStatus1.keySet()) {
+		for (String key : workerInfos.workersStatus1.keySet()) {
 			String url = "<a href=\"Http://" + key+"/servlet/crawler/worker/status\">" + key + "</a>";
 			writer.println("<h4>" + url + "</h4>");
-			writer.println("<h5>" + workersStatus1.get(key).getStatus() + "</h5>");
+			writer.println("<h5>" + workerInfos.workersStatus1.get(key).getStatus() + "</h5>");
 		}
         writer.println("<form method=\"post\">");
         writer.println("MasterURL: <input type=\"text\" name=\"url\"><br>");
@@ -519,13 +512,13 @@ public class CrawlerServlet extends ApplicationServlet{
 		writer.println("</head>");
 		writer.println("<body>");
 		writer.println("<h2>Workers status</h2>");
-		if (workersStatus == null) {
+		if (workerInfos.workersStatus == null) {
 			return;
 		}
-		for (String key : workersStatus.keySet()) {
+		for (String key : workerInfos.workersStatus.keySet()) {
 			String url = "<a href=\"Http://" + key+"/servlet/crawler/worker/status\">" + key + "</a>";
 			writer.println("<h4>" + url + "</h4>");
-			writer.println("<h5>" + workersStatus.get(key).getStatus() + "</h5>");
+			writer.println("<h5>" + workerInfos.workersStatus.get(key).getStatus() + "</h5>");
 		}
 		  // generate the form for submitting jobs
 		writer.println("<p>Submit url seeds:</p>");
@@ -614,7 +607,7 @@ public class CrawlerServlet extends ApplicationServlet{
 	
 	private void sendHeartBeatSignal() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("?port=" + this.port);
+		sb.append("?port=" + workerInfos.port);
     	String params = sb.toString();
     	httpClient.init();
 		httpClient.setMethod("GET");
