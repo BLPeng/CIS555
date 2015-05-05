@@ -35,7 +35,7 @@ public class CrawlerServlet extends ApplicationServlet{
 	private Hashtable<String, WorkerStatus> workersStatus;
 	private Hashtable<String, WorkerStatus> workersStatus1;
 	private HTTPClient httpClient;
-	private final long Longest_Interval = 1000 * 1000; // 30 sec
+	private final long Longest_Interval = 10 * 1000; // 30 sec
 	private String masterIP;
 	private int masterPort;
 	private int port = 80;
@@ -210,18 +210,20 @@ public class CrawlerServlet extends ApplicationServlet{
     		numOfWorkers = 0;
     	}
     	int cnt = 1;
+    	Hashtable<String, WorkerStatus> newWorkersStatus1 = new Hashtable<String, WorkerStatus>();
     	for (int i = 0; i < numOfWorkers; i++) {
     		String tmp = "worker";
     		String key = request.getParameter(tmp + cnt);
     		String[] params = key.split(":");
     		try {
     			int port = Integer.valueOf(params[1]);
-    			workersStatus1.put(key, new WorkerStatus(params[0], port, ""));
+    			newWorkersStatus1.put(key, new WorkerStatus(params[0], port, ""));
     		} catch (Exception e) {
     			continue;
     		}
     		cnt++;
     	} 
+    	workersStatus1 = newWorkersStatus1;
 	}
 	
 	private void updateWorkerLists(PrintWriter writer) {
@@ -470,6 +472,15 @@ public class CrawlerServlet extends ApplicationServlet{
         writer.println("<body>");
         writer.println(msg+"<br/>");
         writer.println("Master Page!<br/>");
+		writer.println("<h2>Workers status</h2>");
+		if (workersStatus1 == null) {
+			return;
+		}
+		for (String key : workersStatus1.keySet()) {
+			String url = "<a href=\"Http://" + key+"/servlet/crawler/worker/status\">" + key + "</a>";
+			writer.println("<h4>" + url + "</h4>");
+			writer.println("<h5>" + workersStatus1.get(key).getStatus() + "</h5>");
+		}
         writer.println("<form method=\"post\">");
         writer.println("MasterURL: <input type=\"text\" name=\"url\"><br>");
         writer.println("<input type=\"submit\" value=\"Submit\">");
@@ -527,6 +538,7 @@ public class CrawlerServlet extends ApplicationServlet{
 		writer.println("</body>");
         writer.println("</html>");
 	}
+	
 	
 	private String getThreadStatus() {
 		List<ThreadStats> status = crawlerPool.getThreadStatus();
