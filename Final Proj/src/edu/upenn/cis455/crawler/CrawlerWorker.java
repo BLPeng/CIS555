@@ -1,6 +1,8 @@
 package edu.upenn.cis455.crawler;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.FileReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -8,6 +10,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +59,7 @@ public class CrawlerWorker extends Thread{
 	private boolean ifDownloaded;
 	private CrawlerWorkerPool crawlerWorkerPool;
 	private XPathEngineImpl xpathEngine;
+	private HashMap<String, List<String>> outURLs;
 	
 	// crawlers share the same frontURL queue, the same fetched url set
 	public CrawlerWorker(CrawlerWorkerPool crawlerWorkerPool, BlockingQueue<String> pendingURLs, Set<String> syncSet, int label) {
@@ -72,6 +76,7 @@ public class CrawlerWorker extends Thread{
 //		mTidy.setErrout(null);     // error why???
 		this.crawlerWorkerPool = crawlerWorkerPool;
 		xpathEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine(); 
+		outURLs = new HashMap<>();
 //		mTidy.setErrout(null);
 	}
 
@@ -349,8 +354,9 @@ public class CrawlerWorker extends Thread{
 					String hash = MyUtils.sha1(key);
 					List<String> workers = crawlerWorkerPool.getWorkers();
 					int index = MyUtils.getWorkerIndex(hash, workers.size());
-					if (index >= 0 && index < workers.size()) {
-						String[] params = workers.get(index).split(":");
+					if (index >= 0 && index < workers.size()) {						
+						String addr = workers.get(index);
+						String[] params = addr.split(":");
 						String IP = workers.get(index);
 						int port = 80;
 						try {
@@ -358,20 +364,30 @@ public class CrawlerWorker extends Thread{
 							if (port == crawlerWorkerPool.getPort()) {
 								URLQueueDA.pushURL(url);
 							} else {
-								try {
-									
-									String param = "?URL="+URLEncoder.encode(url, "UTF-8");
+								List<String> outurls;
+								if (outURLs.get(addr) == null) {
+									outurls = new ArrayList<String>();
+								} else {
+									outurls = outURLs.get(addr);
+								}
+								outurls.add(url);
+								if (outurls.size() > 100) {
+									String content;
+									StringBuilder sb = new StringBuilder();
+									for (String tmp : outurls) {
+										sb.append(tmp);
+										sb.append(System.lineSeparator());
+									}
+								    content = sb.toString();
 									httpClient.init();
-									httpClient.setMethod("GET");
-									httpClient.setSendContent("");
+									httpClient.setMethod("POST");
+									httpClient.setSendContent(content);
 									httpClient.setRequestHeaders("Content-Type", "text/html");
-									httpClient.setRequestHeaders("Content-Length", "10");
-//									httpClient.setURL("http://127.0.0.1:8080/master/test");		//for test
-//									httpClient.setURL("http://" + masterIP + ":" + String.valueOf(masterPort)+ "/master/workerstatus" + params);
-									httpClient.setURL("http://" + IP + "/servlet/crawler/worker/urlFeed" + param);
+									httpClient.setRequestHeaders("Content-Length", String.valueOf(content.length()));
+									httpClient.setURL("http://" + addr + "/servlet/crawler/worker/pushdata");
 									httpClient.connect();
-								} catch (UnsupportedEncodingException e) {
-									continue;
+								} else {
+									outURLs.put(addr, outurls);
 								}
 								
 							}

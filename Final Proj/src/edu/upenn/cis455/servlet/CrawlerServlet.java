@@ -1,5 +1,9 @@
 package edu.upenn.cis455.servlet;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -64,11 +68,22 @@ public class CrawlerServlet extends ApplicationServlet{
 			createHeartBeat();
 		} else if ("/master/submitURLS".equals(pathInfo)) {
 			startAllWorkers(request, response);
+		} else if ("/worker/pushdata".equals(pathInfo)) {
+			getPushedData(request);
 		} else {
 			handleCrawlerConfig(request, response);
 		}
 	}
 
+	private void getPushedData(HttpServletRequest request) {
+		String line = null;
+		try {
+		    BufferedReader reader = request.getReader();
+		    while ((line = reader.readLine()) != null) {
+		    	URLQueueDA.pushURL(line);
+		    }	
+		} catch (Exception e) { /*report an error*/ }
+	}
 	private void stopAllWorkers(HttpServletRequest request,
 			HttpServletResponse response) {
 		PrintWriter writer;
