@@ -8,8 +8,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -63,7 +66,7 @@ public class HTTPClient {
 	
 	public void connect() {
 		if (type == 0) {
-			httpConnect(); 
+			httpConnect1(); 
 		} else {
 			httpsConnect();
 		}
@@ -123,6 +126,53 @@ public class HTTPClient {
 		}
 	}
 	
+	public void httpConnect1() {
+		URL Url;
+		boolean isXML = false;
+		try {
+			Url = new URL(url);
+			HttpURLConnection urlConnection = (HttpURLConnection) Url.openConnection();
+			urlConnection.setConnectTimeout(5000);
+			urlConnection.setRequestMethod(method);
+			for (String header : reqHeaders.keySet()) {
+	        	for (String value : reqHeaders.get(header)) {
+	        		urlConnection.setRequestProperty(header, value);
+	        	}
+	        }
+			if ("POST".equals(method)) {
+				DataOutputStream postOut=new DataOutputStream(urlConnection.getOutputStream());
+				if (this.sendContent != null)
+					postOut.writeBytes(this.sendContent);
+				postOut.flush();
+				postOut.close();
+			}
+			resCode = String.valueOf(urlConnection.getResponseCode());
+			headers = urlConnection.getHeaderFields();
+			try {
+				   StringBuilder sb = new StringBuilder();		
+				   BufferedReader br = 
+					new BufferedReader(
+						new InputStreamReader(urlConnection.getInputStream()));
+			 
+				   String input;
+			 
+				   while ((input = br.readLine()) != null){
+				      sb.append(input);
+				      sb.append(System.lineSeparator());
+				   }
+				   br.close();
+				   content = sb.toString();
+				} catch (IOException e) {
+			//	   e.printStackTrace();
+				   return;
+				}
+			urlConnection.disconnect();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+	//		e.printStackTrace();
+		}
+
+	}
 	public void httpConnect() {
 		StringBuilder sb = new StringBuilder();
 		boolean isXML = false;
@@ -135,7 +185,7 @@ public class HTTPClient {
 			BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
 			String data = URLEncoder.encode("key1", "UTF-8") + "=" + URLEncoder.encode("value1", "UTF-8");
 //			OutputStream theOutput = socket.getOutputStream();
-			String req = method + " " + url + " HTTP/1.0\r\n";
+			String req = method + " " + url + " HTTP/1.1\r\n";
 			wr.write(req);
 //			wr.write("Content-Length: " + this.sendContent.length() + "\r\n");
 //		    wr.write("Content-Type: application/x-www-form-urlencoded\r\n");
@@ -148,8 +198,8 @@ public class HTTPClient {
 		    
 		    wr.write(this.sendContent);
 		    wr.flush();
-
-	/*		
+		    wr.close();
+/*			
 	        PrintWriter out = new PrintWriter(theOutput, false);
 	        String req = method + " " + url + " HTTP/1.0\r\n";
 	        out.print(req); 
@@ -163,7 +213,7 @@ public class HTTPClient {
 			out.print("\r\n");
 			out.print(this.sendContent); 
 			out.flush(); 
-	*/		
+*/			
 			BufferedReader in = new BufferedReader(
 			      new InputStreamReader(socket.getInputStream()));
 			String line;
@@ -184,7 +234,7 @@ public class HTTPClient {
 					sb.append(System.lineSeparator());
 				}
 			}
-			wr.close();
+			
 		    in.close();
 		    socket.close();
 		}catch(Exception e) {
