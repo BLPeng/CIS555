@@ -5,6 +5,7 @@ import java.io.File;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.persist.EntityCursor;
 import com.sleepycat.persist.EntityStore;
 import com.sleepycat.persist.PrimaryIndex;
 import com.sleepycat.persist.StoreConfig;
@@ -23,6 +24,10 @@ public class ContentDA {
 		ContentDA.primaryIndex = primaryIndex;
 	}
 
+	public static EntityCursor<Content> getCursor() {
+		return primaryIndex.entities();
+	}
+	
 	public static long init(Environment env)  {
 		// absolute path from where the application was initialized.
 		String dir = System.getProperty("user.dir");

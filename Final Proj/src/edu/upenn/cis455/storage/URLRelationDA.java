@@ -54,6 +54,10 @@ public class URLRelationDA {
 		return primaryIndex.contains(url);
 	}
 	
+	public static EntityCursor<URLRelation> getCursor() {
+		return primaryIndex.entities();
+	}
+	
 	public static List<URLRelation> getEntries() {
 		EntityCursor<URLRelation> pi_cursor = primaryIndex.entities();
 		List<URLRelation> ret = new ArrayList<URLRelation>();

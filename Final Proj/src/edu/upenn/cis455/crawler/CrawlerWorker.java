@@ -21,6 +21,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.tidy.Tidy;
 
+import edu.upenn.cis455.crawler.info.HTTPClient;
 import edu.upenn.cis455.crawler.info.MyUtils;
 import edu.upenn.cis455.crawler.info.RobotsTxtInfo;
 import edu.upenn.cis455.crawler.info.WorkerStatus;
@@ -379,10 +380,11 @@ public class CrawlerWorker extends Thread{
 										sb.append(System.lineSeparator());
 									}
 								    content = sb.toString();
+								    outurls.clear();
 									httpClient.init();
 									httpClient.setMethod("POST");
 									httpClient.setSendContent(content);
-									httpClient.setRequestHeaders("Content-Type", "text/html");
+									httpClient.setRequestHeaders("Content-Type", "application/x-www-form-urlencoded");
 									httpClient.setRequestHeaders("Content-Length", String.valueOf(content.length()));
 									httpClient.setURL("http://" + addr + "/servlet/crawler/worker/pushdata");
 									httpClient.connect();

@@ -1,4 +1,4 @@
-package edu.upenn.cis455.crawler;
+package edu.upenn.cis455.crawler.info;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import javax.net.ssl.HttpsURLConnection;
-
-import edu.upenn.cis455.crawler.info.URLInfo;
 
 
 public class HTTPClient {
@@ -91,6 +89,7 @@ public class HTTPClient {
 	        	}
 	        }		
 			if ("POST".equals(method)) {
+				connection.setDoOutput(true);
 				DataOutputStream postOut=new DataOutputStream(connection.getOutputStream());
 				if (this.sendContent != null)
 					postOut.writeBytes(this.sendContent);
@@ -140,6 +139,8 @@ public class HTTPClient {
 	        	}
 	        }
 			if ("POST".equals(method)) {
+				urlConnection.setDoInput(true);
+				urlConnection.setDoOutput(true);
 				DataOutputStream postOut=new DataOutputStream(urlConnection.getOutputStream());
 				if (this.sendContent != null)
 					postOut.writeBytes(this.sendContent);
@@ -169,7 +170,7 @@ public class HTTPClient {
 			urlConnection.disconnect();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-	//		e.printStackTrace();
+			e.printStackTrace();
 		}
 
 	}

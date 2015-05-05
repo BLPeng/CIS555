@@ -22,7 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import edu.upenn.cis455.crawler.CrawlerWorkerPool;
 import edu.upenn.cis455.crawler.CrawlerWorkerPool.ThreadStats;
-import edu.upenn.cis455.crawler.HTTPClient;
+import edu.upenn.cis455.crawler.file.FileCreater;
+import edu.upenn.cis455.crawler.info.HTTPClient;
 import edu.upenn.cis455.crawler.info.WorkerInfos;
 import edu.upenn.cis455.crawler.info.WorkerStatus;
 import edu.upenn.cis455.storage.DBWrapper;
@@ -41,6 +42,7 @@ public class CrawlerServlet extends ApplicationServlet{
 	private final long Longest_Interval = 10 * 1000; // 30 sec
 	private WorkerInfos workerInfos;
 	private Timer heartBeatTimer;
+	private FileCreater fileCreater;
 	private static final int DURATION = 10 * 1000;
 	private String masterURL;
 	String defaultDir = System.getProperty("user.dir") + "/database";
@@ -53,7 +55,7 @@ public class CrawlerServlet extends ApplicationServlet{
 	    defaultDir = System.getProperty("user.dir") + "/database/" + workerInfos.getPort();
 	    crawlerPool = new CrawlerWorkerPool(workerInfos);
 	    crawlerPool.setDir(defaultDir);
-	    
+	    fileCreater = new FileCreater(crawlerPool.getDir());
 	    DBWrapper.setupDirectory(crawlerPool.getDir());
 	    httpClient = new HTTPClient();
 //	    ServletContext context = getServletContext();
@@ -411,6 +413,7 @@ public class CrawlerServlet extends ApplicationServlet{
 			crawlerPool.init();
 			crawlerPool.setUrl(url);
 			crawlerPool.setDir(dir);
+			fileCreater.setDir(crawlerPool.getDir());
 			crawlerPool.setMaxSize(maxSize);
 			crawlerPool.setMaxPage(numOfFiles);
 			crawlerPool.start();
