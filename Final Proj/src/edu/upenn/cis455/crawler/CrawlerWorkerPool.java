@@ -78,6 +78,12 @@ public class CrawlerWorkerPool {
 		return status;
 	}
 
+	public void shutdown1() {
+		for (int i = 0; i < threadPoolSize; i++){
+			pools[i].shutdown();
+		}
+	}
+	
 	public void shutdown() {
 		for (int i = 0; i < threadPoolSize; i++){
 			pools[i].shutdown();

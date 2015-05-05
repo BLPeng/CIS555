@@ -138,7 +138,15 @@ public class CrawlerServlet extends ApplicationServlet{
 				stopAllWorkers(request, response);
 			} else if ("/worker/masterURL".equals(pathInfo)){
 				printMasterURLSubmit(writer, "submit master url address");
-			} else if ("/worker/urlFeed".equals(pathInfo)){
+			} else if ("/worker/getFiles".equals(pathInfo)){
+				if (crawlerPool != null) {
+					crawlerPool.shutdown();
+				}
+				DBWrapper.setupDirectory(crawlerPool.getDir());
+				fileCreater.createURLFiles();
+				fileCreater.createPageFiles();
+				DBWrapper.closeDBs();
+			}else if ("/worker/urlFeed".equals(pathInfo)){
 				getUrlFeed(request);
 			} else if ("/worker/updateWorkerLists".equals(pathInfo)) {
 				updateWorkerLists1(request);
@@ -612,6 +620,8 @@ public class CrawlerServlet extends ApplicationServlet{
 		sb.append("<button>Start</button></a>");
 		sb.append("<a href=\"clear\">");
 		sb.append("<button>Clear Queue</button></a>");
+		sb.append("<a href=\"getFiles\">");
+		sb.append("<button>Generate Files</button></a>");
 		sb.append("</body>");
 		sb.append("</html>");
 		return sb.toString();
