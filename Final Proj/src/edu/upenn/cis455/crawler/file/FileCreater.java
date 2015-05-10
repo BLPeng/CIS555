@@ -16,18 +16,20 @@ public class FileCreater {
 	String pageDir;
 	File URLFile;
 	File PageFile;
+	final int lines = 1000;
 	public FileCreater(String dir) {
 		this.dir = dir;
-		urlDir = dir + "/url";
-		pageDir = dir + "/page";
+		urlDir = "/url";
+		pageDir = "/page";
 		URLFile = new File(urlDir);
 		PageFile = new File(pageDir);
 		initStorageDirs();
+		
 	}
 	public void setDir(String dir) {
 		this.dir = dir;
-		urlDir = dir + "/url";
-		pageDir = dir + "/page";
+		urlDir = "/url";
+		pageDir = "/page";
 		URLFile = new File(urlDir);
 		PageFile = new File(pageDir);
 		initStorageDirs();
@@ -79,11 +81,15 @@ public class FileCreater {
 			PrintWriter writer = null;
 		    for (URLRelation seci : cursor) {	    	
 				try {	
-					if (i % 100 == 0) {
+					if (i % lines == 0) {
 			    		dest = new File(URLFile, "url" + i);
 			    		writer = new PrintWriter(dest, "UTF-8");
 			    	}	
 					writer.print(seci.getUrl());
+					writer.print("\t");
+					writer.print("0");
+					writer.print("\t");
+					writer.print("1");
 					writer.print("\t");
 					for (String url : seci.getUrls()) {
 						writer.print(url + " ");
@@ -93,7 +99,7 @@ public class FileCreater {
 				} catch (Exception e) {
 					e.printStackTrace();
 				} finally {
-					if (i % 100 == 0) {
+					if (i % lines == 0) {
 						writer.close();
 					}
 				}
@@ -115,6 +121,7 @@ public class FileCreater {
 				try {	
 			    	dest = new File(PageFile, "page" + i);
 			    	writer = new PrintWriter(dest, "UTF-8");
+			    	writer.println("<!--" + seci.getUrl() + "-->");
 					writer.print(seci.getContent());
 					writer.print(System.lineSeparator());
 					i++;

@@ -18,7 +18,7 @@ public class ContextListener implements ServletContextListener {
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
 		ServletContext context = event.getServletContext();
-	    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
+	//    DBWrapper.setupDirectory(context.getInitParameter("BDBstore"));
 	}
 	
 }

@@ -52,7 +52,8 @@ public class CrawlerServlet extends ApplicationServlet{
 	    super.init();
 	    workerInfos = new WorkerInfos();
 	    workerInfos.setPort(getInitParameter("port"));
-	    defaultDir = System.getProperty("user.dir") + "/database/" + workerInfos.getPort();
+//	    defaultDir = System.getProperty("user.dir") + "/database/" + workerInfos.getPort();
+	    defaultDir = "/database/";
 	    crawlerPool = new CrawlerWorkerPool(workerInfos);
 	    crawlerPool.setDir(defaultDir);
 	    fileCreater = new FileCreater(crawlerPool.getDir());
@@ -388,7 +389,7 @@ public class CrawlerServlet extends ApplicationServlet{
 		}
 		if (url == null || url.length() == 0 ) {
 			printErrorPage(writer, getBanner(request), "empty seed url");
-		} else if (!checkLogin(request)) {
+		} else if (false) {
 			try {
 				response.sendRedirect("/servlet/login");
 			} catch (IOException e) {

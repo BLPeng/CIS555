@@ -18,7 +18,7 @@ import edu.upenn.cis455.storage.URLVisitedDA;
 
 
 public class CrawlerWorkerPool {
-	private int threadPoolSize = 5;	//for multi-processor /core, increase this number
+	private int threadPoolSize = 10;	//for multi-processor /core, increase this number
 	private int queueSize = 409600;
 	private WorkerInfos workerInfo;
 	private CrawlerWorker[] pools;
