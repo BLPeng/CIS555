@@ -1,9 +1,6 @@
 package edu.upenn.cis455.servlet;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -143,9 +140,9 @@ public class CrawlerServlet extends ApplicationServlet{
 				if (crawlerPool != null) {
 					crawlerPool.shutdown();
 				}
-				DBWrapper.setupDirectory(crawlerPool.getDir());
-				fileCreater.createURLFiles();
-				fileCreater.createPageFiles();
+	//			DBWrapper.setupDirectory(crawlerPool.getDir());
+	//			fileCreater.createURLFiles();
+	//			fileCreater.createPageFiles();
 				DBWrapper.closeDBs();
 			}else if ("/worker/urlFeed".equals(pathInfo)){
 				getUrlFeed(request);
@@ -190,7 +187,7 @@ public class CrawlerServlet extends ApplicationServlet{
 				}
 				DBWrapper.setupDirectory(crawlerPool.getDir());
 				URLQueueDA.clear();
-				URLCrawleredDA.clear();
+	//			URLCrawleredDA.clear();
 				DBWrapper.closeDBs();
 				try {
 					response.sendRedirect("status");
@@ -422,7 +419,7 @@ public class CrawlerServlet extends ApplicationServlet{
 			crawlerPool.init();
 			crawlerPool.setUrl(url);
 			crawlerPool.setDir(dir);
-			fileCreater.setDir(crawlerPool.getDir());
+			fileCreater.setDir(crawlerPool.getDir(), false);
 			crawlerPool.setMaxSize(maxSize);
 			crawlerPool.setMaxPage(numOfFiles);
 			crawlerPool.start();

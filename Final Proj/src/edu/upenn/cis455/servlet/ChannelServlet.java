@@ -133,8 +133,8 @@ public class ChannelServlet extends ApplicationServlet{
 				writer.print("<document crawled=\"");
 				writer.print(dateFormat.format(content.getLastAccessedAt()));
 				writer.print("\" location=\"" + content.getUrl() + "\">");
-				Matcher m = xmlInstructionPtn.matcher(content.getContent());
-				writer.print(m.replaceAll(""));
+	// comment for FinalProj			Matcher m = xmlInstructionPtn.matcher(content.getContent());
+	// comment for FinalProj			writer.print(m.replaceAll(""));
 				writer.println("</document>");
 			}
 		}

@@ -1,13 +1,10 @@
 package edu.upenn.cis455.crawler;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.FileReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,10 +18,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.tidy.Tidy;
 
+import edu.upenn.cis455.crawler.file.FileCreater;
 import edu.upenn.cis455.crawler.info.HTTPClient;
 import edu.upenn.cis455.crawler.info.MyUtils;
 import edu.upenn.cis455.crawler.info.RobotsTxtInfo;
-import edu.upenn.cis455.crawler.info.WorkerStatus;
 import edu.upenn.cis455.storage.Channel;
 import edu.upenn.cis455.storage.ChannelDA;
 import edu.upenn.cis455.storage.Content;
@@ -56,18 +53,17 @@ public class CrawlerWorker extends Thread{
 	private Document document;
 	private HTTPClient httpClient;
 	private BlockingQueue<String> pendingURLs;
-	private Set<String> fetchedURLSet;
 	private boolean ifDownloaded;
 	private CrawlerWorkerPool crawlerWorkerPool;
 	private XPathEngineImpl xpathEngine;
 	private HashMap<String, List<String>> outURLs;
-	
+	private FileCreater fileCreater;
 	// crawlers share the same frontURL queue, the same fetched url set
 	public CrawlerWorker(CrawlerWorkerPool crawlerWorkerPool, BlockingQueue<String> pendingURLs, Set<String> syncSet, int label) {
 		super("Crawler " + String.valueOf(label));
 		httpClient = new HTTPClient();
 		this.pendingURLs = pendingURLs;
-		this.fetchedURLSet = syncSet;
+//		this.fetchedURLSet = syncSet;
 		mTidy.setForceOutput(true);
 		mTidy.setPrintBodyOnly(true);
 		mTidy.setXHTML(true);
@@ -78,6 +74,7 @@ public class CrawlerWorker extends Thread{
 		this.crawlerWorkerPool = crawlerWorkerPool;
 		xpathEngine = (XPathEngineImpl) XPathEngineFactory.getXPathEngine(); 
 		outURLs = new HashMap<>();
+		fileCreater = new FileCreater("/cis555");
 //		mTidy.setErrout(null);
 	}
 
@@ -138,7 +135,7 @@ public class CrawlerWorker extends Thread{
 					crawlPage(url);
 				} else if (ifDownloaded) {
 					printProcess(crawlURL, 1);
-					crawlLocalContent(url);
+	//				crawlLocalContent(url);
 				} else {
 					printProcess(crawlURL, 2);
 				}
@@ -201,36 +198,11 @@ public class CrawlerWorker extends Thread{
 	
 	// get local copy for url
 	private void crawlLocalContent(String url) {
-		boolean isXML = false;
-		if (ContentDA.containsEntry(url)) {
-			Content content = ContentDA.getEntry(url);
-			if (content.getType().equals("xml")) {
-				mTidy.setXmlTags(true);
-				isXML = true;
-			} else {
-				mTidy.setXmlTags(false);
-			}
-			ByteArrayInputStream inputStream;
-			try {
-				inputStream = new ByteArrayInputStream(content.getContent().getBytes("UTF-8"));
-			} catch (UnsupportedEncodingException e) {
-				return;
-		//		e.printStackTrace();
-			}
-			try {
-				document = mTidy.parseDOM(inputStream, null);
-				if (!isXML) {	
-					//	mTidy.pprint(document, System.out);
-					extractURL(document, url); 
-				} else {
-	//				matchChannel(document, url);
-				}
-			} catch (Exception e) {
-				return;
-			}
+		if (URLRelationDA.containsEntry(url)) {
+			URLRelation urlRelation = URLRelationDA.getEntry(url);
+			filterURLs(urlRelation); 
 		}
 	}
-	
 	private void matchChannel(Document document, String url) {
 		List<Channel> channels = ChannelDA.getEntries();
 		for (Channel channel : channels) {
@@ -256,8 +228,6 @@ public class CrawlerWorker extends Thread{
 		}*/
     	if (URLCrawleredDA.containsEntry(url)) {
     		return;
-    	} else {
-    		URLCrawleredDA.putEntry(new URLVisited((long) 0, url));
     	}
     	boolean isXML;
     	String type = "html";
@@ -296,7 +266,9 @@ public class CrawlerWorker extends Thread{
 			mTidy.setXmlTags(false);
 			type = "html";
 		}
-		Content content = new Content(url, httpClient.getContent(), new Date(), type);
+		String html = httpClient.getContent();
+		fileCreater.createPageFiles(url, html);
+		Content content = new Content(url, null, new Date(), type);
 //		System.out.println(httpClient.getContent());
 		ContentDA.putEntry(content);
 		ByteArrayInputStream inputStream;
@@ -319,35 +291,13 @@ public class CrawlerWorker extends Thread{
 		}
     }
     
-    // to extract links from html page
-    private void extractURL(Document document, String baseURI) {
-    	URL baseUrl;
-		try {
-			baseUrl = new URL(baseURI);
-		} catch (MalformedURLException e1) {
-			e1.printStackTrace();
-			return;
-		}
-    	NodeList elements = document.getElementsByTagName("a");
-    	List<String> urls = new ArrayList<String>();
-    	for (int i = 0; i < elements.getLength(); i++) {
-    		Node node = elements.item(i).getAttributes().getNamedItem("href");
-    		if (node == null) continue;
-    		String tmp = node.getNodeValue();
-    		try {
-				URL url = new URL( baseUrl , tmp);
-				urls.add(url.toString());
-			} catch (MalformedURLException e) {
-		//		e.printStackTrace();
-				continue;
-			}
-    		
+    private void filterURLs(URLRelation urlRelation) {
+    	if (urlRelation == null) {
+    		return;
     	}
-    	String[] urls1 = new String[urls.size()];
-    	urls1 = urls.toArray(urls1);
-    	URLRelationDA.putEntry(new URLRelation(baseURI, urls1));
+    	String[] urls = urlRelation.getUrls();
     	for (String url : urls) {
-    		if (URLVisitedDA.containsEntry(url) == false) {
+    		if (URLCrawleredDA.containsEntry(url) == false) {
     			try {
     				URI uri = new URI(url);
     			    String domain = uri.getHost();
@@ -403,11 +353,46 @@ public class CrawlerWorker extends Thread{
 					// TODO Auto-generated catch block
 				//	e.printStackTrace();
 					URLQueueDA.pushURL(url);
-				} 
+				} finally {
+				//	URLCrawleredDA.putEntry(new URLVisited(System.currentTimeMillis(), url));
+				}
 	//						
 //			pendingURLs.put(url);
     		}
     	}
+    }
+
+    
+    // to extract links from html page
+    private void extractURL(Document document, String baseURI) {
+    	URL baseUrl;
+		try {
+			baseUrl = new URL(baseURI);
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+			return;
+		}
+    	NodeList elements = document.getElementsByTagName("a");
+    	List<String> urls = new ArrayList<String>();
+    	for (int i = 0; i < elements.getLength(); i++) {
+    		Node node = elements.item(i).getAttributes().getNamedItem("href");
+    		if (node == null) continue;
+    		String tmp = node.getNodeValue();
+    		try {
+				URL url = new URL( baseUrl , tmp);
+				urls.add(url.toString());
+			} catch (MalformedURLException e) {
+		//		e.printStackTrace();
+				continue;
+			}
+    		
+    	}
+    	String[] urls1 = new String[urls.size()];
+    	urls1 = urls.toArray(urls1);
+    	URLRelation relation = new URLRelation(baseURI, urls1);
+//    	URLRelationDA.putEntry(new URLRelation(baseURI, urls1));
+    	filterURLs(relation);
+    	FileCreater.createURLFile(relation);
     }
     
 	// fetch robot.txt info
@@ -504,8 +489,8 @@ public class CrawlerWorker extends Thread{
 		ifDownloaded = false;
 		if (url == null) {
 			return false;
-		}
-		if (URLVisitedDA.containsEntry(url)) {
+		} //check if already downloaded this page
+		if (URLCrawleredDA.containsEntry(url)) {
 			return false;
 		}
 		httpClient.init();

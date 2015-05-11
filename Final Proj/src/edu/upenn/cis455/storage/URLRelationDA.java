@@ -58,6 +58,13 @@ public class URLRelationDA {
 		return primaryIndex.entities();
 	}
 	
+	public static long getCount() {
+		if (primaryIndex == null) {
+			return 0;
+		}
+		return primaryIndex.count();
+	}
+	
 	public static List<URLRelation> getEntries() {
 		EntityCursor<URLRelation> pi_cursor = primaryIndex.entities();
 		List<URLRelation> ret = new ArrayList<URLRelation>();

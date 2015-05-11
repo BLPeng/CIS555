@@ -46,6 +46,7 @@ public class HTTPClient {
 	}
 	
 	public void init() {
+		this.type = -1;
 		content = null;
 		sendContent = null;
 		url = null;
@@ -65,7 +66,7 @@ public class HTTPClient {
 	public void connect() {
 		if (type == 0) {
 			httpConnect1(); 
-		} else {
+		} else if (type == 1){
 			httpsConnect();
 		}
 	}
@@ -316,6 +317,7 @@ public class HTTPClient {
 		} else if (url.toLowerCase().startsWith("https://")){
 			type = 1;
 		} else {
+			type = -1;
 			return;
 		}	
 	}

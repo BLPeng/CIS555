@@ -77,4 +77,11 @@ public class ContentDA {
 			}
 		}
 	}
+
+	public static long getCount() {
+		if (primaryIndex == null)
+			return 0;
+		else 
+			return primaryIndex.count();
+	}
 }
